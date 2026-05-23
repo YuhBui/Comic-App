@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000"
+    android:fillViewport="false"> <LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content" android:orientation="vertical">
+<!--    android:descendantFocusability="blocksDescendants" android:orientation="vertical">-->
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerViewImages"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:nestedScrollingEnabled="false" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="#222222"
+        android:padding="8dp"
+        android:gravity="center">
+
+        <Button
+            android:id="@+id/btnPrevChapter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="◀ Trước"
+            android:backgroundTint="#444444"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp" />
+
+        <Spinner
+            android:id="@+id/spinnerChapters"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:background="@android:drawable/btn_dropdown"
+            android:gravity="center"
+            android:spinnerMode="dialog" />
+
+        <Button
+        android:id="@+id/btnNextChapter"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Sau ▶"
+        android:backgroundTint="#FF9800"
+        android:textColor="#FFFFFF"
+        android:textSize="12sp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#FFFFFF"
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:layout_marginTop="20dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Bình luận chương này"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:textColor="#000000"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp">
+            <EditText
+                android:id="@+id/edtCommentInputReader"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="Chia sẻ cảm xúc về chương này..."
+                android:textColorHint="#888888"
+                android:textColor="#000000"
+
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:clickable="true"/>
+            <Button
+                android:id="@+id/btnSendCommentReader"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Gửi"/>
+        </LinearLayout>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerViewCommentsReader"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:nestedScrollingEnabled="false"/>
+    </LinearLayout>
+
+</LinearLayout>
+</androidx.core.widget.NestedScrollView>

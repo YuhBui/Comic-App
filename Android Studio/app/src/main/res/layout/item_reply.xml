@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingTop="6dp"
+    android:paddingBottom="6dp">
+
+    <TextView
+        android:id="@+id/tvUserReply"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="User ID"
+        android:textStyle="bold"
+        android:textColor="#4CAF50"
+        android:textSize="13sp"/>
+
+    <TextView
+        android:id="@+id/tvReplyContent"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:text="Nội dung phản hồi..."
+        android:textColor="#555555"
+        android:textSize="14sp"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="4dp"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/btnLikeReply"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="👍 Thích (0)"
+            android:textSize="11sp"
+            android:textColor="#777777"
+            android:padding="2dp"/>
+
+        <View android:layout_width="10dp" android:layout_height="1dp"/>
+
+        <TextView
+            android:id="@+id/btnDislikeReply"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="👎 Ghét (0)"
+            android:textSize="11sp"
+            android:textColor="#777777"
+            android:padding="2dp"/>
+
+        <View android:layout_width="10dp" android:layout_height="1dp"/>
+
+        <TextView
+            android:id="@+id/btnReplyToReply"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="💬 Phản hồi"
+            android:textColor="#FF9800"
+            android:textStyle="bold"
+            android:textSize="11sp"
+            android:padding="2dp"/>
+
+        <View android:layout_width="0dp" android:layout_height="1dp" android:layout_weight="1"/>
+
+        <TextView
+            android:id="@+id/btnReportReply"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="⚠️ Báo cáo"
+            android:textColor="#E91E63"
+            android:textSize="11sp"
+            android:padding="2dp"/>
+    </LinearLayout>
+</LinearLayout>

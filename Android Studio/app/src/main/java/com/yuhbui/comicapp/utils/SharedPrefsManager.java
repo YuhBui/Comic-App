@@ -1,0 +1,32 @@
+package com.yuhbui.comicapp.utils;
+
+import android.content.Context;
+import android.content.SharedPreferences;
+import com.yuhbui.comicapp.data.model.User;
+
+public class SharedPrefsManager {
+    private static final String PREF_NAME = "ComicAppPrefs";
+    private static final String KEY_USER_ID = "userId";
+    private static final String KEY_USER_NAME = "userName";
+
+    // Hàm lưu thông tin khi đăng nhập thành công
+    public static void saveUser(Context context, User user) {
+        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putInt(KEY_USER_ID, user.getUserId()); // Lưu ID để sau này gọi API
+        editor.putString(KEY_USER_NAME, user.getDisplayName());
+        editor.apply();
+    }
+
+    // Hàm lấy ID người dùng hiện tại (Trả về -1 nếu chưa đăng nhập)
+    public static int getUserId(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+        return prefs.getInt(KEY_USER_ID, -1);
+    }
+
+    // Hàm Đăng xuất
+    public static void logout(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+        prefs.edit().clear().apply();
+    }
+}
