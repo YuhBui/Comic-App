@@ -1,5 +1,6 @@
 package com.yuhbui.ComicAppBackend.controller;
 
+import com.yuhbui.ComicAppBackend.entity.Chapter;
 import com.yuhbui.ComicAppBackend.entity.Comic;
 import com.yuhbui.ComicAppBackend.dto.ComicDetailResponseDTO;
 import com.yuhbui.ComicAppBackend.dto.ComicHomeResponseDTO;
