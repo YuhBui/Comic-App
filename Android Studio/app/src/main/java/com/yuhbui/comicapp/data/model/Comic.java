@@ -34,6 +34,18 @@ public class Comic implements Serializable {
     @SerializedName("createdAt")
     private String createdAt; // Dùng String để dễ dàng nhận dữ liệu ngày tháng từ API
 
+    @SerializedName("latestChapterNumber")
+    private String latestChapterNumber;
+
+    @SerializedName("timeUpdated")
+    private String timeUpdated;
+
+    @SerializedName("followCount")
+    private long followCount;
+
+    @SerializedName("commentCount")
+    private long commentCount;
+
     public Comic() {
     }
 
@@ -115,5 +127,37 @@ public class Comic implements Serializable {
 
     public void setCreatedAt(String createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public String getLatestChapterNumber() {
+        return latestChapterNumber;
+    }
+
+    public void setLatestChapterNumber(String latestChapterNumber) {
+        this.latestChapterNumber = latestChapterNumber;
+    }
+
+    public String getTimeUpdated() {
+        return timeUpdated;
+    }
+
+    public void setTimeUpdated(String timeUpdated) {
+        this.timeUpdated = timeUpdated;
+    }
+
+    public long getFollowCount() {
+        return followCount;
+    }
+
+    public void setFollowCount(long followCount) {
+        this.followCount = followCount;
+    }
+
+    public long getCommentCount() {
+        return commentCount;
+    }
+
+    public void setCommentCount(long commentCount) {
+        this.commentCount = commentCount;
     }
 }

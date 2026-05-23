@@ -1,5 +1,6 @@
 package com.yuhbui.comicapp.data.api;
 
+import com.yuhbui.comicapp.data.model.Category;
 import com.yuhbui.comicapp.data.model.ChapterImage;
 import com.yuhbui.comicapp.data.model.Comic;
 import com.yuhbui.comicapp.data.model.Chapter;
@@ -21,9 +22,6 @@ import retrofit2.http.Query;
 public interface ApiService {
     @GET("/api/comics")
     Call<List<Comic>> getAllComics();
-
-    @GET("/api/comics/{id}")
-    Call<Comic> getComicById(@Path("id") int comicId);
 
     @GET("/api/comics/{comicId}/chapters")
     Call<List<Chapter>> getChaptersByComicId(@Path("comicId") int comicId);
@@ -101,7 +99,19 @@ public interface ApiService {
     @GET("/api/comics/home/updates")
     Call<List<Comic>> getHomeUpdates(@Query("page") int page);
 
-    // API lấy bảng xếp hạng top 10 theo ngày/tuần/tháng
+    // API lấy danh sách truyện đề cử hot (top rating)
+    @GET("/api/comics/home/recommended")
+    Call<List<Comic>> getRecommendedComics();
+
+    // Lấy danh sách toàn bộ thể loại để làm thanh lọc
+    @GET("/api/categories")
+    Call<List<Category>> getCategories();
+
+    // Lấy danh sách truyện đã được lọc theo mã thể loại
+    @GET("/api/comics/filter")
+    Call<List<Comic>> getComicsByCategory(@Query("catId") int catId);
+
+    // API lấy bảng xếp hạng top 10
     @GET("/api/comics/home/ranking")
     Call<List<Comic>> getTopRanking(@Query("type") String type);
 }

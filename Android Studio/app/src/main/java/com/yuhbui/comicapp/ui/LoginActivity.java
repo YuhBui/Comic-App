@@ -7,7 +7,6 @@ import android.widget.EditText;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.yuhbui.comicapp.MainActivity;
 import com.yuhbui.comicapp.R;
 import com.yuhbui.comicapp.data.api.ApiClient;
 import com.yuhbui.comicapp.data.model.LoginRequest;

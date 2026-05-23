@@ -1,6 +1,5 @@
 package com.yuhbui.ComicAppBackend.controller;
 
-import com.yuhbui.ComicAppBackend.entity.Chapter;
 import com.yuhbui.ComicAppBackend.entity.Comic;
 import com.yuhbui.ComicAppBackend.dto.ComicDetailResponseDTO;
 import com.yuhbui.ComicAppBackend.dto.ComicHomeResponseDTO;
@@ -8,12 +7,10 @@ import com.yuhbui.ComicAppBackend.repository.ComicRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -151,17 +148,16 @@ public class ComicController {
     // TRÙNG KHỚP CÁC ENDPOINT MỚI BỔ SUNG CHO TRANG CHỦ (HOME NÂNG CẤP)
     // =========================================================================
 
-    // 6. API TRUYỆN ĐỀ CỬ HOT (Lấy 5-7 bộ có điểm đánh giá rating cao nhất để đưa lên Slide trượt ngang)
+    // 6. API TRUYỆN ĐỀ CỬ HOT (Lấy top 6 bộ có điểm rating cao nhất kèm đầy đủ thông số)
     @GetMapping("/home/recommended")
-    public ResponseEntity<List<Comic>> getRecommendedComics() {
-        // Viết câu lệnh native query hoặc dùng Pageable lấy top 6 truyện có Rating cao nhất
-        Pageable topSix = PageRequest.of(0, 6);
-        // Thay vì tự viết SQL phức tạp, ta lấy nhanh danh sách thô sắp xếp theo Rating giảm dần
-        String hql = "FROM Comic c WHERE c.isHidden = false ORDER BY c.rating DESC";
-        List<Comic> recommended = entityManager.createQuery(hql, Comic.class)
-                .setMaxResults(6)
-                .getResultList();
-        return ResponseEntity.ok(recommended);
+    public ResponseEntity<List<ComicHomeResponseDTO>> getRecommendedComics() {
+        List<Object[]> rawData = comicRepository.getComicHomeDataRaw();
+        List<ComicHomeResponseDTO> dtoList = rawData.stream()
+                .map(this::mapRowToDTO)
+                .sorted(Comparator.comparing(ComicHomeResponseDTO::getRating, Comparator.nullsLast(Comparator.reverseOrder())))
+                .limit(6)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(dtoList);
     }
 
     // 7. API TRUYỆN MỚI CẬP NHẬT + TÍNH TOÁN ĐẦY ĐỦ THÔNG SỐ (PHÂN TRANG LŨY TIẾN 10 TRUYỆN)
@@ -171,18 +167,9 @@ public class ComicController {
         List<Object[]> rawData = comicRepository.getComicHomeDataRaw();
 
         // Ánh xạ dữ liệu thô (Object Array) sang định dạng đối tượng DTO chuyên biệt gửi cho Android
-        List<ComicHomeResponseDTO> dtoList = rawData.stream().map(row -> new ComicHomeResponseDTO(
-                (Integer) row[0],
-                (String) row[1],
-                (String) row[2],
-                (Integer) row[3],
-                (Float) row[4],
-                (String) row[5],
-                row[6] != null ? "Chương " + row[6].toString() : "Chương 0", // Tên chương mới nhất
-                "Mới cập nhật", // Thời gian cập nhật
-                row[8] != null ? ((Number) row[8]).longValue() : 0L,        // Số lượt thích (Follows)
-                row[9] != null ? ((Number) row[9]).longValue() : 0L         // Số lượt bình luận (Comments)
-        )).collect(Collectors.toList());
+        List<ComicHomeResponseDTO> dtoList = rawData.stream()
+                .map(this::mapRowToDTO)
+                .collect(Collectors.toList());
 
         // Phân đoạn phân trang (Cắt mảng 10 phần tử dựa theo tham số ?page=)
         int start = page * 10;
@@ -196,25 +183,72 @@ public class ComicController {
 
     // 8. API BẢNG XẾP HẠNG TOP 10 TRUYỆN (HỖ TRỢ THAY ĐỔI TAB: NGÀY / TUẦN / THÁNG)
     @GetMapping("/home/ranking")
-    public ResponseEntity<List<Comic>> getTopRanking(@RequestParam(defaultValue = "day") String type) {
-        String orderByField = "c.viewCount"; // Mặc định sắp xếp top theo tổng lượt xem (ViewCount)
+    public ResponseEntity<List<ComicHomeResponseDTO>> getTopRanking(@RequestParam(defaultValue = "day") String type) {
+        List<Object[]> rawData = comicRepository.getComicHomeDataRaw();
+        List<ComicHomeResponseDTO> dtoList = rawData.stream()
+                .map(this::mapRowToDTO)
+                .collect(Collectors.toList());
 
-        // Gợi ý mở rộng: Nếu sau này làm chặt chẽ bảng log tương tác, bạn có thể bổ sung điều kiện
-        // WHERE thời gian tương tác nằm trong 1 ngày qua, 7 ngày qua hoặc 30 ngày qua tại đây.
-        // Đối với Demo đồ án, ta lấy Top 10 truyện có lượt xem cao nhất để chạy mượt và nhanh nhất.
-        String hql = "FROM Comic c WHERE c.isHidden = false ORDER BY " + orderByField + " DESC";
+        // Phân biệt tiêu chí sắp xếp theo từng tab thời gian
+        Comparator<ComicHomeResponseDTO> comparator;
+        switch (type) {
+            case "week":
+                // Tuần: Sắp xếp theo điểm Rating cao nhất
+                comparator = Comparator.comparing(ComicHomeResponseDTO::getRating, Comparator.nullsLast(Comparator.reverseOrder()));
+                break;
+            case "month":
+                // Tháng: Sắp xếp theo số Follow nhiều nhất
+                comparator = Comparator.comparing(ComicHomeResponseDTO::getFollowCount, Comparator.nullsLast(Comparator.reverseOrder()));
+                break;
+            default: // "day"
+                // Ngày: Sắp xếp theo ViewCount nhiều nhất
+                comparator = Comparator.comparing(ComicHomeResponseDTO::getViewCount, Comparator.nullsLast(Comparator.reverseOrder()));
+                break;
+        }
 
-        List<Comic> rankingList = entityManager.createQuery(hql, Comic.class)
-                .setMaxResults(10) // Ép cứng giới hạn tối đa chỉ lấy 10 bộ truyện đầu bảng
-                .getResultList();
+        List<ComicHomeResponseDTO> ranked = dtoList.stream()
+                .sorted(comparator)
+                .limit(10)
+                .collect(Collectors.toList());
 
-        return ResponseEntity.ok(rankingList);
+        return ResponseEntity.ok(ranked);
     }
 
-    // 9. API BỘ LỌC TRUYỆN THEO THỂ LOẠI (Lấy danh sách truyện khi click vào CategoryID tương ứng trên app)
+    // 9. API BỘ LỌC TRUYỆN THEO THỂ LOẠI (Path variable version)
     @GetMapping("/filter/category/{catId}")
-    public ResponseEntity<List<Comic>> filterComicsByCategory(@PathVariable Integer catId) {
-        List<Comic> filteredList = comicRepository.findByCategoryId(catId);
-        return ResponseEntity.ok(filteredList);
+    public ResponseEntity<List<ComicHomeResponseDTO>> filterComicsByCategory(@PathVariable Integer catId) {
+        List<Object[]> rawData = comicRepository.getComicHomeDataByCategory(catId);
+        List<ComicHomeResponseDTO> dtoList = rawData.stream()
+                .map(this::mapRowToDTO)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(dtoList);
+    }
+
+    // 10. API BỘ LỌC TRUYỆN THEO THỂ LOẠI (Query param version - dùng bởi Android)
+    @GetMapping("/filter")
+    public ResponseEntity<List<ComicHomeResponseDTO>> filterByCat(@RequestParam Integer catId) {
+        List<Object[]> rawData = comicRepository.getComicHomeDataByCategory(catId);
+        List<ComicHomeResponseDTO> dtoList = rawData.stream()
+                .map(this::mapRowToDTO)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(dtoList);
+    }
+
+    // =============================================
+    // HÀM PHỤ TRỢ: Chuyển đổi Object[] sang DTO
+    // =============================================
+    private ComicHomeResponseDTO mapRowToDTO(Object[] row) {
+        return new ComicHomeResponseDTO(
+                (Integer) row[0],
+                (String) row[1],
+                (String) row[2],
+                (Integer) row[3],
+                (Float) row[4],
+                (String) row[5],
+                row[6] != null ? "Chương " + row[6].toString() : "Chương 0",
+                "Mới cập nhật",
+                row[8] != null ? ((Number) row[8]).longValue() : 0L,
+                row[9] != null ? ((Number) row[9]).longValue() : 0L
+        );
     }
 }
