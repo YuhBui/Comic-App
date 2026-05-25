@@ -5,6 +5,7 @@
      2. Truyện Mới Cập Nhật: Grid 2 cột, 5 hàng + bộ lọc + phân trang
      3. Bảng Xếp Hạng Top 10: Danh sách 1 cột 10 hàng -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
@@ -14,7 +15,7 @@
     <!-- Header cố định phía trên -->
     <include
         android:id="@+id/layoutHeader"
-        layout="@layout/layout_header"/>
+        layout="@layout/layout_header" />
 
     <!-- Nội dung chính cuộn được -->
     <androidx.core.widget.NestedScrollView
@@ -50,7 +51,7 @@
                     android:textSize="15sp"
                     android:paddingStart="14dp"
                     android:paddingEnd="14dp"
-                    android:paddingBottom="8dp"/>
+                    android:paddingBottom="8dp" />
 
                 <!-- Container slider: nút trái | ViewPager | nút phải -->
                 <RelativeLayout
@@ -63,7 +64,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:layout_marginStart="14dp"
-                        android:layout_marginEnd="14dp"/>
+                        android:layout_marginEnd="14dp" />
 
                     <!-- Nút chuyển truyện trước (bên trái) -->
                     <ImageButton
@@ -75,9 +76,9 @@
                         android:layout_marginStart="18dp"
                         android:src="@drawable/ic_chevron_left"
                         android:background="@drawable/bg_slider_btn"
-                        android:tint="#FFFFFF"
                         android:scaleType="centerInside"
-                        android:contentDescription="Truyện trước"/>
+                        android:contentDescription="Truyện trước"
+                        app:tint="#FFFFFF" />
 
                     <!-- Nút chuyển truyện sau (bên phải) -->
                     <ImageButton
@@ -89,9 +90,9 @@
                         android:layout_marginEnd="18dp"
                         android:src="@drawable/ic_chevron_right"
                         android:background="@drawable/bg_slider_btn"
-                        android:tint="#FFFFFF"
                         android:scaleType="centerInside"
-                        android:contentDescription="Truyện sau"/>
+                        android:contentDescription="Truyện sau"
+                        app:tint="#FFFFFF" />
                 </RelativeLayout>
 
                 <!-- Dot indicator bên dưới slider -->
