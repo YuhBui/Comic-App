@@ -1,21 +1,32 @@
 package com.yuhbui.comicapp.ui;
 
+import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.viewpager2.widget.ViewPager2;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.yuhbui.comicapp.R;
 import com.yuhbui.comicapp.data.api.ApiClient;
 import com.yuhbui.comicapp.data.model.Category;
 import com.yuhbui.comicapp.data.model.Comic;
 import com.yuhbui.comicapp.ui.adapters.CategoryFilterAdapter;
 import com.yuhbui.comicapp.ui.adapters.ComicAdapter;
+import com.yuhbui.comicapp.ui.adapters.RankingAdapter;
+import com.yuhbui.comicapp.ui.adapters.RecommendedBannerAdapter;
 import java.util.ArrayList;
 import java.util.List;
 import retrofit2.Call;
@@ -24,86 +35,322 @@ import retrofit2.Response;
 
 public class MainActivity extends AppCompatActivity {
 
-    private RecyclerView rvRecommended, rvNewUpdates, rvRank, rvCategoriesFilter;
-    private ComicAdapter recommendedAdapter, newUpdatesAdapter, rankAdapter;
-    private CategoryFilterAdapter catFilterAdapter;
+    // ========== PHẦN 1: TRUYỆN ĐỀ CỬ - Banner Slider ==========
+    private ViewPager2 vpRecommended;
+    private RecommendedBannerAdapter bannerAdapter;
+    private ImageButton btnSliderPrev, btnSliderNext;
+    private LinearLayout layoutDotIndicator;
 
+    // ========== PHẦN 2: TRUYỆN MỚI CẬP NHẬT - Grid 2 cột ==========
+    private RecyclerView recyclerViewComics;
+    private ComicAdapter newUpdatesAdapter;
+    private ImageView btnFilterIcon;
+    private TextView tvActiveFilter;
+
+    // Phân trang
     private Button btnPrevPage, btnNextPage;
-    private TextView tvPageIndicator;
+    private LinearLayout layoutPageNumbers;
+    private int currentPage = 0;
+    private int totalPages = 1;
+    private static final int PAGE_SIZE = 10;
+
+    // Bộ lọc thể loại
+    private CategoryFilterAdapter catFilterAdapter;
+    private Integer activeFilterCategoryId = null;
+    private String activeFilterCategoryName = null;
+
+    // ========== PHẦN 3: BẢNG XẾP HẠNG TOP 10 ==========
+    private RecyclerView rvTopRank;
+    private RankingAdapter rankingAdapter;
     private RadioGroup rgRankFilter;
 
-    private int currentPage = 0; // Quản lý số trang hiện tại của "Truyện mới cập nhật"
+    // ========== HEADER ==========
+    private View layoutHeader;
+    private ImageView headerMenu, headerSearch, headerNotification, headerAvatar;
+    private TextView headerLogo;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // 1. ÁNH XẠ TOÀN BỘ CÁC VIEW TRÊN LƯỚI GIAO DIỆN HOME
-        rvRecommended = findViewById(R.id.rvRecommendedComic);
-        rvCategoriesFilter = findViewById(R.id.rvCategoriesFilter);
-        rvNewUpdates = findViewById(R.id.recyclerViewComics);
-        rvRank = findViewById(R.id.rvTopRank);
+        initViews();
+        setupHeader();
+        setupRecommendedSlider();
+        setupNewUpdatesSection();
+        setupRankingSection();
+        loadAllData();
+    }
 
-        btnPrevPage = findViewById(R.id.btnPrevPage);
-        btnNextPage = findViewById(R.id.btnNextPage);
-        tvPageIndicator = findViewById(R.id.tvPageIndicator);
+    // ========== KHỞI TẠO VIEW ==========
+
+    private void initViews() {
+        // Header
+        layoutHeader       = findViewById(R.id.layoutHeader);
+        headerMenu         = layoutHeader.findViewById(R.id.headerMenu);
+        headerLogo         = layoutHeader.findViewById(R.id.headerLogo);
+        headerSearch       = layoutHeader.findViewById(R.id.headerSearch);
+        headerNotification = layoutHeader.findViewById(R.id.headerNotification);
+        headerAvatar       = layoutHeader.findViewById(R.id.headerAvatar);
+
+        // Phần 1: Slider
+        vpRecommended    = findViewById(R.id.vpRecommended);
+        btnSliderPrev    = findViewById(R.id.btnSliderPrev);
+        btnSliderNext    = findViewById(R.id.btnSliderNext);
+        layoutDotIndicator = findViewById(R.id.layoutDotIndicator);
+
+        // Phần 2: Truyện mới
+        recyclerViewComics = findViewById(R.id.recyclerViewComics);
+        btnFilterIcon      = findViewById(R.id.btnFilterIcon);
+        tvActiveFilter     = findViewById(R.id.tvActiveFilter);
+        btnPrevPage        = findViewById(R.id.btnPrevPage);
+        btnNextPage        = findViewById(R.id.btnNextPage);
+        layoutPageNumbers  = findViewById(R.id.layoutPageNumbers);
+
+        // Phần 3: BXH
+        rvTopRank    = findViewById(R.id.rvTopRank);
         rgRankFilter = findViewById(R.id.rgRankFilter);
+    }
 
-        // 2. CẤU HÌNH HƯỚNG CUỘN CHO RECYCLERVIEW
-        // Truyện đề cử và Bộ lọc danh mục -> Trượt theo chiều NGANG (Horizontal)
-        rvRecommended.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
-        rvCategoriesFilter.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+    // ========== HEADER ==========
 
-        // Bảng xếp hạng và Truyện mới cập nhật -> Cuộn theo chiều DỌC (Vertical)
-        rvNewUpdates.setLayoutManager(new LinearLayoutManager(this));
-        rvRank.setLayoutManager(new LinearLayoutManager(this));
+    private void setupHeader() {
+        headerMenu.setOnClickListener(v -> showHeaderPopupMenu(v));
+        headerLogo.setOnClickListener(v -> Toast.makeText(this, "Trang chủ", Toast.LENGTH_SHORT).show());
+        headerSearch.setOnClickListener(v -> Toast.makeText(this, "Tìm kiếm truyện", Toast.LENGTH_SHORT).show());
+        headerNotification.setOnClickListener(v -> Toast.makeText(this, "Thông báo", Toast.LENGTH_SHORT).show());
+        headerAvatar.setOnClickListener(v -> Toast.makeText(this, "Hồ sơ cá nhân", Toast.LENGTH_SHORT).show());
+    }
 
-        // 3. KHỞI TẠO VÀ GẮN ADAPTER CHO TỪNG PHÂN VÙNG
-        recommendedAdapter = new ComicAdapter();
-        newUpdatesAdapter = new ComicAdapter();
-        rankAdapter = new ComicAdapter();
+    // ========== PHẦN 1: SLIDER TRUYỆN ĐỀ CỬ ==========
 
-        rvRecommended.setAdapter(recommendedAdapter);
-        rvNewUpdates.setAdapter(newUpdatesAdapter);
-        rvRank.setAdapter(rankAdapter);
+    private void setupRecommendedSlider() {
+        bannerAdapter = new RecommendedBannerAdapter();
+        vpRecommended.setAdapter(bannerAdapter);
 
-        // Khởi tạo adapter Bộ lọc thể loại kèm thiết lập sự kiện lắng nghe Click
-        catFilterAdapter = new CategoryFilterAdapter(new CategoryFilterAdapter.OnCatClickListener() {
+        // Nút chuyển trang slide
+        btnSliderPrev.setOnClickListener(v -> {
+            int cur = vpRecommended.getCurrentItem();
+            if (cur > 0) vpRecommended.setCurrentItem(cur - 1, true);
+        });
+        btnSliderNext.setOnClickListener(v -> {
+            int cur = vpRecommended.getCurrentItem();
+            int max = bannerAdapter.getItemCount() - 1;
+            if (cur < max) vpRecommended.setCurrentItem(cur + 1, true);
+        });
+
+        // Lắng nghe thay đổi trang để cập nhật dot indicator
+        vpRecommended.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
             @Override
-            public void onCatClick(Category category) {
-                if (category == null) {
-                    // Nếu người dùng bỏ chọn danh mục (Unclick) -> Quay về hiển thị list phân trang mặc định
-                    currentPage = 0;
-                    loadNewUpdatesComics(currentPage);
-                } else {
-                    // Nếu kích hoạt chọn danh mục -> Lọc truyện thật kết nối từ DB qua CategoryID
-                    loadComicsByCategory(category.getCategoryId());
-                }
+            public void onPageSelected(int position) {
+                updateDotIndicator(position);
             }
         });
-        rvCategoriesFilter.setAdapter(catFilterAdapter);
+    }
 
-        // 4. TIẾN HÀNH GỌI CÁC KÊNH API KẾT NỐI DATABASE THỰC TẾ
-        loadCategoriesFilterData();        // Tải danh sách nhãn thể loại cho bộ lọc
-        loadRecommendedComics();           // Tải danh sách slider truyện hot đề cử
-        loadNewUpdatesComics(currentPage); // Tải danh sách truyện mới cập nhật (Trang 1 - index 0)
-        loadRankingData("day");            // Tải dữ liệu Bảng xếp hạng (Mặc định Tab Ngày)
+    /**
+     * Tạo lại dot indicator sau khi dữ liệu banner được tải
+     */
+    private void buildDotIndicator(int count) {
+        layoutDotIndicator.removeAllViews();
+        int dp6 = dpToPx(6);
+        int dp8 = dpToPx(8);
+        int dp3 = dpToPx(3);
 
-        // 5. CÀI ĐẶT SỰ KIỆN ĐIỀU HƯỚNG PHÂN TRANG CHUYỂN BÀI (< VÀ >)
-        btnNextPage.setOnClickListener(v -> {
-            currentPage++;
-            loadNewUpdatesComics(currentPage);
-        });
+        for (int i = 0; i < count; i++) {
+            View dot = new View(this);
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(dp6, dp6);
+            params.setMargins(dp3, 0, dp3, 0);
+            dot.setLayoutParams(params);
+            dot.setBackgroundResource(R.drawable.dot_inactive);
+            layoutDotIndicator.addView(dot);
+        }
+        updateDotIndicator(0);
+    }
 
+    private void updateDotIndicator(int activePosition) {
+        for (int i = 0; i < layoutDotIndicator.getChildCount(); i++) {
+            View dot = layoutDotIndicator.getChildAt(i);
+            if (i == activePosition) {
+                LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(dpToPx(8), dpToPx(8));
+                p.setMargins(dpToPx(3), 0, dpToPx(3), 0);
+                dot.setLayoutParams(p);
+                dot.setBackgroundResource(R.drawable.dot_active);
+            } else {
+                LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(dpToPx(6), dpToPx(6));
+                p.setMargins(dpToPx(3), 0, dpToPx(3), 0);
+                dot.setLayoutParams(p);
+                dot.setBackgroundResource(R.drawable.dot_inactive);
+            }
+        }
+    }
+
+    // ========== PHẦN 2: TRUYỆN MỚI CẬP NHẬT ==========
+
+    private void setupNewUpdatesSection() {
+        // RecyclerView grid 2 cột
+        newUpdatesAdapter = new ComicAdapter();
+        recyclerViewComics.setLayoutManager(new GridLayoutManager(this, 2));
+        recyclerViewComics.setAdapter(newUpdatesAdapter);
+        recyclerViewComics.setNestedScrollingEnabled(false);
+
+        // Icon lọc - mở BottomSheetDialog chọn thể loại
+        btnFilterIcon.setOnClickListener(v -> showCategoryFilterDialog());
+
+        // Nút phân trang
         btnPrevPage.setOnClickListener(v -> {
             if (currentPage > 0) {
                 currentPage--;
+                if (activeFilterCategoryId != null) {
+                    loadComicsByCategory(activeFilterCategoryId);
+                } else {
+                    loadNewUpdatesComics(currentPage);
+                }
+            }
+        });
+        btnNextPage.setOnClickListener(v -> {
+            if (currentPage < totalPages - 1) {
+                currentPage++;
+                if (activeFilterCategoryId != null) {
+                    loadComicsByCategory(activeFilterCategoryId);
+                } else {
+                    loadNewUpdatesComics(currentPage);
+                }
+            }
+        });
+    }
+
+    /**
+     * Hiển thị BottomSheetDialog chứa danh sách thể loại để lọc
+     */
+    private void showCategoryFilterDialog() {
+        BottomSheetDialog dialog = new BottomSheetDialog(this);
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_category_filter, null);
+        dialog.setContentView(dialogView);
+
+        RecyclerView rvPopup = dialogView.findViewById(R.id.rvCategoryPopup);
+        TextView tvClear = dialogView.findViewById(R.id.tvClearFilter);
+
+        // Adapter thể loại với grid 3 cột
+        catFilterAdapter = new CategoryFilterAdapter(category -> {
+            if (category == null) {
+                // Xóa bộ lọc
+                activeFilterCategoryId = null;
+                activeFilterCategoryName = null;
+                tvActiveFilter.setVisibility(View.GONE);
+                tvActiveFilter.setText("");
+                currentPage = 0;
                 loadNewUpdatesComics(currentPage);
+            } else {
+                // Áp dụng lọc theo thể loại
+                activeFilterCategoryId = category.getCategoryId();
+                activeFilterCategoryName = category.getName();
+                tvActiveFilter.setText("Đang lọc: " + category.getName());
+                tvActiveFilter.setVisibility(View.VISIBLE);
+                currentPage = 0;
+                loadComicsByCategory(activeFilterCategoryId);
+            }
+            dialog.dismiss();
+        });
+
+        rvPopup.setLayoutManager(new GridLayoutManager(this, 3));
+        rvPopup.setAdapter(catFilterAdapter);
+
+        // Tải danh sách thể loại
+        ApiClient.getApiService().getCategories().enqueue(new Callback<List<Category>>() {
+            @Override
+            public void onResponse(Call<List<Category>> call, Response<List<Category>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    catFilterAdapter.setCategories(response.body());
+                }
+            }
+            @Override
+            public void onFailure(Call<List<Category>> call, Throwable t) {
+                Log.e("YUH_TEST", "Lỗi tải danh mục: " + t.getMessage());
             }
         });
 
-        // 6. CÀI ĐẶT SỰ KIỆN CHUYỂN TAB BẢNG XẾP HẠNG (NGÀY / TUẦN / THÁNG)
+        // Nút xóa lọc
+        tvClear.setOnClickListener(v -> {
+            activeFilterCategoryId = null;
+            activeFilterCategoryName = null;
+            tvActiveFilter.setVisibility(View.GONE);
+            tvActiveFilter.setText("");
+            currentPage = 0;
+            loadNewUpdatesComics(currentPage);
+            dialog.dismiss();
+        });
+
+        dialog.show();
+    }
+
+    /**
+     * Cập nhật thanh phân trang: hiển thị các số trang, highlight trang hiện tại
+     */
+    private void updatePageNumbers(int currentPage, int totalPages) {
+        layoutPageNumbers.removeAllViews();
+
+        int maxVisible = 5; // Số trang tối đa hiển thị cùng lúc
+        int startPage = Math.max(0, currentPage - maxVisible / 2);
+        int endPage = Math.min(totalPages - 1, startPage + maxVisible - 1);
+
+        // Điều chỉnh lại start nếu end bị giới hạn
+        if (endPage - startPage < maxVisible - 1) {
+            startPage = Math.max(0, endPage - maxVisible + 1);
+        }
+
+        int dpSize = dpToPx(34);
+        int marginDp = dpToPx(2);
+
+        for (int i = startPage; i <= endPage; i++) {
+            final int pageIndex = i;
+            TextView tvPage = new TextView(this);
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(dpSize, dpSize);
+            params.setMargins(marginDp, 0, marginDp, 0);
+            tvPage.setLayoutParams(params);
+            tvPage.setText(String.valueOf(i + 1));
+            tvPage.setGravity(Gravity.CENTER);
+            tvPage.setTextSize(13);
+
+            if (i == currentPage) {
+                // Trang hiện tại - nền cam, chữ trắng
+                tvPage.setBackgroundResource(R.drawable.bg_page_btn);
+                tvPage.setBackgroundColor(Color.parseColor("#FF9800"));
+                tvPage.setTextColor(Color.WHITE);
+                tvPage.setTypeface(null, android.graphics.Typeface.BOLD);
+            } else {
+                // Trang khác - nền xám nhạt, chữ tối
+                tvPage.setBackgroundResource(R.drawable.bg_page_btn);
+                tvPage.setBackgroundColor(Color.parseColor("#EEEEEE"));
+                tvPage.setTextColor(Color.parseColor("#333333"));
+                tvPage.setOnClickListener(v -> {
+                    MainActivity.this.currentPage = pageIndex;
+                    if (activeFilterCategoryId != null) {
+                        loadComicsByCategory(activeFilterCategoryId);
+                    } else {
+                        loadNewUpdatesComics(pageIndex);
+                    }
+                });
+            }
+            layoutPageNumbers.addView(tvPage);
+        }
+
+        // Cập nhật trạng thái nút < và >
+        btnPrevPage.setEnabled(currentPage > 0);
+        btnNextPage.setEnabled(currentPage < totalPages - 1);
+        btnPrevPage.setAlpha(currentPage > 0 ? 1.0f : 0.4f);
+        btnNextPage.setAlpha(currentPage < totalPages - 1 ? 1.0f : 0.4f);
+    }
+
+    // ========== PHẦN 3: BẢNG XẾP HẠNG ==========
+
+    private void setupRankingSection() {
+        rankingAdapter = new RankingAdapter();
+        rvTopRank.setLayoutManager(new LinearLayoutManager(this));
+        rvTopRank.setAdapter(rankingAdapter);
+        rvTopRank.setNestedScrollingEnabled(false);
+
+        // Tab lọc ngày/tuần/tháng
         rgRankFilter.setOnCheckedChangeListener((group, checkedId) -> {
             if (checkedId == R.id.rbDay) {
                 loadRankingData("day");
@@ -115,20 +362,12 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    // --- CỤM HÀM THỰC THI GỌI MẠNG RETROFIT KẾT NỐI DATABASE ---
+    // ========== LOAD DỮ LIỆU TỪ API ==========
 
-    private void loadCategoriesFilterData() {
-        ApiClient.getApiService().getCategories().enqueue(new Callback<List<Category>>() {
-            @Override
-            public void onResponse(Call<List<Category>> call, Response<List<Category>> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    catFilterAdapter.setCategories(response.body());
-                }
-            }
-            @Override public void onFailure(Call<List<Category>> call, Throwable t) {
-                Log.e("YUH_TEST", "Lỗi tải danh mục: " + t.getMessage());
-            }
-        });
+    private void loadAllData() {
+        loadRecommendedComics();
+        loadNewUpdatesComics(currentPage);
+        loadRankingData("day");
     }
 
     private void loadRecommendedComics() {
@@ -136,10 +375,12 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call<List<Comic>> call, Response<List<Comic>> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    recommendedAdapter.setComics(response.body());
+                    bannerAdapter.setComics(response.body());
+                    buildDotIndicator(response.body().size());
                 }
             }
-            @Override public void onFailure(Call<List<Comic>> call, Throwable t) {
+            @Override
+            public void onFailure(Call<List<Comic>> call, Throwable t) {
                 Log.e("YUH_TEST", "Lỗi tải truyện đề cử: " + t.getMessage());
             }
         });
@@ -153,16 +394,18 @@ public class MainActivity extends AppCompatActivity {
                     List<Comic> comics = response.body();
                     newUpdatesAdapter.setComics(comics);
 
-                    // Cập nhật số hiệu trang lên TextView giao diện
-                    tvPageIndicator.setText("Trang " + (page + 1));
-
-                    // Khóa/Mở các nút chuyển trang tùy theo điều kiện biên dữ liệu
-                    btnPrevPage.setEnabled(page > 0);
-                    btnNextPage.setEnabled(comics.size() == 10); // Nếu trang hiện tại có đủ 10 truyện thì mới cho sang tiếp trang sau
+                    // Tính tổng trang (nếu trả về đủ PAGE_SIZE thì vẫn còn trang sau)
+                    if (comics.size() == PAGE_SIZE) {
+                        totalPages = Math.max(totalPages, page + 2);
+                    } else {
+                        totalPages = page + 1;
+                    }
+                    updatePageNumbers(page, totalPages);
                 }
             }
-            @Override public void onFailure(Call<List<Comic>> call, Throwable t) {
-                Log.e("YUH_TEST", "Lỗi tải truyện mới phân trang: " + t.getMessage());
+            @Override
+            public void onFailure(Call<List<Comic>> call, Throwable t) {
+                Log.e("YUH_TEST", "Lỗi tải truyện mới: " + t.getMessage());
             }
         });
     }
@@ -172,15 +415,17 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call<List<Comic>> call, Response<List<Comic>> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    newUpdatesAdapter.setComics(response.body());
-
-                    // Khi đang ở chế độ xem kết quả lọc danh mục, ta tạm ẩn phân trang số đi để tránh xung đột
-                    tvPageIndicator.setText("Kết quả lọc");
-                    btnPrevPage.setEnabled(false);
-                    btnNextPage.setEnabled(false);
+                    List<Comic> comics = response.body();
+                    newUpdatesAdapter.setComics(comics);
+                    // Phân trang đơn giản khi lọc
+                    totalPages = 1;
+                    updatePageNumbers(0, 1);
                 }
             }
-            @Override public void onFailure(Call<List<Comic>> call, Throwable t) {}
+            @Override
+            public void onFailure(Call<List<Comic>> call, Throwable t) {
+                Log.e("YUH_TEST", "Lỗi lọc thể loại: " + t.getMessage());
+            }
         });
     }
 
@@ -189,13 +434,52 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call<List<Comic>> call, Response<List<Comic>> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    // Đổ dữ liệu BXH Top 10 lấy thật từ DB ra ngoài màn hình
-                    rankAdapter.setComics(response.body());
+                    rankingAdapter.setComics(response.body());
                 }
             }
-            @Override public void onFailure(Call<List<Comic>> call, Throwable t) {
+            @Override
+            public void onFailure(Call<List<Comic>> call, Throwable t) {
                 Log.e("YUH_TEST", "Lỗi BXH: " + t.getMessage());
             }
         });
+    }
+
+    // ========== POPUP MENU HEADER ==========
+
+    private void showHeaderPopupMenu(View anchorView) {
+        androidx.appcompat.widget.PopupMenu popupMenu =
+                new androidx.appcompat.widget.PopupMenu(this, anchorView);
+        popupMenu.getMenuInflater().inflate(R.menu.menu_header_options, popupMenu.getMenu());
+        popupMenu.setOnMenuItemClickListener(item -> {
+            int id = item.getItemId();
+            if (id == R.id.menu_home) {
+                Toast.makeText(this, "Trang chủ", Toast.LENGTH_SHORT).show();
+                return true;
+            } else if (id == R.id.menu_history) {
+                startActivity(new Intent(this, HistoryActivity.class));
+                return true;
+            } else if (id == R.id.menu_favorites) {
+                Toast.makeText(this, "Truyện yêu thích", Toast.LENGTH_SHORT).show();
+                return true;
+            } else if (id == R.id.menu_downloads) {
+                Toast.makeText(this, "Truyện tải xuống", Toast.LENGTH_SHORT).show();
+                return true;
+            } else if (id == R.id.menu_profile) {
+                Toast.makeText(this, "Hồ sơ cá nhân", Toast.LENGTH_SHORT).show();
+                return true;
+            } else if (id == R.id.menu_logout) {
+                Toast.makeText(this, "Đăng xuất...", Toast.LENGTH_SHORT).show();
+                return true;
+            }
+            return false;
+        });
+        popupMenu.show();
+    }
+
+    // ========== TIỆN ÍCH ==========
+
+    private int dpToPx(int dp) {
+        float density = getResources().getDisplayMetrics().density;
+        return Math.round(dp * density);
     }
 }

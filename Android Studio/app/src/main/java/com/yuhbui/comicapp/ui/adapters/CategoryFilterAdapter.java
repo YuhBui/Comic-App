@@ -12,14 +12,18 @@ import com.yuhbui.comicapp.data.model.Category;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Adapter hiển thị danh sách thể loại trong popup bộ lọc
+ * Dùng cho dialog_category_filter (grid 3 cột) và hiển thị dạng chip
+ */
 public class CategoryFilterAdapter extends RecyclerView.Adapter<CategoryFilterAdapter.CatViewHolder> {
 
     private List<Category> categories = new ArrayList<>();
-    private int selectedPosition = -1; // Lưu vị trí đang được chọn để đổi màu nền công nghệ
-    private OnCatClickListener listener;
+    private int selectedPosition = -1;
+    private final OnCatClickListener listener;
 
     public interface OnCatClickListener {
-        void onCatClick(Category category);
+        void onCatClick(Category category); // null = xóa lọc
     }
 
     public CategoryFilterAdapter(OnCatClickListener listener) {
@@ -34,7 +38,9 @@ public class CategoryFilterAdapter extends RecyclerView.Adapter<CategoryFilterAd
     @NonNull
     @Override
     public CatViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View v = LayoutInflater.from(parent.getContext()).inflate(android.R.layout.simple_list_item_1, parent, false);
+        // Dùng simple_list_item_1 của Android làm base, style bằng code
+        View v = LayoutInflater.from(parent.getContext())
+                .inflate(android.R.layout.simple_list_item_1, parent, false);
         return new CatViewHolder(v);
     }
 
@@ -42,24 +48,28 @@ public class CategoryFilterAdapter extends RecyclerView.Adapter<CategoryFilterAd
     public void onBindViewHolder(@NonNull CatViewHolder holder, int position) {
         Category cat = categories.get(position);
         holder.tvName.setText(cat.getName());
-        holder.tvName.setPadding(24, 12, 24, 12);
-        holder.tvName.setTextSize(13);
 
-        // Lấy vị trí thực tế an toàn của Holder hiện tại để tránh lỗi đồng bộ luồng Lambda
+        // Style chip: padding, bo góc, căn giữa
+        holder.tvName.setPadding(16, 14, 16, 14);
+        holder.tvName.setTextSize(12f);
+        holder.tvName.setGravity(android.view.Gravity.CENTER);
+        holder.tvName.setMaxLines(2);
+
         final int currentPos = holder.getAdapterPosition();
 
-        // So sánh vị trí được chọn để đổi màu nền
+        // Màu sắc theo trạng thái chọn
         if (selectedPosition == currentPos) {
-            holder.tvName.setBackgroundColor(Color.parseColor("#FF9800"));
+            holder.tvName.setBackgroundResource(R.drawable.bg_category_chip_active);
             holder.tvName.setTextColor(Color.WHITE);
         } else {
-            holder.tvName.setBackgroundColor(Color.parseColor("#EEEEEE"));
-            holder.tvName.setTextColor(Color.BLACK);
+            holder.tvName.setBackgroundResource(R.drawable.bg_category_chip);
+            holder.tvName.setTextColor(Color.parseColor("#333333"));
         }
 
         holder.itemView.setOnClickListener(v -> {
             if (selectedPosition == currentPos) {
-                selectedPosition = -1; // Bấm lại lần nữa thì bỏ lọc
+                // Bấm lại lần nữa thì bỏ lọc
+                selectedPosition = -1;
                 listener.onCatClick(null);
             } else {
                 selectedPosition = currentPos;
@@ -70,7 +80,9 @@ public class CategoryFilterAdapter extends RecyclerView.Adapter<CategoryFilterAd
     }
 
     @Override
-    public int getItemCount() { return categories.size(); }
+    public int getItemCount() {
+        return categories.size();
+    }
 
     static class CatViewHolder extends RecyclerView.ViewHolder {
         TextView tvName;

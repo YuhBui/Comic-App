@@ -20,7 +20,7 @@ import com.yuhbui.comicapp.R;
 import com.yuhbui.comicapp.data.api.ApiClient;
 import com.yuhbui.comicapp.data.model.Chapter;
 import com.yuhbui.comicapp.data.model.Comic;
-import com.yuhbui.comicapp.data.model.ComicDetailResponse; // 👉 Import Model DTO mới nhận từ server
+import com.yuhbui.comicapp.data.model.ComicDetailResponse;
 import com.yuhbui.comicapp.data.model.Comment;
 import com.yuhbui.comicapp.ui.adapters.ChapterAdapter;
 import com.yuhbui.comicapp.ui.adapters.CommentAdapter;
@@ -43,9 +43,9 @@ public class ComicDetailActivity extends AppCompatActivity {
     private TextView tvViews, tvFavorites, tvRatingAverage, tvDescription;
     private RatingBar ratingBarUser;
     private Button btnStartReading;
-    private TextView btnToggleFavorite; // 👉 Thêm biến nút Yêu thích toàn cục
+    private TextView btnToggleFavorite;
 
-    private boolean isCurrentlyFavorite = false; // Lưu trạng thái yêu thích cục bộ
+    private boolean isCurrentlyFavorite = false;
 
     // Thành phần xử lý danh sách chương truyện (MVVM)
     private ComicDetailViewModel viewModel;
@@ -59,6 +59,11 @@ public class ComicDetailActivity extends AppCompatActivity {
     private CommentAdapter commentAdapter;
     private EditText edtCommentInput;
     private Button btnSendComment;
+
+    // --- KHAI BÁO CÁC THÀNH PHẦN CỦA HEADER DÙNG CHUNG ---
+    private View layoutHeader;
+    private ImageView headerMenu, headerSearch, headerNotification, headerAvatar;
+    private TextView headerLogo;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,12 +83,31 @@ public class ComicDetailActivity extends AppCompatActivity {
         tvDescription = findViewById(R.id.tvComicDescription);
         ratingBarUser = findViewById(R.id.ratingBarUser);
         btnStartReading = findViewById(R.id.btnStartReading);
-        btnToggleFavorite = findViewById(R.id.btnToggleFavorite); // 👉 Ánh xạ nút yêu thích từ XML
+        btnToggleFavorite = findViewById(R.id.btnToggleFavorite);
 
         recyclerView = findViewById(R.id.recyclerViewChapters);
         recyclerViewComments = findViewById(R.id.recyclerViewComments);
         edtCommentInput = findViewById(R.id.edtCommentInput);
         btnSendComment = findViewById(R.id.btnSendComment);
+
+        // --- ÁNH XẠ VÀ THIẾT LẬP HEADER CHUNG ---
+        layoutHeader = findViewById(R.id.layoutHeader);
+        headerMenu = layoutHeader.findViewById(R.id.headerMenu);
+        headerLogo = layoutHeader.findViewById(R.id.headerLogo);
+        headerSearch = layoutHeader.findViewById(R.id.headerSearch);
+        headerNotification = layoutHeader.findViewById(R.id.headerNotification);
+        headerAvatar = layoutHeader.findViewById(R.id.headerAvatar);
+
+        // Đăng ký sự kiện Click xử lý chức năng cho Header trên màn hình Chi tiết
+        headerMenu.setOnClickListener(v -> showHeaderPopupMenu(v));
+        headerLogo.setOnClickListener(v -> {
+            // Nhấn logo có thể quay về màn hình chính hoặc kết thúc Activity hiện tại
+            finish();
+        });
+        headerSearch.setOnClickListener(v -> Toast.makeText(this, "Mở màn hình tìm kiếm truyện", Toast.LENGTH_SHORT).show());
+        headerNotification.setOnClickListener(v -> Toast.makeText(this, "Mở thông báo", Toast.LENGTH_SHORT).show());
+        headerAvatar.setOnClickListener(v -> Toast.makeText(this, "Mở thông tin tài khoản người dùng", Toast.LENGTH_SHORT).show());
+
 
         // 2. Cài đặt cấu trúc hiển thị danh sách Chương truyện
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -135,7 +159,6 @@ public class ComicDetailActivity extends AppCompatActivity {
 
         // 6. Ra lệnh tải dữ liệu tổng thể từ máy chủ nếu mã ID hợp lệ
         if (currentComicId != -1) {
-            // 👉 SỬA HÀM GỌI CHI TIẾT: Truyền thêm cả UserId hiện tại (nếu có) để check trạng thái Thích thương thích
             loadComicFullDetails(currentComicId, currentUserId != -1 ? currentUserId : null);
             viewModel.loadChapters(currentComicId);
             loadComments(currentComicId);
@@ -153,7 +176,6 @@ public class ComicDetailActivity extends AppCompatActivity {
                     if (response.isSuccessful() && response.body() != null) {
                         isCurrentlyFavorite = response.body();
                         updateFavoriteButtonUI(isCurrentlyFavorite);
-                        // Tải lại chi tiết để số lượng đếm ❤️ cập nhật tự động chuẩn từ Database
                         loadComicFullDetails(currentComicId, currentUserId);
                     }
                 }
@@ -180,7 +202,6 @@ public class ComicDetailActivity extends AppCompatActivity {
         // 8. Bắt sự kiện bấm nút BẮT ĐẦU ĐỌC TRUYỆN
         btnStartReading.setOnClickListener(v -> {
             if (globalChapterList != null && !globalChapterList.isEmpty()) {
-                // Đổi thành index = 0 nếu danh sách của bạn hiển thị Chương 1 lên trước
                 Chapter firstChapter = globalChapterList.get(globalChapterList.size() - 1);
 
                 Intent intent = new Intent(ComicDetailActivity.this, ReaderActivity.class);
@@ -196,7 +217,6 @@ public class ComicDetailActivity extends AppCompatActivity {
         btnSendComment.setOnClickListener(v -> sendCommentToServer());
     }
 
-    // Hàm đổi giao diện nút Yêu thích
     private void updateFavoriteButtonUI(boolean isFav) {
         if (isFav) {
             btnToggleFavorite.setText("❤️ Đã yêu thích");
@@ -207,7 +227,6 @@ public class ComicDetailActivity extends AppCompatActivity {
         }
     }
 
-    // --- SỬA LẠI HOÀN TOÀN HÀM NÀY: Gọi API DTO để lấy thông tin thật kết nối bảng ---
     private void loadComicFullDetails(int comicId, Integer userId) {
         ApiClient.getApiService().getComicDetail(comicId, userId).enqueue(new Callback<ComicDetailResponse>() {
             @Override
@@ -216,28 +235,23 @@ public class ComicDetailActivity extends AppCompatActivity {
                     ComicDetailResponse data = response.body();
                     Comic comic = data.getComic();
 
-                    // Đổ dữ liệu text thật từ MySQL sang giao diện
                     tvTitle.setText(comic.getTitle());
                     tvAuthor.setText("Tác giả: " + (comic.getAuthor() != null ? comic.getAuthor() : "Đang cập nhật"));
                     tvStatus.setText("Tình trạng: " + (comic.getStatus() != null ? comic.getStatus() : "Đang tiến hành"));
                     tvViews.setText("👁️ " + comic.getViewCount());
                     tvDescription.setText(comic.getDescription());
 
-                    // LẤY DỮ LIỆU ĐÃ KẾT NỐI BẢNG THẬT TRÊN MYSQL
-                    tvGenre.setText("Thể loại: " + data.getGenres()); // Lấy chuỗi thể loại từ bảng Comic_Categories
-                    tvFavorites.setText("❤️ " + data.getFavoriteCount()); // Đếm tổng số dòng thật trong bảng Follows
-                    tvRatingAverage.setText("⭐ " + comic.getRating() + "/5"); // Điểm Rating FLOAT từ bảng Comics
+                    tvGenre.setText("Thể loại: " + data.getGenres());
+                    tvFavorites.setText("❤️ " + data.getFavoriteCount());
+                    tvRatingAverage.setText("⭐ " + comic.getRating() + "/5");
 
-                    // Ép định dạng năm phát hành từ CreatedAt của MySQL
                     tvRelease.setText("Phát hành: " + (comic.getCreatedAt() != null && comic.getCreatedAt().length() >= 4 ? comic.getCreatedAt().substring(0, 4) : "2026"));
 
-                    // Cập nhật trạng thái nút Trái tim yêu thích
                     isCurrentlyFavorite = data.isFavorite();
                     updateFavoriteButtonUI(isCurrentlyFavorite);
 
-                    // Load ảnh bìa truyện thật từ DB
                     Glide.with(ComicDetailActivity.this)
-                            .load(comic.getCoverImageUrl()) // Dùng CoverImageUrl đã đồng bộ
+                            .load(comic.getCoverImageUrl())
                             .placeholder(R.drawable.ic_launcher_background)
                             .into(imgComicCover);
                 }
@@ -325,5 +339,49 @@ public class ComicDetailActivity extends AppCompatActivity {
                 Toast.makeText(ComicDetailActivity.this, "Lỗi kết nối mạng!", Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    private void showHeaderPopupMenu(View anchorView) {
+        // Khởi tạo PopupMenu gắn vào nút Menu trên Header
+        androidx.appcompat.widget.PopupMenu popupMenu = new androidx.appcompat.widget.PopupMenu(this, anchorView);
+
+        // Nạp giao diện menu XML đã định nghĩa ở Bước 1 vào popup
+        popupMenu.getMenuInflater().inflate(R.menu.menu_header_options, popupMenu.getMenu());
+
+        // Cài đặt sự kiện lắng nghe khi người dùng chọn một mục trong menu
+        popupMenu.setOnMenuItemClickListener(item -> {
+            int id = item.getItemId();
+
+            if (id == R.id.menu_home) {
+                Toast.makeText(this, "Chuyển hướng sang Trang chủ", Toast.LENGTH_SHORT).show();
+                // TODO: Chuyển hướng sang MainActivity bằng Intent nếu đang ở màn hình khác
+                return true;
+            } else if (id == R.id.menu_history) {
+                Toast.makeText(this, "Mở Lịch sử đọc", Toast.LENGTH_SHORT).show();
+                // TODO: Thực hiện chức năng hoặc mở giao diện Lịch sử đọc
+                return true;
+            } else if (id == R.id.menu_favorites) {
+                Toast.makeText(this, "Mở Truyện yêu thích", Toast.LENGTH_SHORT).show();
+                // TODO: Thực hiện chức năng hoặc mở giao diện Truyện yêu thích
+                return true;
+            } else if (id == R.id.menu_downloads) {
+                Toast.makeText(this, "Mở Truyện tải xuống", Toast.LENGTH_SHORT).show();
+                // TODO: Thực hiện chức năng hoặc mở giao diện Truyện tải xuống
+                return true;
+            } else if (id == R.id.menu_profile) {
+                Toast.makeText(this, "Mở Hồ sơ cá nhân", Toast.LENGTH_SHORT).show();
+                // TODO: Thực hiện chức năng hoặc mở giao diện Profile
+                return true;
+            } else if (id == R.id.menu_logout) {
+                Toast.makeText(this, "Đang đăng xuất tài khoản...", Toast.LENGTH_SHORT).show();
+                // TODO: Xóa session/SharedPrefs và chuyển hướng về màn hình Đăng nhập (LoginActivity)
+                return true;
+            }
+
+            return false;
+        });
+
+        // Hiển thị menu lên màn hình
+        popupMenu.show();
     }
 }

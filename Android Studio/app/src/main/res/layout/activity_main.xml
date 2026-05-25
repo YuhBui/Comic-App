@@ -1,196 +1,312 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- activity_main.xml - Màn hình chính ứng dụng Comic
+     Gồm 3 phần chính:
+     1. Truyện Đề Cử: Slider banner lớn có nút trái/phải
+     2. Truyện Mới Cập Nhật: Grid 2 cột, 5 hàng + bộ lọc + phân trang
+     3. Bảng Xếp Hạng Top 10: Danh sách 1 cột 10 hàng -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F5F5F5"
-    android:fillViewport="false">
+    android:orientation="vertical"
+    android:background="#F0F0F0"
+    android:fitsSystemWindows="true">
 
-    <LinearLayout
+    <!-- Header cố định phía trên -->
+    <include
+        android:id="@+id/layoutHeader"
+        layout="@layout/layout_header"/>
+
+    <!-- Nội dung chính cuộn được -->
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:descendantFocusability="blocksDescendants">
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="false">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:background="#FFFFFF"
-            android:padding="12dp">
+            android:descendantFocusability="blocksDescendants">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="⭐ TRUYỆN ĐỀ CỬ HOT"
-                android:textStyle="bold"
-                android:textColor="#FF9800"
-                android:textSize="16sp"/>
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rvRecommendedComic"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:paddingBottom="4dp" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:background="#FFFFFF"
-            android:layout_marginTop="8dp"
-            android:padding="12dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="🔍 BỘ LỌC THỂ LOẠI"
-                android:textStyle="bold"
-                android:textColor="#000000"
-                android:textSize="14sp"/>
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rvCategoriesFilter"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"/>
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:background="#FFFFFF"
-            android:layout_marginTop="8dp"
-            android:padding="12dp">
-
+            <!-- =====================================================
+                 PHẦN 1: TRUYỆN ĐỀ CỬ - Banner Slider
+                 ===================================================== -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical">
+                android:orientation="vertical"
+                android:background="#FFFFFF"
+                android:paddingTop="12dp"
+                android:paddingBottom="12dp">
 
+                <!-- Tiêu đề section -->
                 <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="📊 BẢNG XẾP HẠNG TOP 10"
-                    android:textStyle="bold"
-                    android:textColor="#E91E63"
-                    android:textSize="15sp"/>
-
-                <RadioGroup
-                    android:id="@+id/rgRankFilter"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-                    <RadioButton
-                        android:id="@+id/rbDay"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Ngày"
-                        android:checked="true"
-                        android:button="@null"
-                        android:paddingLeft="10dp"
-                        android:paddingRight="10dp"
-                        android:paddingTop="6dp"
-                        android:paddingBottom="6dp"
-                        android:background="@android:drawable/btn_default"/>
-                    <RadioButton
-                        android:id="@+id/rbWeek"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Tuần"
-                        android:button="@null"
-                        android:paddingLeft="10dp"
-                        android:paddingRight="10dp"
-                        android:paddingTop="6dp"
-                        android:paddingBottom="6dp"
-                        android:background="@android:drawable/btn_default"/>
-                    <RadioButton
-                        android:id="@+id/rbMonth"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Tháng"
-                        android:button="@null"
-                        android:paddingLeft="10dp"
-                        android:paddingRight="10dp"
-                        android:paddingTop="6dp"
-                        android:paddingBottom="6dp"
-                        android:background="@android:drawable/btn_default"/>
-                </RadioGroup>
+                    android:text="⭐  TRUYỆN ĐỀ CỬ"
+                    android:textStyle="bold"
+                    android:textColor="#FF9800"
+                    android:textSize="15sp"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp"
+                    android:paddingBottom="8dp"/>
+
+                <!-- Container slider: nút trái | ViewPager | nút phải -->
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="240dp">
+
+                    <!-- ViewPager2 cho banner slider -->
+                    <androidx.viewpager2.widget.ViewPager2
+                        android:id="@+id/vpRecommended"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_marginStart="14dp"
+                        android:layout_marginEnd="14dp"/>
+
+                    <!-- Nút chuyển truyện trước (bên trái) -->
+                    <ImageButton
+                        android:id="@+id/btnSliderPrev"
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:layout_alignParentStart="true"
+                        android:layout_centerVertical="true"
+                        android:layout_marginStart="18dp"
+                        android:src="@drawable/ic_chevron_left"
+                        android:background="@drawable/bg_slider_btn"
+                        android:tint="#FFFFFF"
+                        android:scaleType="centerInside"
+                        android:contentDescription="Truyện trước"/>
+
+                    <!-- Nút chuyển truyện sau (bên phải) -->
+                    <ImageButton
+                        android:id="@+id/btnSliderNext"
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        android:layout_marginEnd="18dp"
+                        android:src="@drawable/ic_chevron_right"
+                        android:background="@drawable/bg_slider_btn"
+                        android:tint="#FFFFFF"
+                        android:scaleType="centerInside"
+                        android:contentDescription="Truyện sau"/>
+                </RelativeLayout>
+
+                <!-- Dot indicator bên dưới slider -->
+                <LinearLayout
+                    android:id="@+id/layoutDotIndicator"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="10dp"
+                    android:gravity="center"/>
             </LinearLayout>
 
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rvTopRank"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:nestedScrollingEnabled="false"/>
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:background="#FFFFFF"
-            android:layout_marginTop="8dp"
-            android:padding="12dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="🆕 TRUYỆN MỚI CẬP NHẬT"
-                android:textStyle="bold"
-                android:textColor="#2196F3"
-                android:textSize="16sp"/>
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/recyclerViewComics"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:nestedScrollingEnabled="false"/>
-
+            <!-- =====================================================
+                 PHẦN 2: TRUYỆN MỚI CẬP NHẬT - Grid 2 cột
+                 ===================================================== -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center"
-                android:layout_marginTop="16dp"
-                android:layout_marginBottom="8dp">
+                android:orientation="vertical"
+                android:background="#FFFFFF"
+                android:layout_marginTop="8dp"
+                android:paddingTop="12dp"
+                android:paddingBottom="12dp"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp">
 
-                <Button
-                    android:id="@+id/btnPrevPage"
-                    android:layout_width="50dp"
-                    android:layout_height="40dp"
-                    android:text="&lt;"
-                    android:backgroundTint="#444444"
-                    android:textColor="#FFFFFF"
-                    android:textStyle="bold"/>
+                <!-- Hàng tiêu đề: "Truyện Mới Cập Nhật" + icon lọc -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="10dp">
 
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="🆕  TRUYỆN MỚI CẬP NHẬT"
+                        android:textStyle="bold"
+                        android:textColor="#2196F3"
+                        android:textSize="15sp"/>
+
+                    <!-- Icon lọc thể loại - nhấn để hiện popup bộ lọc -->
+                    <ImageView
+                        android:id="@+id/btnFilterIcon"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:src="@drawable/ic_filter"
+                        android:scaleType="centerInside"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="Bộ lọc thể loại"
+                        android:padding="2dp"/>
+                </LinearLayout>
+
+                <!-- Tên thể loại đang lọc (hiện khi đang lọc) -->
                 <TextView
-                    android:id="@+id/tvPageIndicator"
+                    android:id="@+id/tvActiveFilter"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Trang 1"
-                    android:layout_marginStart="24dp"
-                    android:layout_marginEnd="24dp"
-                    android:textStyle="bold"
-                    android:textColor="#000000"
-                    android:textSize="14sp"/>
+                    android:text=""
+                    android:textColor="#FF9800"
+                    android:textSize="12sp"
+                    android:textStyle="italic"
+                    android:layout_marginBottom="6dp"
+                    android:visibility="gone"/>
 
-                <Button
-                    android:id="@+id/btnNextPage"
-                    android:layout_width="50dp"
-                    android:layout_height="40dp"
-                    android:text="&gt;"
-                    android:backgroundTint="#444444"
-                    android:textColor="#FFFFFF"
-                    android:textStyle="bold"/>
+                <!-- Grid 2 cột danh sách truyện mới -->
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recyclerViewComics"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:nestedScrollingEnabled="false"/>
+
+                <!-- =========================================
+                     Phân trang: < | 1 2 3 ... N | >
+                     ========================================= -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginBottom="8dp">
+
+                    <!-- Nút trang trước -->
+                    <Button
+                        android:id="@+id/btnPrevPage"
+                        android:layout_width="40dp"
+                        android:layout_height="36dp"
+                        android:text="&lt;"
+                        android:textColor="#FFFFFF"
+                        android:textStyle="bold"
+                        android:textSize="14sp"
+                        android:background="@drawable/bg_nav_btn"
+                        android:padding="0dp"/>
+
+                    <!-- Danh sách số trang (động) -->
+                    <LinearLayout
+                        android:id="@+id/layoutPageNumbers"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginStart="6dp"
+                        android:layout_marginEnd="6dp"
+                        android:gravity="center_vertical"/>
+
+                    <!-- Nút trang sau -->
+                    <Button
+                        android:id="@+id/btnNextPage"
+                        android:layout_width="40dp"
+                        android:layout_height="36dp"
+                        android:text="&gt;"
+                        android:textColor="#FFFFFF"
+                        android:textStyle="bold"
+                        android:textSize="14sp"
+                        android:background="@drawable/bg_nav_btn"
+                        android:padding="0dp"/>
+                </LinearLayout>
             </LinearLayout>
-        </LinearLayout>
 
-    </LinearLayout>
-</androidx.core.widget.NestedScrollView>
+            <!-- =====================================================
+                 PHẦN 3: BẢNG XẾP HẠNG TOP 10
+                 ===================================================== -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="#FFFFFF"
+                android:layout_marginTop="8dp"
+                android:paddingTop="12dp"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:paddingBottom="16dp">
+
+                <!-- Hàng tiêu đề + tab lọc Ngày/Tuần/Tháng -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="12dp">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="📊  BẢNG XẾP HẠNG TOP 10"
+                        android:textStyle="bold"
+                        android:textColor="#E91E63"
+                        android:textSize="15sp"/>
+
+                    <!-- Tab bộ lọc thời gian BXH -->
+                    <RadioGroup
+                        android:id="@+id/rgRankFilter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <RadioButton
+                            android:id="@+id/rbDay"
+                            android:layout_width="wrap_content"
+                            android:layout_height="30dp"
+                            android:text="Ngày"
+                            android:checked="true"
+                            android:button="@null"
+                            android:gravity="center"
+                            android:paddingStart="10dp"
+                            android:paddingEnd="10dp"
+                            android:textSize="12sp"
+                            android:textColor="@drawable/radio_text_color"
+                            android:background="@drawable/radio_tab_bg"/>
+
+                        <RadioButton
+                            android:id="@+id/rbWeek"
+                            android:layout_width="wrap_content"
+                            android:layout_height="30dp"
+                            android:text="Tuần"
+                            android:button="@null"
+                            android:gravity="center"
+                            android:paddingStart="10dp"
+                            android:paddingEnd="10dp"
+                            android:textSize="12sp"
+                            android:textColor="@drawable/radio_text_color"
+                            android:background="@drawable/radio_tab_bg"
+                            android:layout_marginStart="4dp"/>
+
+                        <RadioButton
+                            android:id="@+id/rbMonth"
+                            android:layout_width="wrap_content"
+                            android:layout_height="30dp"
+                            android:text="Tháng"
+                            android:button="@null"
+                            android:gravity="center"
+                            android:paddingStart="10dp"
+                            android:paddingEnd="10dp"
+                            android:textSize="12sp"
+                            android:textColor="@drawable/radio_text_color"
+                            android:background="@drawable/radio_tab_bg"
+                            android:layout_marginStart="4dp"/>
+                    </RadioGroup>
+                </LinearLayout>
+
+                <!-- RecyclerView danh sách top 10 -->
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvTopRank"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:nestedScrollingEnabled="false"/>
+            </LinearLayout>
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+</LinearLayout>

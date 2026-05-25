@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/menu_home"
+        android:title="Trang chủ" />
+    <item
+        android:id="@+id/menu_history"
+        android:title="Lịch sử đọc" />
+    <item
+        android:id="@+id/menu_favorites"
+        android:title="Truyện yêu thích" />
+    <item
+        android:id="@+id/menu_downloads"
+        android:title="Truyện tải xuống" />
+    <item
+        android:id="@+id/menu_profile"
+        android:title="Hồ sơ cá nhân" />
+    <item
+        android:id="@+id/menu_logout"
+        android:title="Đăng xuất" />
+</menu>

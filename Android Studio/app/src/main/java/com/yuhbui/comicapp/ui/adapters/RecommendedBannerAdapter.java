@@ -16,11 +16,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * ComicAdapter - Adapter đa năng cho danh sách truyện
- * Dùng layout item_comic_full_default: ảnh bìa + stats overlay + tiêu đề + chương + thời gian
- * Sử dụng cho phần Truyện Mới Cập Nhật (GridLayout 2 cột)
+ * Adapter dùng cho ViewPager2 hiển thị banner truyện đề cử
+ * Mỗi item là 1 ảnh lớn với thông tin truyện chồng phía dưới (gradient overlay)
  */
-public class ComicAdapter extends RecyclerView.Adapter<ComicAdapter.ComicViewHolder> {
+public class RecommendedBannerAdapter extends RecyclerView.Adapter<RecommendedBannerAdapter.BannerViewHolder> {
 
     private List<Comic> comicList = new ArrayList<>();
 
@@ -29,39 +28,44 @@ public class ComicAdapter extends RecyclerView.Adapter<ComicAdapter.ComicViewHol
         notifyDataSetChanged();
     }
 
+    public List<Comic> getComics() {
+        return comicList;
+    }
+
     @NonNull
     @Override
-    public ComicViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        // Dùng layout item_comic_full_default: grid 2 cột với ảnh + stats overlay
+    public BannerViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_comic_full_default, parent, false);
-        return new ComicViewHolder(view);
+                .inflate(R.layout.item_banner_recommended, parent, false);
+        return new BannerViewHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull ComicViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull BannerViewHolder holder, int position) {
         Comic comic = comicList.get(position);
 
-        // 1. Tiêu đề truyện
+        // Tiêu đề
         holder.tvTitle.setText(comic.getTitle());
 
-        // 2. Chương mới nhất và thời gian cập nhật
-        holder.tvLatestChapter.setText("Chương " + (comic.getLatestChapterNumber() != null ? comic.getLatestChapterNumber() : "0"));
-        holder.tvTimeUpdate.setText(comic.getTimeUpdated() != null ? comic.getTimeUpdated() : "Vừa xong");
+        // Chương mới nhất
+        String chapter = comic.getLatestChapterNumber() != null
+                ? "Chương " + comic.getLatestChapterNumber()
+                : "Chương -";
+        holder.tvChapter.setText(chapter);
 
-        // 3. Thống kê tương tác
+        // Thống kê tương tác
         holder.tvViews.setText("👁 " + formatNumber(comic.getViewCount()));
         holder.tvLikes.setText("❤ " + formatNumber(comic.getFollowCount()));
         holder.tvComments.setText("💬 " + formatNumber(comic.getCommentCount()));
 
-        // 4. Tải ảnh bìa với Glide
+        // Tải ảnh bìa
         Glide.with(holder.itemView.getContext())
                 .load(comic.getCoverImageUrl())
                 .placeholder(R.drawable.ic_launcher_background)
                 .centerCrop()
                 .into(holder.imgCover);
 
-        // 5. Sự kiện click chuyển sang màn hình chi tiết
+        // Click chuyển sang chi tiết
         holder.itemView.setOnClickListener(v -> {
             Intent intent = new Intent(holder.itemView.getContext(), ComicDetailActivity.class);
             intent.putExtra("COMIC_ID", comic.getComicId());
@@ -74,27 +78,24 @@ public class ComicAdapter extends RecyclerView.Adapter<ComicAdapter.ComicViewHol
         return comicList != null ? comicList.size() : 0;
     }
 
-    // Rút gọn số hiển thị: 1200 → 1.2K, 1500000 → 1.5M
     private String formatNumber(long number) {
         if (number >= 1000000) return String.format("%.1fM", number / 1000000.0);
         if (number >= 1000) return String.format("%.1fK", number / 1000.0);
         return String.valueOf(number);
     }
 
-    static class ComicViewHolder extends RecyclerView.ViewHolder {
+    static class BannerViewHolder extends RecyclerView.ViewHolder {
         ImageView imgCover;
-        TextView tvTitle, tvLatestChapter, tvTimeUpdate;
-        TextView tvViews, tvLikes, tvComments;
+        TextView tvTitle, tvChapter, tvViews, tvLikes, tvComments;
 
-        public ComicViewHolder(@NonNull View itemView) {
+        public BannerViewHolder(@NonNull View itemView) {
             super(itemView);
-            imgCover        = itemView.findViewById(R.id.imgItemCover);
-            tvTitle         = itemView.findViewById(R.id.tvItemTitle);
-            tvLatestChapter = itemView.findViewById(R.id.tvItemLatestChapter);
-            tvTimeUpdate    = itemView.findViewById(R.id.tvItemTimeUpdate);
-            tvViews         = itemView.findViewById(R.id.tvItemViews);
-            tvLikes         = itemView.findViewById(R.id.tvItemLikes);
-            tvComments      = itemView.findViewById(R.id.tvItemComments);
+            imgCover    = itemView.findViewById(R.id.imgBannerCover);
+            tvTitle     = itemView.findViewById(R.id.tvBannerTitle);
+            tvChapter   = itemView.findViewById(R.id.tvBannerChapter);
+            tvViews     = itemView.findViewById(R.id.tvBannerViews);
+            tvLikes     = itemView.findViewById(R.id.tvBannerLikes);
+            tvComments  = itemView.findViewById(R.id.tvBannerComments);
         }
     }
 }

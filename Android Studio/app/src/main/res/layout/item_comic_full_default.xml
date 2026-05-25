@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Layout item truyện mới cập nhật dùng cho grid 2 cột -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="6dp"
+    android:background="?android:attr/selectableItemBackground">
+
+    <!-- Khung ảnh bìa với stats chồng dưới cùng -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="210dp">
+
+        <!-- Ảnh bìa truyện -->
+        <ImageView
+            android:id="@+id/imgItemCover"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:background="#DDDDDD"/>
+
+        <!-- Stats overlay ở dưới cùng ảnh: View, Like, Comment -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="30dp"
+            android:layout_gravity="bottom"
+            android:background="#BB000000"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp">
+
+            <TextView
+                android:id="@+id/tvItemViews"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="👁 0"
+                android:textColor="#FFFFFF"
+                android:textSize="10sp"
+                android:gravity="center"/>
+
+            <View
+                android:layout_width="1dp"
+                android:layout_height="14dp"
+                android:background="#55FFFFFF"/>
+
+            <TextView
+                android:id="@+id/tvItemLikes"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="❤ 0"
+                android:textColor="#FFFFFF"
+                android:textSize="10sp"
+                android:gravity="center"/>
+
+            <View
+                android:layout_width="1dp"
+                android:layout_height="14dp"
+                android:background="#55FFFFFF"/>
+
+            <TextView
+                android:id="@+id/tvItemComments"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="💬 0"
+                android:textColor="#FFFFFF"
+                android:textSize="10sp"
+                android:gravity="center"/>
+        </LinearLayout>
+    </FrameLayout>
+
+    <!-- Tiêu đề truyện bên dưới ảnh -->
+    <TextView
+        android:id="@+id/tvItemTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:text="Tên Truyện"
+        android:textStyle="bold"
+        android:textColor="#111111"
+        android:textSize="13sp"
+        android:maxLines="2"
+        android:ellipsize="end"
+        android:lineSpacingExtra="2dp"/>
+
+    <!-- Hàng dưới: Chương mới (trái) và Thời gian (phải) -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="4dp"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/tvItemLatestChapter"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Chương 0"
+            android:textColor="#FF9800"
+            android:textStyle="bold"
+            android:textSize="11sp"/>
+
+        <TextView
+            android:id="@+id/tvItemTimeUpdate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0 phút trước"
+            android:textColor="#888888"
+            android:textSize="10sp"/>
+    </LinearLayout>
+</LinearLayout>

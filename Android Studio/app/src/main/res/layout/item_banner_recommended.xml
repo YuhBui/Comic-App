@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Layout item banner slider cho phần Truyện Đề Cử
+     Ảnh lớn chiếm toàn bộ, thông tin nằm phía dưới trong gradient -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- Ảnh bìa toàn màn hình -->
+    <ImageView
+        android:id="@+id/imgBannerCover"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:background="#2C2C2C"/>
+
+    <!-- Gradient overlay phía dưới -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="180dp"
+        android:layout_gravity="bottom"
+        android:background="@drawable/gradient_bottom"/>
+
+    <!-- Thông tin truyện nằm chồng phía dưới ảnh -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:orientation="vertical"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="16dp">
+
+        <!-- Tiêu đề truyện -->
+        <TextView
+            android:id="@+id/tvBannerTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Tên Truyện Tranh"
+            android:textColor="#FFFFFF"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:maxLines="2"
+            android:ellipsize="end"
+            android:shadowColor="#000000"
+            android:shadowRadius="4"
+            android:shadowDx="1"
+            android:shadowDy="1"/>
+
+        <!-- Hàng thông tin: Chương mới + View + Like + Comment -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp"
+            android:gravity="center_vertical">
+
+            <!-- Chương mới nhất - bên trái -->
+            <TextView
+                android:id="@+id/tvBannerChapter"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Chương 100"
+                android:textColor="#FF9800"
+                android:textStyle="bold"
+                android:textSize="13sp"/>
+
+            <!-- Lượt xem -->
+            <TextView
+                android:id="@+id/tvBannerViews"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="👁 1.2M"
+                android:textColor="#EEEEEE"
+                android:textSize="12sp"
+                android:layout_marginEnd="10dp"/>
+
+            <!-- Yêu thích -->
+            <TextView
+                android:id="@+id/tvBannerLikes"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="❤ 45K"
+                android:textColor="#EEEEEE"
+                android:textSize="12sp"
+                android:layout_marginEnd="10dp"/>
+
+            <!-- Bình luận -->
+            <TextView
+                android:id="@+id/tvBannerComments"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="💬 8K"
+                android:textColor="#EEEEEE"
+                android:textSize="12sp"/>
+        </LinearLayout>
+    </LinearLayout>
+</FrameLayout>

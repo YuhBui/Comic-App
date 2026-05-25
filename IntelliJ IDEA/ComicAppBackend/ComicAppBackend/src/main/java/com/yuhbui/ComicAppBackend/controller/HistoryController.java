@@ -1,10 +1,12 @@
 package com.yuhbui.ComicAppBackend.controller;
 
+import com.yuhbui.ComicAppBackend.entity.Comic;
 import com.yuhbui.ComicAppBackend.entity.ReadingHistory;
 import com.yuhbui.ComicAppBackend.repository.ReadingHistoryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -39,5 +41,11 @@ public class HistoryController {
 
             return historyRepository.save(request);
         }
+    }
+
+    @GetMapping("/user/{userId}")
+    public List<Comic> getReadingHistory(@PathVariable("userId") Integer userId) {
+        // Trả về danh sách truyện người dùng này đã đọc từ Database thông qua Custom Query
+        return historyRepository.findReadComicsByUserId(userId);
     }
 }

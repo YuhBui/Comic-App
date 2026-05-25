@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Layout item bảng xếp hạng Top 10
+     Bố cục: số thứ tự | ảnh | thông tin (tiêu đề, chương, stats) -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="8dp"
+    android:gravity="center_vertical"
+    android:background="?android:attr/selectableItemBackground">
+
+    <!-- Số thứ hạng -->
+    <TextView
+        android:id="@+id/tvRankNumber"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:gravity="center"
+        android:text="1"
+        android:textStyle="bold"
+        android:textSize="15sp"
+        android:textColor="#FFFFFF"
+        android:background="@drawable/bg_rank_badge"/>
+
+    <!-- Ảnh bìa nhỏ -->
+    <ImageView
+        android:id="@+id/imgRankCover"
+        android:layout_width="60dp"
+        android:layout_height="80dp"
+        android:layout_marginStart="10dp"
+        android:scaleType="centerCrop"
+        android:background="#DDDDDD"/>
+
+    <!-- Thông tin bên phải ảnh -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:layout_marginStart="10dp"
+        android:gravity="center_vertical">
+
+        <!-- Tiêu đề truyện -->
+        <TextView
+            android:id="@+id/tvRankTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Tiêu đề truyện"
+            android:textStyle="bold"
+            android:textColor="#111111"
+            android:textSize="14sp"
+            android:maxLines="2"
+            android:ellipsize="end"/>
+
+        <!-- Chương mới nhất -->
+        <TextView
+            android:id="@+id/tvRankLatestChapter"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Chương 0"
+            android:textColor="#FF9800"
+            android:textStyle="bold"
+            android:textSize="12sp"/>
+
+        <!-- Hàng stats: View, Like, Comment -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="6dp"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/tvRankViews"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="👁 0"
+                android:textColor="#666666"
+                android:textSize="11sp"/>
+
+            <TextView
+                android:id="@+id/tvRankLikes"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:text="❤ 0"
+                android:textColor="#666666"
+                android:textSize="11sp"/>
+
+            <TextView
+                android:id="@+id/tvRankComments"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:text="💬 0"
+                android:textColor="#666666"
+                android:textSize="11sp"/>
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

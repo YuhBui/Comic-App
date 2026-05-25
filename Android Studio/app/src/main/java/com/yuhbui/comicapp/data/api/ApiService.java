@@ -114,4 +114,7 @@ public interface ApiService {
     // API lấy bảng xếp hạng top 10
     @GET("/api/comics/home/ranking")
     Call<List<Comic>> getTopRanking(@Query("type") String type);
+
+    @GET("/api/history/user/{userId}")
+    Call<List<Comic>> getReadingHistoryByUserId(@Path("userId") int userId);
 }

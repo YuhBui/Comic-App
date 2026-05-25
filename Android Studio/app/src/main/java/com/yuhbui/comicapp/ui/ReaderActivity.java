@@ -7,7 +7,9 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -47,10 +49,30 @@ public class ReaderActivity extends AppCompatActivity {
     private int currentComicId = -1;
     private Integer targetParentCommentId = null; // Quản lý reply lồng nhau
 
+    // --- KHAI BÁO CÁC THÀNH PHẦN CỦA HEADER DÙNG CHUNG ---
+    private View layoutHeader;
+    private ImageView headerMenu, headerSearch, headerNotification, headerAvatar;
+    private TextView headerLogo;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_reader);
+
+        // 0. ÁNH XẠ CỤM HEADER CHUNG VÀ ĐĂNG KÝ SỰ KIỆN CLICK
+        layoutHeader = findViewById(R.id.layoutHeaderReader);
+        headerMenu = layoutHeader.findViewById(R.id.headerMenu);
+        headerLogo = layoutHeader.findViewById(R.id.headerLogo);
+        headerSearch = layoutHeader.findViewById(R.id.headerSearch);
+        headerNotification = layoutHeader.findViewById(R.id.headerNotification);
+        headerAvatar = layoutHeader.findViewById(R.id.headerAvatar);
+
+        headerMenu.setOnClickListener(v -> showHeaderPopupMenu(v));
+        headerLogo.setOnClickListener(v -> Toast.makeText(this, "[Reader] Quay lại trang chính", Toast.LENGTH_SHORT).show());
+        headerSearch.setOnClickListener(v -> Toast.makeText(this, "[Reader] Mở tìm kiếm", Toast.LENGTH_SHORT).show());
+        headerNotification.setOnClickListener(v -> Toast.makeText(this, "[Reader] Mở thông báo", Toast.LENGTH_SHORT).show());
+        headerAvatar.setOnClickListener(v -> Toast.makeText(this, "[Reader] Mở hồ sơ cá nhân", Toast.LENGTH_SHORT).show());
+
 
         // 1. Ánh xạ phần đọc ảnh truyện
         recyclerViewImages = findViewById(R.id.recyclerViewImages);
@@ -304,5 +326,49 @@ public class ReaderActivity extends AppCompatActivity {
             @Override public void onResponse(Call<com.yuhbui.comicapp.data.model.ReadingHistory> call, Response<com.yuhbui.comicapp.data.model.ReadingHistory> response) {}
             @Override public void onFailure(Call<com.yuhbui.comicapp.data.model.ReadingHistory> call, Throwable t) {}
         });
+    }
+
+    private void showHeaderPopupMenu(View anchorView) {
+        // Khởi tạo PopupMenu gắn vào nút Menu trên Header
+        androidx.appcompat.widget.PopupMenu popupMenu = new androidx.appcompat.widget.PopupMenu(this, anchorView);
+
+        // Nạp giao diện menu XML đã định nghĩa ở Bước 1 vào popup
+        popupMenu.getMenuInflater().inflate(R.menu.menu_header_options, popupMenu.getMenu());
+
+        // Cài đặt sự kiện lắng nghe khi người dùng chọn một mục trong menu
+        popupMenu.setOnMenuItemClickListener(item -> {
+            int id = item.getItemId();
+
+            if (id == R.id.menu_home) {
+                Toast.makeText(this, "Chuyển hướng sang Trang chủ", Toast.LENGTH_SHORT).show();
+                // TODO: Chuyển hướng sang MainActivity bằng Intent nếu đang ở màn hình khác
+                return true;
+            } else if (id == R.id.menu_history) {
+                Toast.makeText(this, "Mở Lịch sử đọc", Toast.LENGTH_SHORT).show();
+                // TODO: Thực hiện chức năng hoặc mở giao diện Lịch sử đọc
+                return true;
+            } else if (id == R.id.menu_favorites) {
+                Toast.makeText(this, "Mở Truyện yêu thích", Toast.LENGTH_SHORT).show();
+                // TODO: Thực hiện chức năng hoặc mở giao diện Truyện yêu thích
+                return true;
+            } else if (id == R.id.menu_downloads) {
+                Toast.makeText(this, "Mở Truyện tải xuống", Toast.LENGTH_SHORT).show();
+                // TODO: Thực hiện chức năng hoặc mở giao diện Truyện tải xuống
+                return true;
+            } else if (id == R.id.menu_profile) {
+                Toast.makeText(this, "Mở Hồ sơ cá nhân", Toast.LENGTH_SHORT).show();
+                // TODO: Thực hiện chức năng hoặc mở giao diện Profile
+                return true;
+            } else if (id == R.id.menu_logout) {
+                Toast.makeText(this, "Đang đăng xuất tài khoản...", Toast.LENGTH_SHORT).show();
+                // TODO: Xóa session/SharedPrefs và chuyển hướng về màn hình Đăng nhập (LoginActivity)
+                return true;
+            }
+
+            return false;
+        });
+
+        // Hiển thị menu lên màn hình
+        popupMenu.show();
     }
 }
