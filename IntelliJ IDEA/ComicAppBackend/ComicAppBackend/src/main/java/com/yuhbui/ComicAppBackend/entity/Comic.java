@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "Comics")
-@Data // Lombok tự động tạo Getter, Setter, Constructor
+@Data
 public class Comic {
 
     @Id

@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- activity_favorites.xml - Màn hình Truyện Yêu Thích
+     Giao diện tương tự Lịch sử đọc: grid 2 cột 5 hàng + phân trang -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#F0F0F0"
+    android:fitsSystemWindows="true">
+
+    <!-- Header chung -->
+    <include
+        android:id="@+id/layoutHeaderFavorites"
+        layout="@layout/layout_header"/>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="#FFFFFF"
+            android:paddingBottom="16dp">
+
+            <!-- Tiêu đề section -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="❤️  TRUYỆN YÊU THÍCH"
+                    android:textStyle="bold"
+                    android:textColor="#E91E63"
+                    android:textSize="16sp"/>
+
+                <!-- Số lượng truyện yêu thích -->
+                <TextView
+                    android:id="@+id/tvFavoritesCount"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0 truyện"
+                    android:textColor="#888888"
+                    android:textSize="13sp"/>
+            </LinearLayout>
+
+            <!-- Thông báo khi chưa có truyện yêu thích -->
+            <LinearLayout
+                android:id="@+id/layoutEmptyFavorites"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="💔"
+                    android:textSize="48sp"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="Bạn chưa yêu thích bộ truyện nào!"
+                    android:textColor="#888888"
+                    android:textSize="14sp"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:text="Hãy nhấn ❤ trên trang chi tiết để thêm vào đây"
+                    android:textColor="#AAAAAA"
+                    android:textSize="12sp"/>
+            </LinearLayout>
+
+            <!-- Grid 2 cột danh sách truyện yêu thích -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerViewFavorites"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:nestedScrollingEnabled="false"/>
+
+            <!-- Phân trang: < | 1 2 3 ... N | > -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:layout_marginTop="20dp"
+                android:layout_marginBottom="8dp">
+
+                <Button
+                    android:id="@+id/btnPrevPageFavorites"
+                    android:layout_width="40dp"
+                    android:layout_height="36dp"
+                    android:text="&lt;"
+                    android:textColor="#FFFFFF"
+                    android:textStyle="bold"
+                    android:textSize="14sp"
+                    android:background="@drawable/bg_nav_btn"
+                    android:padding="0dp"/>
+
+                <LinearLayout
+                    android:id="@+id/layoutPageNumbersFavorites"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginStart="6dp"
+                    android:layout_marginEnd="6dp"
+                    android:gravity="center_vertical"/>
+
+                <Button
+                    android:id="@+id/btnNextPageFavorites"
+                    android:layout_width="40dp"
+                    android:layout_height="36dp"
+                    android:text="&gt;"
+                    android:textColor="#FFFFFF"
+                    android:textStyle="bold"
+                    android:textSize="14sp"
+                    android:background="@drawable/bg_nav_btn"
+                    android:padding="0dp"/>
+            </LinearLayout>
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+</LinearLayout>

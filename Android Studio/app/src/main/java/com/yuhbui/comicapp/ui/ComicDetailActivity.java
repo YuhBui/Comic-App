@@ -153,6 +153,7 @@ public class ComicDetailActivity extends AppCompatActivity {
                 if (chapters != null) {
                     globalChapterList = chapters;
                     adapter.setChapters(chapters);
+                    adapter.notifyDataSetChanged();
                 }
             }
         });
@@ -242,10 +243,14 @@ public class ComicDetailActivity extends AppCompatActivity {
                     tvDescription.setText(comic.getDescription());
 
                     tvGenre.setText("Thể loại: " + data.getGenres());
-                    tvFavorites.setText("❤️ " + data.getFavoriteCount());
+                    tvFavorites.setText("❤️ " + String.valueOf(data.getFavoriteCount()));
                     tvRatingAverage.setText("⭐ " + comic.getRating() + "/5");
 
-                    tvRelease.setText("Phát hành: " + (comic.getCreatedAt() != null && comic.getCreatedAt().length() >= 4 ? comic.getCreatedAt().substring(0, 4) : "2026"));
+                    if (comic.getCreatedAt() != null && comic.getCreatedAt().length() >= 4) {
+                        tvRelease.setText("Phát hành: " + comic.getCreatedAt().substring(0, 4));
+                    } else {
+                        tvRelease.setText("Phát hành: Đang cập nhật");
+                    }
 
                     isCurrentlyFavorite = data.isFavorite();
                     updateFavoriteButtonUI(isCurrentlyFavorite);
@@ -288,6 +293,7 @@ public class ComicDetailActivity extends AppCompatActivity {
             public void onResponse(Call<List<Comment>> call, Response<List<Comment>> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     commentAdapter.setComments(response.body());
+                    commentAdapter.notifyDataSetChanged(); // FIX: Thêm làm mới adapter bình luận để RecyclerView cập nhật và hiển thị nội dung
                 }
             }
 
@@ -354,27 +360,21 @@ public class ComicDetailActivity extends AppCompatActivity {
 
             if (id == R.id.menu_home) {
                 Toast.makeText(this, "Chuyển hướng sang Trang chủ", Toast.LENGTH_SHORT).show();
-                // TODO: Chuyển hướng sang MainActivity bằng Intent nếu đang ở màn hình khác
                 return true;
             } else if (id == R.id.menu_history) {
                 Toast.makeText(this, "Mở Lịch sử đọc", Toast.LENGTH_SHORT).show();
-                // TODO: Thực hiện chức năng hoặc mở giao diện Lịch sử đọc
                 return true;
             } else if (id == R.id.menu_favorites) {
                 Toast.makeText(this, "Mở Truyện yêu thích", Toast.LENGTH_SHORT).show();
-                // TODO: Thực hiện chức năng hoặc mở giao diện Truyện yêu thích
                 return true;
             } else if (id == R.id.menu_downloads) {
                 Toast.makeText(this, "Mở Truyện tải xuống", Toast.LENGTH_SHORT).show();
-                // TODO: Thực hiện chức năng hoặc mở giao diện Truyện tải xuống
                 return true;
             } else if (id == R.id.menu_profile) {
                 Toast.makeText(this, "Mở Hồ sơ cá nhân", Toast.LENGTH_SHORT).show();
-                // TODO: Thực hiện chức năng hoặc mở giao diện Profile
                 return true;
             } else if (id == R.id.menu_logout) {
                 Toast.makeText(this, "Đang đăng xuất tài khoản...", Toast.LENGTH_SHORT).show();
-                // TODO: Xóa session/SharedPrefs và chuyển hướng về màn hình Đăng nhập (LoginActivity)
                 return true;
             }
 

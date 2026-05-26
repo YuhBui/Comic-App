@@ -235,6 +235,17 @@ public class ComicController {
         return ResponseEntity.ok(dtoList);
     }
 
+    // 11. API LẤY DANH SÁCH TRUYỆN YÊU THÍCH CỦA NGƯỜI DÙNG (kèm đầy đủ thông số)
+    @GetMapping("/favorites/{userId}")
+    public ResponseEntity<List<ComicHomeResponseDTO>> getFavoriteComics(
+            @PathVariable Integer userId) {
+        List<Object[]> rawData = followRepository.findFavoriteComicsWithStatsByUserId(userId);
+        List<ComicHomeResponseDTO> dtoList = rawData.stream()
+                .map(this::mapRowToDTO)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(dtoList);
+    }
+
     // =============================================
     // HÀM PHỤ TRỢ: Chuyển đổi Object[] sang DTO
     // =============================================

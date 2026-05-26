@@ -459,7 +459,7 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(new Intent(this, HistoryActivity.class));
                 return true;
             } else if (id == R.id.menu_favorites) {
-                Toast.makeText(this, "Truyện yêu thích", Toast.LENGTH_SHORT).show();
+                startActivity(new Intent(this, FavoritesActivity.class));
                 return true;
             } else if (id == R.id.menu_downloads) {
                 Toast.makeText(this, "Truyện tải xuống", Toast.LENGTH_SHORT).show();

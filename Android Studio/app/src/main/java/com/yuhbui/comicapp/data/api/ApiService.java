@@ -117,4 +117,8 @@ public interface ApiService {
 
     @GET("/api/history/user/{userId}")
     Call<List<Comic>> getReadingHistoryByUserId(@Path("userId") int userId);
+
+    // Lấy danh sách truyện yêu thích của người dùng (kèm đầy đủ thông số)
+    @GET("/api/comics/favorites/{userId}")
+    Call<List<Comic>> getFavoriteComics(@Path("userId") int userId);
 }
