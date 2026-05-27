@@ -7,7 +7,7 @@
         android:id="@+id/menu_history"
         android:title="Lịch sử đọc" />
     <item
-        android:id="@+id/menu_favorites"
+        android:id="@+id/menu_follow"
         android:title="Truyện yêu thích" />
     <item
         android:id="@+id/menu_downloads"

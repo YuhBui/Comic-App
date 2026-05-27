@@ -28,7 +28,7 @@ import retrofit2.Response;
  * FavoritesActivity - Màn hình Truyện Yêu Thích
  * Hiển thị danh sách truyện user đã nhấn ❤ (yêu thích), grid 2 cột 5 hàng + phân trang
  */
-public class FavoritesActivity extends AppCompatActivity {
+public class FollowActivity extends AppCompatActivity {
 
     private RecyclerView recyclerViewFavorites;
     private ComicAdapter favoritesAdapter;
@@ -53,7 +53,7 @@ public class FavoritesActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_favorites);
+        setContentView(R.layout.activity_follow);
 
         initViews();
         setupHeader();
@@ -142,7 +142,7 @@ public class FavoritesActivity extends AppCompatActivity {
                         showPage(0);
                     }
                 } else {
-                    Toast.makeText(FavoritesActivity.this, "Không thể tải danh sách yêu thích!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(FollowActivity.this, "Không thể tải danh sách yêu thích!", Toast.LENGTH_SHORT).show();
                     showEmptyState();
                 }
             }
@@ -150,7 +150,7 @@ public class FavoritesActivity extends AppCompatActivity {
             @Override
             public void onFailure(Call<List<Comic>> call, Throwable t) {
                 Log.e("YUH_TEST", "Lỗi kết nối tải yêu thích: " + t.getMessage());
-                Toast.makeText(FavoritesActivity.this, "Lỗi kết nối máy chủ!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(FollowActivity.this, "Lỗi kết nối máy chủ!", Toast.LENGTH_SHORT).show();
                 showEmptyState();
             }
         });
@@ -243,7 +243,7 @@ public class FavoritesActivity extends AppCompatActivity {
                 startActivity(new Intent(this, HistoryActivity.class));
                 finish();
                 return true;
-            } else if (id == R.id.menu_favorites) {
+            } else if (id == R.id.menu_follow) {
                 // Đã ở trang này
                 return true;
             }

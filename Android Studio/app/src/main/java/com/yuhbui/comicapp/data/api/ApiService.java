@@ -8,6 +8,7 @@ import com.yuhbui.comicapp.data.model.ComicDetailResponse;
 import com.yuhbui.comicapp.data.model.Comment;
 import com.yuhbui.comicapp.data.model.LoginRequest;
 import com.yuhbui.comicapp.data.model.ReadingHistory;
+import com.yuhbui.comicapp.data.model.RegisterRequest;
 import com.yuhbui.comicapp.data.model.User;
 
 import java.util.List;
@@ -33,7 +34,7 @@ public interface ApiService {
     Call<User> login(@Body LoginRequest request);
 
     @POST("/api/users/register")
-    Call<User> register(@Body User user);
+    Call<User> register(@Body RegisterRequest request);
 
     @POST("/api/history/save")
     Call<ReadingHistory> saveReadingHistory(@Body ReadingHistory history);

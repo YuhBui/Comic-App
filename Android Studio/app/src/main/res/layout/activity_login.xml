@@ -51,4 +51,21 @@
         android:backgroundTint="#FF5722"
         android:textColor="#FFFFFF" />
 
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:layout_gravity="center"
+        android:layout_marginTop="16dp"/>
+
+    <TextView
+        android:id="@+id/tvRegister"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Chưa có tài khoản? Đăng ký ngay"
+        android:layout_gravity="center"
+        android:padding="16dp"
+        android:textStyle="bold"/>
+
 </LinearLayout>

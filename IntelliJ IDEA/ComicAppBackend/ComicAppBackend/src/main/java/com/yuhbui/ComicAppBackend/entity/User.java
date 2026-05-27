@@ -23,7 +23,7 @@ public class User {
     @Column(name = "AvatarUrl")
     private String avatarUrl;
 
-    @Column(name = "DisplayName", nullable = false)
+    @Column(name = "DisplayName", nullable = false, unique = true)
     private String displayName;
 
     @Column(name = "Role")

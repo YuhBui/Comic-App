@@ -347,7 +347,7 @@ public class ReaderActivity extends AppCompatActivity {
                 Toast.makeText(this, "Mở Lịch sử đọc", Toast.LENGTH_SHORT).show();
                 // TODO: Thực hiện chức năng hoặc mở giao diện Lịch sử đọc
                 return true;
-            } else if (id == R.id.menu_favorites) {
+            } else if (id == R.id.menu_follow) {
                 Toast.makeText(this, "Mở Truyện yêu thích", Toast.LENGTH_SHORT).show();
                 // TODO: Thực hiện chức năng hoặc mở giao diện Truyện yêu thích
                 return true;

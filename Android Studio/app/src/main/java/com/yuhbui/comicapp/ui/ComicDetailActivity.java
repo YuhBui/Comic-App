@@ -364,7 +364,7 @@ public class ComicDetailActivity extends AppCompatActivity {
             } else if (id == R.id.menu_history) {
                 Toast.makeText(this, "Mở Lịch sử đọc", Toast.LENGTH_SHORT).show();
                 return true;
-            } else if (id == R.id.menu_favorites) {
+            } else if (id == R.id.menu_follow) {
                 Toast.makeText(this, "Mở Truyện yêu thích", Toast.LENGTH_SHORT).show();
                 return true;
             } else if (id == R.id.menu_downloads) {

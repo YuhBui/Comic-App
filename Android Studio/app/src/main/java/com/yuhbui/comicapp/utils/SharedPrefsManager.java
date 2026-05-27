@@ -29,4 +29,14 @@ public class SharedPrefsManager {
         SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
         prefs.edit().clear().apply();
     }
+
+    public static String getUserName(Context context) {
+        SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+        return prefs.getString(KEY_USER_NAME, "Bạn đọc"); // "Bạn đọc" là giá trị mặc định nếu không tìm thấy
+    }
+
+    // BỔ SUNG 2: Hàm kiểm tra xem đã đăng nhập chưa cho code gọn gàng
+    public static boolean isLoggedIn(Context context) {
+        return getUserId(context) != -1;
+    }
 }

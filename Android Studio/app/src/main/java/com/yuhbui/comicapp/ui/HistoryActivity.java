@@ -197,8 +197,8 @@ public class HistoryActivity extends AppCompatActivity {
             } else if (id == R.id.menu_history) {
                 // Đã ở trang này
                 return true;
-            } else if (id == R.id.menu_favorites) {
-                startActivity(new Intent(this, FavoritesActivity.class));
+            } else if (id == R.id.menu_follow) {
+                startActivity(new Intent(this, FollowActivity.class));
                 finish();
                 return true;
             }

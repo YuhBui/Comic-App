@@ -27,7 +27,7 @@ import com.yuhbui.comicapp.ui.adapters.CategoryFilterAdapter;
 import com.yuhbui.comicapp.ui.adapters.ComicAdapter;
 import com.yuhbui.comicapp.ui.adapters.RankingAdapter;
 import com.yuhbui.comicapp.ui.adapters.RecommendedBannerAdapter;
-import java.util.ArrayList;
+import com.yuhbui.comicapp.utils.SharedPrefsManager;
 import java.util.List;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -119,7 +119,7 @@ public class MainActivity extends AppCompatActivity {
         headerLogo.setOnClickListener(v -> Toast.makeText(this, "Trang chủ", Toast.LENGTH_SHORT).show());
         headerSearch.setOnClickListener(v -> Toast.makeText(this, "Tìm kiếm truyện", Toast.LENGTH_SHORT).show());
         headerNotification.setOnClickListener(v -> Toast.makeText(this, "Thông báo", Toast.LENGTH_SHORT).show());
-        headerAvatar.setOnClickListener(v -> Toast.makeText(this, "Hồ sơ cá nhân", Toast.LENGTH_SHORT).show());
+        headerAvatar.setOnClickListener(v -> showAvatarMenu(v));
     }
 
     // ========== PHẦN 1: SLIDER TRUYỆN ĐỀ CỬ ==========
@@ -444,12 +444,11 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    // ========== POPUP MENU HEADER ==========
-
     private void showHeaderPopupMenu(View anchorView) {
         androidx.appcompat.widget.PopupMenu popupMenu =
                 new androidx.appcompat.widget.PopupMenu(this, anchorView);
         popupMenu.getMenuInflater().inflate(R.menu.menu_header_options, popupMenu.getMenu());
+
         popupMenu.setOnMenuItemClickListener(item -> {
             int id = item.getItemId();
             if (id == R.id.menu_home) {
@@ -458,8 +457,8 @@ public class MainActivity extends AppCompatActivity {
             } else if (id == R.id.menu_history) {
                 startActivity(new Intent(this, HistoryActivity.class));
                 return true;
-            } else if (id == R.id.menu_favorites) {
-                startActivity(new Intent(this, FavoritesActivity.class));
+            } else if (id == R.id.menu_follow) {
+                startActivity(new Intent(this, FollowActivity.class));
                 return true;
             } else if (id == R.id.menu_downloads) {
                 Toast.makeText(this, "Truyện tải xuống", Toast.LENGTH_SHORT).show();
@@ -468,7 +467,7 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(this, "Hồ sơ cá nhân", Toast.LENGTH_SHORT).show();
                 return true;
             } else if (id == R.id.menu_logout) {
-                Toast.makeText(this, "Đăng xuất...", Toast.LENGTH_SHORT).show();
+                performLogout();
                 return true;
             }
             return false;
@@ -476,7 +475,41 @@ public class MainActivity extends AppCompatActivity {
         popupMenu.show();
     }
 
-    // ========== TIỆN ÍCH ==========
+    private void showAvatarMenu(View anchorView) {
+        androidx.appcompat.widget.PopupMenu popupMenu =
+                new androidx.appcompat.widget.PopupMenu(this, anchorView);
+
+        // Bạn có thể tạo thêm một file menu riêng (VD: menu_avatar.xml) hoặc thêm code tay
+        popupMenu.getMenu().add(0, 1, 0, "Hồ sơ cá nhân");
+        popupMenu.getMenu().add(0, 2, 1, "Đăng xuất");
+
+        popupMenu.setOnMenuItemClickListener(item -> {
+            if (item.getItemId() == 1) {
+                Toast.makeText(this, "Mở Hồ sơ cá nhân...", Toast.LENGTH_SHORT).show();
+                // TODO: Chuyển sang ProfileActivity nếu có
+                return true;
+            } else if (item.getItemId() == 2) {
+                performLogout();
+                return true;
+            }
+            return false;
+        });
+        popupMenu.show();
+    }
+
+    private void performLogout() {
+        Toast.makeText(this, "Đang đăng xuất...", Toast.LENGTH_SHORT).show();
+
+        // 1. Xóa thông tin đã lưu trong bộ nhớ
+        com.yuhbui.comicapp.utils.SharedPrefsManager.logout(this);
+
+        // 2. Chuyển người dùng về màn hình Login
+        Intent intent = new Intent(this, LoginActivity.class);
+        // Xoá toàn bộ lịch sử Activity để người dùng không thể bấm phím "Back" quay lại MainActivity
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
+    }
 
     private int dpToPx(int dp) {
         float density = getResources().getDisplayMetrics().density;
