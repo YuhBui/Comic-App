@@ -5,6 +5,7 @@ public class RegisterRequest {
     private String displayName;
     private String password;
     private String confirmPassword;
+    private String avatarUrl;
 
     public RegisterRequest(String email, String displayName, String password, String confirmPassword) {
         this.email = email;
@@ -43,5 +44,13 @@ public class RegisterRequest {
 
     public void setConfirmPassword(String confirmPassword) {
         this.confirmPassword = confirmPassword;
+    }
+
+    public String getAvatarUrl() {
+        return avatarUrl;
+    }
+
+    public void setAvatarUrl(String avatarUrl) {
+        this.avatarUrl = avatarUrl;
     }
 }

@@ -1,6 +1,7 @@
 package com.yuhbui.ComicAppBackend.controller;
 
 import com.yuhbui.ComicAppBackend.dto.LoginRequest;
+import com.yuhbui.ComicAppBackend.dto.ProfileRequest;
 import com.yuhbui.ComicAppBackend.dto.RegisterRequest;
 import com.yuhbui.ComicAppBackend.entity.User;
 import com.yuhbui.ComicAppBackend.repository.UserRepository;
@@ -8,7 +9,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
@@ -81,5 +87,102 @@ public class UserController {
         }
 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Sai email hoặc mật khẩu!");
+    }
+
+    // 3. API Lấy thông tin chi tiết User theo ID để hiển thị lên màn hình Profile
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getUserById(@PathVariable("id") Integer id) {
+        Optional<User> userOpt = userRepository.findById(id);
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            user.setPassword(null); // Ẩn mật khẩu đã băm vì lý do bảo mật
+            return ResponseEntity.ok(user);
+        }
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Không tìm thấy người dùng!");
+    }
+
+    // 4. API Cập nhật thông tin hồ sơ cá nhân
+    @PutMapping("/update/{id}")
+    public ResponseEntity<?> updateProfile(@PathVariable("id") Integer id, @RequestBody ProfileRequest request) {
+        Optional<User> userOpt = userRepository.findById(id);
+        if (!userOpt.isPresent()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Không tìm thấy người dùng!");
+        }
+
+        User user = userOpt.get();
+
+        // Kiểm tra độc nhất Email (nếu người dùng thay đổi email khác)
+        Optional<User> existingEmail = userRepository.findByEmail(request.getEmail());
+        if (existingEmail.isPresent() && !existingEmail.get().getUserId().equals(id)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Email đã được sử dụng bởi tài khoản khác!");
+        }
+
+        // Kiểm tra độc nhất DisplayName (tên hiển thị)
+        Optional<User> existingName = userRepository.findByDisplayName(request.getDisplayName());
+        if (existingName.isPresent() && !existingName.get().getUserId().equals(id)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Tên hiển thị đã được sử dụng bởi tài khoản khác!");
+        }
+
+        // Kiểm tra nếu có ý định thay đổi mật khẩu
+        if (request.getPassword() != null && !request.getPassword().trim().isEmpty()) {
+            if (!request.getPassword().equals(request.getConfirmPassword())) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Mật khẩu xác nhận không khớp!");
+            }
+            // Thực hiện băm mật khẩu mới bằng SHA-256 (đồng bộ với hàm hashPassword sẵn có của bạn)
+            user.setPassword(hashPassword(request.getPassword()));
+        }
+
+        // Cập nhật các thông tin cơ bản khác
+        user.setEmail(request.getEmail());
+        user.setDisplayName(request.getDisplayName());
+
+        // Cập nhật Avatar nếu có gửi lên
+        if (request.getAvatarUrl() != null && !request.getAvatarUrl().isEmpty()) {
+            user.setAvatarUrl(request.getAvatarUrl());
+        }
+
+        User updatedUser = userRepository.save(user);
+        updatedUser.setPassword(null); // Ẩn mật khẩu trước khi trả về
+        return ResponseEntity.ok(updatedUser);
+    }
+
+    // API Upload Avatar nội bộ (ĐÃ NÂNG CẤP)
+    @PostMapping("/upload-avatar/{id}")
+    public ResponseEntity<?> uploadAvatar(@PathVariable("id") Integer id, @RequestParam("file") MultipartFile file) {
+        try {
+            if (file.isEmpty()) {
+                return ResponseEntity.badRequest().body("File không hợp lệ hoặc trống!");
+            }
+
+            String uploadDir = "uploads/avatars/";
+            Path uploadPath = Paths.get(uploadDir);
+            if (!Files.exists(uploadPath)) {
+                Files.createDirectories(uploadPath);
+            }
+
+            // SỬA TẠI ĐÂY: Thêm System.currentTimeMillis() để tên file luôn luôn thay đổi sau mỗi lần upload
+            String fileName = id + "_avatar_" + System.currentTimeMillis() + ".jpg";
+            Path filePath = uploadPath.resolve(fileName);
+
+            // Ghi file vật lý vào ổ đĩa
+            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+            // URL này giờ đây sẽ liên tục thay đổi (Ví dụ: .../1_avatar_171542352.jpg)
+            String avatarUrl = "http://10.0.2.2:8080/uploads/avatars/" + fileName;
+
+            // Cập nhật CSDL ngay lập tức
+            Optional<User> userOpt = userRepository.findById(id);
+            if (userOpt.isPresent()) {
+                User user = userOpt.get();
+                user.setAvatarUrl(avatarUrl);
+                userRepository.save(user); // Lưu chuỗi URL mới tinh vào Database
+            }
+
+            // Trả về JSON để Android đọc được
+            return ResponseEntity.ok(java.util.Map.of("avatarUrl", avatarUrl));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Lỗi hệ thống khi lưu file: " + e.getMessage());
+        }
     }
 }

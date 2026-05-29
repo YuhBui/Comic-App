@@ -12,11 +12,15 @@ import com.yuhbui.comicapp.data.model.RegisterRequest;
 import com.yuhbui.comicapp.data.model.User;
 
 import java.util.List;
+
+import okhttp3.MultipartBody;
 import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.GET;
+import retrofit2.http.Multipart;
 import retrofit2.http.POST;
 import retrofit2.http.PUT;
+import retrofit2.http.Part;
 import retrofit2.http.Path; // Import thêm Path
 import retrofit2.http.Query;
 
@@ -122,4 +126,18 @@ public interface ApiService {
     // Lấy danh sách truyện yêu thích của người dùng (kèm đầy đủ thông số)
     @GET("/api/comics/favorites/{userId}")
     Call<List<Comic>> getFavoriteComics(@Path("userId") int userId);
+
+    @GET("/api/users/{id}")
+    Call<User> getUserProfile(@Path("id") int userId);
+
+    @PUT("/api/users/update/{id}")
+    Call<User> updateProfile(@Path("id") int userId, @Body com.yuhbui.comicapp.data.model.RegisterRequest request);
+    // Có thể tái sử dụng RegisterRequest vì cấu trúc gửi lên giống hệt nhau (email, displayName, password, confirmPassword)
+
+    @Multipart
+    @POST("/api/users/upload-avatar/{id}")
+    Call<java.util.Map<String, String>> uploadAvatar(
+            @Path("id") int userId,
+            @Part MultipartBody.Part file
+    );
 }

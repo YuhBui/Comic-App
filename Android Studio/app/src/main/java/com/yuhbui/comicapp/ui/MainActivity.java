@@ -452,7 +452,7 @@ public class MainActivity extends AppCompatActivity {
         popupMenu.setOnMenuItemClickListener(item -> {
             int id = item.getItemId();
             if (id == R.id.menu_home) {
-                Toast.makeText(this, "Trang chủ", Toast.LENGTH_SHORT).show();
+                startActivity(new Intent(this, MainActivity.class));
                 return true;
             } else if (id == R.id.menu_history) {
                 startActivity(new Intent(this, HistoryActivity.class));
@@ -464,7 +464,7 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(this, "Truyện tải xuống", Toast.LENGTH_SHORT).show();
                 return true;
             } else if (id == R.id.menu_profile) {
-                Toast.makeText(this, "Hồ sơ cá nhân", Toast.LENGTH_SHORT).show();
+                startActivity(new Intent(MainActivity.this, ProfileActivity.class));
                 return true;
             } else if (id == R.id.menu_logout) {
                 performLogout();
@@ -485,8 +485,8 @@ public class MainActivity extends AppCompatActivity {
 
         popupMenu.setOnMenuItemClickListener(item -> {
             if (item.getItemId() == 1) {
-                Toast.makeText(this, "Mở Hồ sơ cá nhân...", Toast.LENGTH_SHORT).show();
-                // TODO: Chuyển sang ProfileActivity nếu có
+                // Sửa dòng Toast cũ thành Intent mở ProfileActivity
+                startActivity(new Intent(MainActivity.this, ProfileActivity.class));
                 return true;
             } else if (item.getItemId() == 2) {
                 performLogout();
