@@ -31,8 +31,19 @@ public class LoginActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        // LOGIC KIỂM TRA TỰ ĐỘNG ĐĂNG NHẬP (ĐÃ SỬA ĐỔI PHÂN QUYỀN)
         if (SharedPrefsManager.isLoggedIn(this)) {
-            Intent intent = new Intent(this, MainActivity.class);
+            Intent intent;
+            String currentRole = SharedPrefsManager.getUserRole(this);
+
+            if ("Admin".equals(currentRole)) {
+                // Nếu phiên đăng nhập cũ lưu quyền Admin -> Vào thẳng vùng quản trị
+                intent = new Intent(this, com.yuhbui.comicapp.ui.admin.AdminDashboardActivity.class);
+            } else {
+                // Ngược lại nếu là User thường -> Vào trang chủ đọc truyện
+                intent = new Intent(this, MainActivity.class);
+            }
+
             startActivity(intent);
             finish();
             return;
@@ -74,23 +85,29 @@ public class LoginActivity extends AppCompatActivity {
         ApiClient.getApiService().login(request).enqueue(new Callback<User>() {
             @Override
             public void onResponse(Call<User> call, Response<User> response) {
-                // Ẩn vòng xoay loading và mở lại nút bấm
                 if (progressBar != null) progressBar.setVisibility(View.GONE);
                 btnLogin.setEnabled(true);
 
                 if (response.isSuccessful() && response.body() != null) {
-                    // Đăng nhập thành công!
                     User loggedInUser = response.body();
 
-                    // LƯU THÔNG TIN VÀO BỘ NHỚ MÁY
+                    // GỌI HÀM LƯU TỔNG HỢP: Lưu ID, Name và tự động lưu kèm cả biến Role mới
                     SharedPrefsManager.saveUser(LoginActivity.this, loggedInUser);
 
                     Toast.makeText(LoginActivity.this, "Chào mừng " + loggedInUser.getDisplayName(), Toast.LENGTH_SHORT).show();
 
-                    // Chuyển sang màn hình chính (Trang chủ)
-                    Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                    // LOGIC KIỂM TRA ROLE ĐỂ PHÂN PHỐI GIAO DIỆN ĐÍCH
+                    Intent intent;
+                    if ("Admin".equals(loggedInUser.getRole())) {
+                        // Trạng thái tài khoản trả về có chữ "Admin" viết hoa chữ đầu -> Mở Dashboard của Admin
+                        intent = new Intent(LoginActivity.this, com.yuhbui.comicapp.ui.admin.AdminDashboardActivity.class);
+                    } else {
+                        // Trạng thái thông thường (User) -> Vào màn hình chính đọc truyện
+                        intent = new Intent(LoginActivity.this, MainActivity.class);
+                    }
+
                     startActivity(intent);
-                    finish(); // Đóng màn hình đăng nhập
+                    finish(); // Đóng hẳn LoginActivity
                 } else {
                     Toast.makeText(LoginActivity.this, "Sai tài khoản hoặc mật khẩu!", Toast.LENGTH_SHORT).show();
                 }
@@ -98,10 +115,8 @@ public class LoginActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(Call<User> call, Throwable t) {
-                // Ẩn vòng xoay loading và mở lại nút bấm
                 if (progressBar != null) progressBar.setVisibility(View.GONE);
                 btnLogin.setEnabled(true);
-
                 Toast.makeText(LoginActivity.this, "Lỗi kết nối mạng", Toast.LENGTH_SHORT).show();
             }
         });

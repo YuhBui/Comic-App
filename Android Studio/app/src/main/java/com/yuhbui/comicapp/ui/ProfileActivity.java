@@ -7,6 +7,7 @@ import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
+import android.webkit.MimeTypeMap;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -25,6 +26,10 @@ import com.yuhbui.comicapp.data.model.User;
 import com.yuhbui.comicapp.utils.SharedPrefsManager;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Map;
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
@@ -198,16 +203,29 @@ public class ProfileActivity extends AppCompatActivity {
     }
 
     private void uploadAvatarFileThenText(String name, String email, String password, String confirmPassword) {
-        File file = new File(getRealPathFromURI(selectedImageUri));
+        // Gọi hàm tạo file tạm mới
+        File file = getFileFromUri(selectedImageUri);
+
+        if (file == null || !file.exists()) {
+            progressBar.setVisibility(View.GONE);
+            btnSave.setEnabled(true);
+            Toast.makeText(this, "Không thể xử lý tệp ảnh này!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Tạo RequestBody từ file tạm
         RequestBody requestFile = RequestBody.create(MediaType.parse(getContentResolver().getType(selectedImageUri)), file);
         MultipartBody.Part body = MultipartBody.Part.createFormData("file", file.getName(), requestFile);
 
-        // Đảm bảo Enqueue truyền vào đúng loại Callback<Map<String, String>>
         ApiClient.getApiService().uploadAvatar(userId, body).enqueue(new Callback<java.util.Map<String, String>>() {
             @Override
             public void onResponse(Call<java.util.Map<String, String>> call, Response<java.util.Map<String, String>> response) {
+                // Xóa file tạm ngay sau khi đã upload xong để giải phóng bộ nhớ cache
+                if (file.exists()) {
+                    file.delete();
+                }
+
                 if (response.isSuccessful() && response.body() != null) {
-                    // Lấy chính xác URL từ cấu trúc Map bằng từ khóa "avatarUrl"
                     String newAvatarUrl = response.body().get("avatarUrl");
                     currentAvatarUrl = newAvatarUrl;
 
@@ -222,9 +240,13 @@ public class ProfileActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(Call<java.util.Map<String, String>> call, Throwable t) {
+                // Đảm bảo file tạm cũng được xóa nếu xảy ra lỗi kết nối
+                if (file.exists()) {
+                    file.delete();
+                }
+
                 progressBar.setVisibility(View.GONE);
                 btnSave.setEnabled(true);
-                // In ra log chi tiết để theo dõi dễ dàng
                 Toast.makeText(ProfileActivity.this, "Lỗi kết nối upload file: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
@@ -261,14 +283,30 @@ public class ProfileActivity extends AppCompatActivity {
         });
     }
 
-    private String getRealPathFromURI(Uri contentUri) {
-        String[] proj = { MediaStore.Images.Media.DATA };
-        Cursor cursor = getContentResolver().query(contentUri, proj, null, null, null);
-        if (cursor == null) return contentUri.getPath();
-        int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-        cursor.moveToFirst();
-        String result = cursor.getString(column_index);
-        cursor.close();
-        return result;
+    private File getFileFromUri(Uri uri) {
+        try {
+            // Lấy định dạng mở rộng của file (jpg, png,...) từ ContentResolver
+            String extension = MimeTypeMap.getSingleton().getExtensionFromMimeType(getContentResolver().getType(uri));
+            if (extension == null) extension = "jpg";
+
+            // Tạo một file tạm trong thư mục cache của ứng dụng
+            File tempFile = new File(getCacheDir(), "avatar_upload_" + System.currentTimeMillis() + "." + extension);
+
+            // Tiến hành copy dữ liệu stream từ Uri sang file tạm
+            try (InputStream inputStream = getContentResolver().openInputStream(uri);
+                 OutputStream outputStream = new FileOutputStream(tempFile)) {
+
+                byte[] buffer = new byte[4096];
+                int length;
+                while ((length = inputStream.read(buffer)) > 0) {
+                    outputStream.write(buffer, 0, length);
+                }
+                outputStream.flush();
+            }
+            return tempFile;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 }

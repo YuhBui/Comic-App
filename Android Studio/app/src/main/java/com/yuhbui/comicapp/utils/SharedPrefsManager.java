@@ -9,12 +9,14 @@ public class SharedPrefsManager {
     private static final String KEY_USER_ID = "userId";
     private static final String KEY_USER_NAME = "userName";
 
+    private static final String KEY_USER_ROLE = "user_role";
     // Hàm lưu thông tin khi đăng nhập thành công
     public static void saveUser(Context context, User user) {
         SharedPreferences prefs = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
-        editor.putInt(KEY_USER_ID, user.getUserId()); // Lưu ID để sau này gọi API
+        editor.putInt(KEY_USER_ID, user.getUserId());
         editor.putString(KEY_USER_NAME, user.getDisplayName());
+        editor.putString(KEY_USER_ROLE, user.getRole()); // <-- THÊM DÒNG NÀY: Tự động gom việc lưu Role vào đây
         editor.apply();
     }
 
@@ -38,5 +40,17 @@ public class SharedPrefsManager {
     // BỔ SUNG 2: Hàm kiểm tra xem đã đăng nhập chưa cho code gọn gàng
     public static boolean isLoggedIn(Context context) {
         return getUserId(context) != -1;
+    }
+
+    // Hàm lưu Role
+    public static void saveUserRole(Context context, String role) {
+        SharedPreferences pref = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+        pref.edit().putString(KEY_USER_ROLE, role).apply();
+    }
+
+    // Hàm lấy Role (Mặc định nếu trống là User)
+    public static String getUserRole(Context context) {
+        SharedPreferences pref = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+        return pref.getString(KEY_USER_ROLE, "User");
     }
 }

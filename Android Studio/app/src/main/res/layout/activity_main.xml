@@ -12,6 +12,7 @@
         layout="@layout/layout_header" />
 
     <androidx.core.widget.NestedScrollView
+        android:id="@+id/scrollMainContainer"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
@@ -23,7 +24,7 @@
             android:orientation="vertical"
             android:descendantFocusability="blocksDescendants">
 
-             <LinearLayout
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
@@ -130,7 +131,7 @@
                         android:padding="2dp"/>
                 </LinearLayout>
 
-                 <TextView
+                <TextView
                     android:id="@+id/tvActiveFilter"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -274,5 +275,32 @@
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
+
+    <LinearLayout
+        android:id="@+id/layoutSearchContainer"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:background="#FFFFFF"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🔍 KẾT QUẢ TÌM KIẾM TRUYỆN"
+            android:textStyle="bold"
+            android:textColor="#000000"
+            android:textSize="16sp"
+            android:padding="16dp"/>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerViewSearchResults"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:scrollbars="vertical"/>
+    </LinearLayout>
 
 </LinearLayout>

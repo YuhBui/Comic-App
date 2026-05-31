@@ -100,11 +100,21 @@ public class ComicDetailActivity extends AppCompatActivity {
 
         // Đăng ký sự kiện Click xử lý chức năng cho Header trên màn hình Chi tiết
         headerMenu.setOnClickListener(v -> showHeaderPopupMenu(v));
+
         headerLogo.setOnClickListener(v -> {
             // Nhấn logo có thể quay về màn hình chính hoặc kết thúc Activity hiện tại
             finish();
         });
-        headerSearch.setOnClickListener(v -> Toast.makeText(this, "Mở màn hình tìm kiếm truyện", Toast.LENGTH_SHORT).show());
+
+        headerSearch.setOnClickListener(v -> {
+            // Chuyển hướng về MainActivity và xóa các Activity xếp chồng phía trước
+            Intent intent = new Intent(ComicDetailActivity.this, MainActivity.class);
+            intent.putExtra("OPEN_SEARCH", true);
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            startActivity(intent);
+            finish();
+        });
+
         headerNotification.setOnClickListener(v -> Toast.makeText(this, "Mở thông báo", Toast.LENGTH_SHORT).show());
         headerAvatar.setOnClickListener(v -> Toast.makeText(this, "Mở thông tin tài khoản người dùng", Toast.LENGTH_SHORT).show());
 

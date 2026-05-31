@@ -231,9 +231,11 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:layout_marginTop="8dp">
+
                 <EditText
                     android:id="@+id/edtCommentInput"
-                    android:layout_width="match_parent"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
                     android:layout_height="wrap_content"
                     android:hint="Viết bình luận..."
                     android:inputType="textShortMessage"
@@ -241,6 +243,7 @@
                     android:focusableInTouchMode="true"
                     android:clickable="true"
                     android:enabled="true" />
+
                 <Button
                     android:id="@+id/btnSendComment"
                     android:layout_width="wrap_content"

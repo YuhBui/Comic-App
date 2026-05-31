@@ -23,6 +23,15 @@ import java.util.List;
 public class ComicAdapter extends RecyclerView.Adapter<ComicAdapter.ComicViewHolder> {
 
     private List<Comic> comicList = new ArrayList<>();
+    private boolean isListView = false;
+
+    public ComicAdapter() {
+        this.isListView = false;
+    }
+
+    public ComicAdapter(boolean isListView) {
+        this.isListView = isListView;
+    }
 
     public void setComics(List<Comic> comics) {
         this.comicList = comics;
@@ -32,9 +41,8 @@ public class ComicAdapter extends RecyclerView.Adapter<ComicAdapter.ComicViewHol
     @NonNull
     @Override
     public ComicViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        // Dùng layout item_comic_full_default: grid 2 cột với ảnh + stats overlay
-        View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_comic_full_default, parent, false);
+        int layoutId = isListView ? R.layout.item_comic_full : R.layout.item_comic_full_default;
+        View view = LayoutInflater.from(parent.getContext()).inflate(layoutId, parent, false);
         return new ComicViewHolder(view);
     }
 
@@ -42,26 +50,20 @@ public class ComicAdapter extends RecyclerView.Adapter<ComicAdapter.ComicViewHol
     public void onBindViewHolder(@NonNull ComicViewHolder holder, int position) {
         Comic comic = comicList.get(position);
 
-        // 1. Tiêu đề truyện
         holder.tvTitle.setText(comic.getTitle());
-
-        // 2. Chương mới nhất và thời gian cập nhật
         holder.tvLatestChapter.setText("Chương " + (comic.getLatestChapterNumber() != null ? comic.getLatestChapterNumber() : "0"));
         holder.tvTimeUpdate.setText(comic.getTimeUpdated() != null ? comic.getTimeUpdated() : "Vừa xong");
 
-        // 3. Thống kê tương tác
         holder.tvViews.setText("👁 " + formatNumber(comic.getViewCount()));
         holder.tvLikes.setText("❤ " + formatNumber(comic.getFollowCount()));
         holder.tvComments.setText("💬 " + formatNumber(comic.getCommentCount()));
 
-        // 4. Tải ảnh bìa với Glide
         Glide.with(holder.itemView.getContext())
                 .load(comic.getCoverImageUrl())
                 .placeholder(R.drawable.ic_launcher_background)
                 .centerCrop()
                 .into(holder.imgCover);
 
-        // 5. Sự kiện click chuyển sang màn hình chi tiết
         holder.itemView.setOnClickListener(v -> {
             Intent intent = new Intent(holder.itemView.getContext(), ComicDetailActivity.class);
             intent.putExtra("COMIC_ID", comic.getComicId());
@@ -74,7 +76,6 @@ public class ComicAdapter extends RecyclerView.Adapter<ComicAdapter.ComicViewHol
         return comicList != null ? comicList.size() : 0;
     }
 
-    // Rút gọn số hiển thị: 1200 → 1.2K, 1500000 → 1.5M
     private String formatNumber(long number) {
         if (number >= 1000000) return String.format("%.1fM", number / 1000000.0);
         if (number >= 1000) return String.format("%.1fK", number / 1000.0);

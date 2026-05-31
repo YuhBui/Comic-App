@@ -12,10 +12,12 @@ import com.yuhbui.comicapp.data.model.RegisterRequest;
 import com.yuhbui.comicapp.data.model.User;
 
 import java.util.List;
+import java.util.Map;
 
 import okhttp3.MultipartBody;
 import retrofit2.Call;
 import retrofit2.http.Body;
+import retrofit2.http.DELETE;
 import retrofit2.http.GET;
 import retrofit2.http.Multipart;
 import retrofit2.http.POST;
@@ -140,4 +142,41 @@ public interface ApiService {
             @Path("id") int userId,
             @Part MultipartBody.Part file
     );
+
+    @GET("/api/comics/search")
+    Call<List<Comic>> searchComics(@Query("keyword") String keyword);
+
+    @GET("/api/admin/dashboard/access-stats")
+    Call<List<java.util.Map<String, Object>>> getAdminAccessStats(@Query("type") String type);
+
+    @GET("/api/admin/comics")
+    Call<List<Comic>> adminGetAllComics();
+
+    @POST("/api/admin/comics")
+    Call<Comic> adminCreateComic(@Body Comic comic);
+
+    @PUT("/api/admin/comics/{id}")
+    Call<Comic> adminUpdateComic(@Path("id") Integer id, @Body Comic comic);
+
+    @PUT("/api/admin/comics/{id}/toggle-hidden")
+    Call<Boolean> adminToggleHiddenComic(@Path("id") Integer id);
+
+    @POST("/api/categories")
+    Call<Category> createCategory(@Body Category category);
+
+    @GET("/api/categories")
+    Call<List<Category>> getAllCategories();
+
+    @POST("/api/admin/comics")
+    Call<Comic> adminCreateComic(@Body Comic comic, @Query("categoryId") Integer categoryId);
+
+    @PUT("/api/admin/comics/{id}")
+    Call<Comic> adminUpdateComic(@Path("id") Integer id, @Body Comic comic, @Query("categoryId") Integer categoryId);
+
+    @DELETE("/api/admin/comics/{id}")
+    Call<okhttp3.ResponseBody> adminDeleteComic(@Path("id") Integer id);
+
+    @Multipart
+    @POST("/api/admin/comics/upload-cover")
+    Call<Map<String, String>> adminUploadCover(@Part MultipartBody.Part file);
 }

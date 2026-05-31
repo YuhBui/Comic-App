@@ -33,6 +33,20 @@
         android:clickable="true"
         android:focusable="true"/>
 
+    <EditText
+        android:id="@+id/edtHeaderSearch"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="12dp"
+        android:hint="Nhập tên truyện cần tìm..."
+        android:textSize="15sp"
+        android:singleLine="true"
+        android:imeOptions="actionSearch"
+        android:inputType="text"
+        android:visibility="gone"/>
+
     <ImageView
         android:id="@+id/headerSearch"
         android:layout_width="32dp"

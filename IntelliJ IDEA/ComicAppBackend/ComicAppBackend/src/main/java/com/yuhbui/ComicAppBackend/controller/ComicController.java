@@ -263,4 +263,20 @@ public class ComicController {
                 row[9] != null ? ((Number) row[9]).longValue() : 0L
         );
     }
+
+    // 12. API TÌM KIẾM TRUYỆN THEO TỪ KHÓA (Kèm đầy đủ thông số tương tác cho danh sách dọc)
+    @GetMapping("/search")
+    public ResponseEntity<List<ComicHomeResponseDTO>> searchComics(@RequestParam String keyword) {
+        // Lấy toàn bộ danh sách dữ liệu thô kèm stats từ Repository
+        List<Object[]> rawData = comicRepository.getComicHomeDataRaw();
+
+        // Chuyển đổi sang DTO và lọc các truyện có tiêu đề chứa từ khóa (không phân biệt chữ hoa/thường)
+        List<ComicHomeResponseDTO> filteredList = rawData.stream()
+                .map(this::mapRowToDTO)
+                .filter(comic -> comic.getTitle() != null &&
+                        comic.getTitle().toLowerCase().contains(keyword.toLowerCase()))
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(filteredList);
+    }
 }

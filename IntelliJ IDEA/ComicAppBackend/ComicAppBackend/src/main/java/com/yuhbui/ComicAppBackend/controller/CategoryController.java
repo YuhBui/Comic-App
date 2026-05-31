@@ -18,4 +18,9 @@ public class CategoryController {
         // Hàm findAll() sẽ tự động chạy lệnh: SELECT * FROM Categories và trả về danh sách
         return categoryRepository.findAll();
     }
+
+    @PostMapping
+    public Category createCategory(@RequestBody Category category) {
+        return categoryRepository.save(category);
+    }
 }

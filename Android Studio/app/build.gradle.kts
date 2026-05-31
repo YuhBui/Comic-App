@@ -49,8 +49,6 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-livedata:2.6.2")
 
     implementation("com.github.bumptech.glide:glide:4.16.0")
-
     implementation("androidx.viewpager2:viewpager2:1.1.0")
-
-    implementation("com.github.bumptech.glide:glide:4.16.0")
+    implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
 }

@@ -168,7 +168,7 @@ public class UserController {
             Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
             // URL này giờ đây sẽ liên tục thay đổi (Ví dụ: .../1_avatar_171542352.jpg)
-            String avatarUrl = "http://10.0.2.2:8080/uploads/avatars/" + fileName;
+            String avatarUrl = "http://localhost:8080/uploads/avatars/" + fileName;
 
             // Cập nhật CSDL ngay lập tức
             Optional<User> userOpt = userRepository.findById(id);
