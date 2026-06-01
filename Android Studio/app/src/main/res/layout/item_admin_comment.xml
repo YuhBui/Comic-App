@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="12dp"
+    android:layout_marginBottom="8dp"
+    android:background="#F9F9F9">
+
+    <ImageView
+        android:id="@+id/imgAdminCommentAvatar"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:src="@android:drawable/sym_def_app_icon"/>
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:layout_marginStart="12dp">
+
+        <TextView
+            android:id="@+id/tvAdminCommentUser"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="User Name"
+            android:textStyle="bold"
+            android:textColor="#000000"
+            android:textSize="14sp"/>
+
+        <TextView
+            android:id="@+id/tvAdminCommentContent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Nội dung bình luận truyện"
+            android:textColor="#333333"
+            android:textSize="14sp"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/tvAdminCommentLikes"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="👍 0"
+                android:textSize="12sp"
+                android:layout_marginEnd="12dp"/>
+
+            <TextView
+                android:id="@+id/tvAdminCommentDislikes"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="👎 0"
+                android:textSize="12sp"
+                android:layout_marginEnd="12dp"/>
+
+            <TextView
+                android:id="@+id/btnAdminCommentReply"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="💬 Phản hồi"
+                android:textColor="#FF9800"
+                android:textStyle="bold"
+                android:textSize="12sp"
+                android:padding="2dp"
+                android:layout_marginEnd="12dp"
+                android:clickable="true"
+                android:focusable="true"/>
+
+            <TextView
+                android:id="@+id/tvAdminCommentReports"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="⚠️ Báo cáo (0)"
+                android:textColor="#E91E63"
+                android:textStyle="bold"
+                android:textSize="12sp"
+                android:layout_marginEnd="12dp"/>
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1"/>
+
+            <TextView
+                android:id="@+id/btnAdminCommentDelete"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🗑️ Xóa"
+                android:textColor="#E74C3C"
+                android:textStyle="bold"
+                android:textSize="12sp"
+                android:padding="4dp"
+                android:clickable="true"
+                android:focusable="true"/>
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

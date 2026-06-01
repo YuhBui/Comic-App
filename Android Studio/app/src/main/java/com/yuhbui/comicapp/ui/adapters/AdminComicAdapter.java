@@ -1,5 +1,6 @@
 package com.yuhbui.comicapp.ui.adapters;
 
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.yuhbui.comicapp.R;
 import com.yuhbui.comicapp.data.model.Comic;
+import com.yuhbui.comicapp.ui.admin.AdminComicDetailActivity;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,7 +40,6 @@ public class AdminComicAdapter extends RecyclerView.Adapter<AdminComicAdapter.Ad
     @NonNull
     @Override
     public AdminViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        // ĐÃ SỬA: Loại bỏ toàn bộ đoạn check cú pháp lỗi thừa
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_admin_comic, parent, false);
         return new AdminViewHolder(view);
     }
@@ -56,6 +57,13 @@ public class AdminComicAdapter extends RecyclerView.Adapter<AdminComicAdapter.Ad
                 .load(comic.getCoverImageUrl())
                 .placeholder(R.drawable.ic_launcher_background)
                 .into(holder.imgCover);
+
+        // THÊM: Sự kiện click vào cả dòng truyện để xem chi tiết quản trị và quản lý bình luận
+        holder.itemView.setOnClickListener(v -> {
+            Intent intent = new Intent(holder.itemView.getContext(), AdminComicDetailActivity.class);
+            intent.putExtra("COMIC_ID", comic.getComicId());
+            holder.itemView.getContext().startActivity(intent);
+        });
 
         // Sự kiện click nút Sửa
         holder.btnEdit.setOnClickListener(v -> listener.onEdit(comic));

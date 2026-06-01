@@ -168,15 +168,42 @@ public interface ApiService {
     Call<List<Category>> getAllCategories();
 
     @POST("/api/admin/comics")
-    Call<Comic> adminCreateComic(@Body Comic comic, @Query("categoryId") Integer categoryId);
+    Call<Comic> adminCreateComic(@Body Comic comic, @Query("categoryIds") List<Integer> categoryIds);
 
     @PUT("/api/admin/comics/{id}")
-    Call<Comic> adminUpdateComic(@Path("id") Integer id, @Body Comic comic, @Query("categoryId") Integer categoryId);
-
+    Call<Comic> adminUpdateComic(@Path("id") Integer id, @Body Comic comic, @Query("categoryIds") List<Integer> categoryIds);
     @DELETE("/api/admin/comics/{id}")
     Call<okhttp3.ResponseBody> adminDeleteComic(@Path("id") Integer id);
 
     @Multipart
     @POST("/api/admin/comics/upload-cover")
     Call<Map<String, String>> adminUploadCover(@Part MultipartBody.Part file);
+
+    @GET("/api/admin/comics/{id}/comments")
+    Call<List<Map<String, Object>>> adminGetComicComments(@Path("id") Integer id);
+
+    @DELETE("/api/admin/comics/comments/{commentId}")
+    Call<Map<String, Object>> adminDeleteComment(@Path("commentId") Integer commentId);
+
+    @GET("/api/admin/chapters/comic/{comicId}")
+    Call<List<Map<String, Object>>> adminGetChapters(@Path("comicId") Integer comicId);
+
+    @POST("/api/admin/chapters/comic/{comicId}")
+    Call<Map<String, Object>> adminCreateChapter(@Path("comicId") Integer comicId, @Query("chapterNumber") Double chapterNumber, @Query("title") String title);
+
+    @PUT("/api/admin/chapters/{chapterId}")
+    Call<Map<String, Object>> adminUpdateChapter(@Path("chapterId") Integer chapterId, @Query("chapterNumber") Double chapterNumber, @Query("title") String title);
+
+    @DELETE("/api/admin/chapters/{chapterId}")
+    Call<Map<String, Object>> adminDeleteChapter(@Path("chapterId") Integer chapterId);
+
+    @GET("/api/admin/chapters/{chapterId}/pages")
+    Call<List<Map<String, Object>>> adminGetChapterPages(@Path("chapterId") Integer chapterId);
+
+    @Multipart
+    @POST("/api/admin/chapters/{chapterId}/upload-page")
+    Call<Map<String, String>> adminUploadChapterPage(@Path("chapterId") Integer chapterId, @Part MultipartBody.Part file);
+
+    @DELETE("/api/admin/chapters/pages/{imageId}")
+    Call<Map<String, Object>> adminDeleteChapterPage(@Path("imageId") Integer imageId);
 }

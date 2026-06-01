@@ -1,97 +1,163 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="#FFFFFF"
-    android:padding="16dp">
-
-    <TextView
-        android:id="@+id/tvFormTitle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="THÊM TRUYỆN TRANH MỚI"
-        android:textStyle="bold"
-        android:textColor="#2196F3"
-        android:textSize="17sp"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginBottom="16dp" />
+    android:fillViewport="true"
+    android:background="#FFFFFF">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:layout_marginBottom="12dp">
-        <ImageView
-            android:id="@+id/imgComicCoverSelect"
-            android:layout_width="75dp"
-            android:layout_height="105dp"
-            android:scaleType="centerCrop"
-            android:src="@android:drawable/ic_menu_gallery"
-            android:background="#EAEAEA" />
-        <Button
-            android:id="@+id/btnSelectCover"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/tvFormTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Chọn ảnh bìa"
-            android:layout_marginStart="16dp"
-            android:textSize="12sp"/>
-    </LinearLayout>
+            android:text="THÊM TRUYỆN TRANH MỚI"
+            android:textStyle="bold"
+            android:textColor="#2196F3"
+            android:textSize="18sp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginBottom="20dp" />
 
-    <EditText
-        android:id="@+id/edtComicTitle"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Nhập tên truyện tranh"
-        android:inputType="text" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="16dp">
+            <ImageView
+                android:id="@+id/imgComicCoverSelect"
+                android:layout_width="80dp"
+                android:layout_height="110dp"
+                android:scaleType="centerCrop"
+                android:src="@android:drawable/ic_menu_gallery"
+                android:background="#EAEAEA" />
+            <Button
+                android:id="@+id/btnSelectCover"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Chọn ảnh bìa"
+                android:layout_marginStart="16dp"
+                android:textSize="12sp"
+                android:backgroundTint="#2196F3"
+                android:textColor="#FFFFFF"/>
+        </LinearLayout>
 
-    <EditText
-        android:id="@+id/edtComicAuthor"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:hint="Nhập tên tác giả"
-        android:inputType="text" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Tên truyện tranh:"
+            android:textStyle="bold"
+            android:textColor="#333333"
+            android:textSize="14sp"
+            android:layout_marginBottom="4dp"/>
+        <EditText
+            android:id="@+id/edtComicTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Nhập tên truyện"
+            android:inputType="text"
+            android:layout_marginBottom="12dp"/>
 
-    <EditText
-        android:id="@+id/edtComicStatus"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:hint="Trạng thái (Ongoing / Completed)"
-        android:inputType="text" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Tác giả:"
+            android:textStyle="bold"
+            android:textColor="#333333"
+            android:textSize="14sp"
+            android:layout_marginBottom="4dp"/>
+        <EditText
+            android:id="@+id/edtComicAuthor"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Nhập tên tác giả"
+            android:inputType="text"
+            android:layout_marginBottom="12dp"/>
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Chọn thể loại truyện:"
-        android:textStyle="bold"
-        android:layout_marginTop="12dp"
-        android:textSize="13sp"/>
-    <Spinner
-        android:id="@+id/spinnerCategory"
-        android:layout_width="match_parent"
-        android:layout_height="44dp"
-        android:layout_marginTop="4dp"
-        android:background="@android:drawable/btn_dropdown"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Thể loại (Bấm để chọn nhiều):"
+            android:textStyle="bold"
+            android:textColor="#333333"
+            android:textSize="14sp"
+            android:layout_marginBottom="4dp"/>
+        <TextView
+            android:id="@+id/tvComicCategoriesSelect"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="44dp"
+            android:padding="10dp"
+            android:text="Bấm vào đây để chọn thể loại..."
+            android:textColor="#555555"
+            android:background="@android:drawable/btn_dropdown"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="12dp"/>
 
-    <EditText
-        android:id="@+id/edtComicDescription"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:layout_marginTop="12dp"
-        android:hint="Mô tả nội dung truyện..."
-        android:gravity="top"
-        android:inputType="textMultiLine" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Trạng thái truyện:"
+            android:textStyle="bold"
+            android:textColor="#333333"
+            android:textSize="14sp"
+            android:layout_marginBottom="4dp"/>
+        <RadioGroup
+            android:id="@+id/rgStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="12dp">
+            <RadioButton
+                android:id="@+id/rbOngoing"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Ongoing"
+                android:checked="true"
+                android:textSize="14sp"
+                android:layout_marginEnd="24dp"/>
+            <RadioButton
+                android:id="@+id/rbCompleted"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Completed"
+                android:textSize="14sp"/>
+        </RadioGroup>
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginTop="12dp">
-        <Button
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Mô tả nội dung:"
+            android:textStyle="bold"
+            android:textColor="#333333"
+            android:textSize="14sp"
+            android:layout_marginBottom="4dp"/>
+        <EditText
+            android:id="@+id/edtComicDescription"
+            android:layout_width="match_parent"
+            android:layout_height="100dp"
+            android:hint="Mô tả nội dung truyện..."
+            android:gravity="top"
+            android:inputType="textMultiLine"
+            android:background="@android:drawable/edit_text"
+            android:padding="8dp"
+            android:layout_marginBottom="16dp"/>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="16dp">
+            <Button
             android:id="@+id/btnCancelComicForm"
             android:layout_width="0dp"
             android:layout_weight="1"
@@ -99,15 +165,18 @@
             android:text="HỦY BỎ"
             android:backgroundTint="#9E9E9E"
             android:textColor="#FFFFFF"/>
-        <Button
-            android:id="@+id/btnSaveComicForm"
-            android:layout_width="0dp"
-            android:layout_weight="1.3"
-            android:layout_height="48dp"
-            android:layout_marginStart="12dp"
-            android:text="LƯU THÔNG TIN"
-            android:backgroundTint="#2196F3"
-            android:textColor="#FFFFFF"
-            android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/btnSaveComicForm"
+                android:layout_width="0dp"
+                android:layout_weight="1.3"
+                android:layout_height="48dp"
+                android:layout_marginStart="12dp"
+                android:text="LƯU THÔNG TIN"
+                android:backgroundTint="#2196F3"
+                android:textColor="#FFFFFF"
+                android:textStyle="bold" />
+        </LinearLayout>
+
     </LinearLayout>
-</LinearLayout>
+</ScrollView>

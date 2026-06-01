@@ -21,6 +21,7 @@ public class CategoryController {
 
     @PostMapping
     public Category createCategory(@RequestBody Category category) {
+        category.setCategoryId(null);
         return categoryRepository.save(category);
     }
 }
