@@ -40,8 +40,11 @@ public class Comic implements Serializable {
     @SerializedName("timeUpdated")
     private String timeUpdated;
 
+    @SerializedName("releaseDate")
+    private String releaseDate;
+
     @SerializedName("followCount")
-    private long followCount;
+    private Integer followCount;
 
     @SerializedName("commentCount")
     private long commentCount;
@@ -145,13 +148,13 @@ public class Comic implements Serializable {
         this.timeUpdated = timeUpdated;
     }
 
-    public long getFollowCount() {
-        return followCount;
-    }
+    public String getReleaseDate() { return releaseDate != null ? releaseDate : "Đang cập nhật"; }
 
-    public void setFollowCount(long followCount) {
-        this.followCount = followCount;
-    }
+    public void setReleaseDate(String releaseDate) { this.releaseDate = releaseDate; }
+
+    public Integer getFollowCount() { return followCount != null ? followCount : 0; }
+
+    public void setFollowCount(Integer followCount) { this.followCount = followCount; }
 
     public long getCommentCount() {
         return commentCount;

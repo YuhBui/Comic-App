@@ -73,10 +73,15 @@ public class ReaderActivity extends AppCompatActivity {
         headerNotification.setOnClickListener(v -> Toast.makeText(this, "[Reader] Mở thông báo", Toast.LENGTH_SHORT).show());
         headerAvatar.setOnClickListener(v -> Toast.makeText(this, "[Reader] Mở hồ sơ cá nhân", Toast.LENGTH_SHORT).show());
 
-
         // 1. Ánh xạ phần đọc ảnh truyện
         recyclerViewImages = findViewById(R.id.recyclerViewImages);
         recyclerViewImages.setLayoutManager(new LinearLayoutManager(this));
+
+        // ĐÃ SỬA: Cấu hình tối ưu bộ nhớ đệm và layout đo đạc kích cỡ để hiển thị đầy đủ loạt ảnh chương truyện
+        recyclerViewImages.setHasFixedSize(true);
+        recyclerViewImages.setItemViewCacheSize(30);
+        recyclerViewImages.setNestedScrollingEnabled(false); // Ngăn ngừa xung đột cuộn mượt khi bọc trong ScrollView cha
+
         imageAdapter = new ImageAdapter();
         recyclerViewImages.setAdapter(imageAdapter);
 
@@ -109,15 +114,15 @@ public class ReaderActivity extends AppCompatActivity {
 
         // Sự kiện bấm nút CHƯƠNG TRƯỚC (Giảm index đi 1)
         btnPrevChapter.setOnClickListener(v -> {
-            if (currentChapterIndex < allChaptersInComic.size() - 1) { // Thay đổi điều kiện
-                navigateToChapter(currentChapterIndex + 1);            // Thay đổi sang +1
+            if (currentChapterIndex < allChaptersInComic.size() - 1) {
+                navigateToChapter(currentChapterIndex + 1);
             }
         });
 
         // Sự kiện bấm nút CHƯƠNG SAU (Vì mảng DESC nên Chương sau phải là giảm Index đi -1)
         btnNextChapter.setOnClickListener(v -> {
-            if (currentChapterIndex > 0) {                             // Thay đổi điều kiện
-                navigateToChapter(currentChapterIndex - 1);            // Thay đổi sang -1
+            if (currentChapterIndex > 0) {
+                navigateToChapter(currentChapterIndex - 1);
             }
         });
 
@@ -235,7 +240,6 @@ public class ReaderActivity extends AppCompatActivity {
 
     // Hàm cập nhật trạng thái đóng/mở khóa (Enabled) của nút Trước và nút Sau
     private void updateButtonNavigationUI() {
-        // MẢNG DESC: Chương ĐẦU TIÊN (Nhỏ nhất) sẽ nằm ở CUỐI MẢNG (Index = size - 1)
         if (currentChapterIndex >= allChaptersInComic.size() - 1) {
             btnPrevChapter.setEnabled(false);
             btnPrevChapter.setAlpha(0.4f);
@@ -244,7 +248,6 @@ public class ReaderActivity extends AppCompatActivity {
             btnPrevChapter.setAlpha(1.0f);
         }
 
-        // MẢNG DESC: Chương MỚI NHẤT (Cuối cùng) sẽ nằm ở ĐẦU MẢNG (Index = 0)
         if (currentChapterIndex <= 0) {
             btnNextChapter.setEnabled(false);
             btnNextChapter.setAlpha(0.4f);
@@ -255,11 +258,19 @@ public class ReaderActivity extends AppCompatActivity {
     }
 
     private void loadImages(int chapterId) {
+        // ĐÃ SỬA: Giải phóng và xóa danh sách trang ảnh cũ ngay lập tức khi đổi chương để tránh lag hình
+        if (imageAdapter != null) {
+            imageAdapter.setImages(new ArrayList<>());
+            imageAdapter.notifyDataSetChanged();
+        }
+
         ApiClient.getApiService().getImagesByChapterId(chapterId).enqueue(new Callback<List<ChapterImage>>() {
             @Override
             public void onResponse(Call<List<ChapterImage>> call, Response<List<ChapterImage>> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     imageAdapter.setImages(response.body());
+                    // ĐÃ SỬA: Ép giao diện vẽ lại toàn bộ mảng tranh truyện lên màn hình ngay khi nạp xong
+                    imageAdapter.notifyDataSetChanged();
                 }
             }
             @Override
@@ -329,46 +340,33 @@ public class ReaderActivity extends AppCompatActivity {
     }
 
     private void showHeaderPopupMenu(View anchorView) {
-        // Khởi tạo PopupMenu gắn vào nút Menu trên Header
         androidx.appcompat.widget.PopupMenu popupMenu = new androidx.appcompat.widget.PopupMenu(this, anchorView);
-
-        // Nạp giao diện menu XML đã định nghĩa ở Bước 1 vào popup
         popupMenu.getMenuInflater().inflate(R.menu.menu_header_options, popupMenu.getMenu());
-
-        // Cài đặt sự kiện lắng nghe khi người dùng chọn một mục trong menu
         popupMenu.setOnMenuItemClickListener(item -> {
             int id = item.getItemId();
 
             if (id == R.id.menu_home) {
                 Toast.makeText(this, "Chuyển hướng sang Trang chủ", Toast.LENGTH_SHORT).show();
-                // TODO: Chuyển hướng sang MainActivity bằng Intent nếu đang ở màn hình khác
                 return true;
             } else if (id == R.id.menu_history) {
                 Toast.makeText(this, "Mở Lịch sử đọc", Toast.LENGTH_SHORT).show();
-                // TODO: Thực hiện chức năng hoặc mở giao diện Lịch sử đọc
                 return true;
             } else if (id == R.id.menu_follow) {
                 Toast.makeText(this, "Mở Truyện yêu thích", Toast.LENGTH_SHORT).show();
-                // TODO: Thực hiện chức năng hoặc mở giao diện Truyện yêu thích
                 return true;
             } else if (id == R.id.menu_downloads) {
                 Toast.makeText(this, "Mở Truyện tải xuống", Toast.LENGTH_SHORT).show();
-                // TODO: Thực hiện chức năng hoặc mở giao diện Truyện tải xuống
                 return true;
             } else if (id == R.id.menu_profile) {
                 Toast.makeText(this, "Mở Hồ sơ cá nhân", Toast.LENGTH_SHORT).show();
-                // TODO: Thực hiện chức năng hoặc mở giao diện Profile
                 return true;
             } else if (id == R.id.menu_logout) {
                 Toast.makeText(this, "Đang đăng xuất tài khoản...", Toast.LENGTH_SHORT).show();
-                // TODO: Xóa session/SharedPrefs và chuyển hướng về màn hình Đăng nhập (LoginActivity)
                 return true;
             }
 
             return false;
         });
-
-        // Hiển thị menu lên màn hình
         popupMenu.show();
     }
 }

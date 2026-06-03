@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 import okhttp3.MultipartBody;
+import okhttp3.RequestBody;
 import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.DELETE;
@@ -206,4 +207,22 @@ public interface ApiService {
 
     @DELETE("/api/admin/chapters/pages/{imageId}")
     Call<Map<String, Object>> adminDeleteChapterPage(@Path("imageId") Integer imageId);
+
+    @Multipart
+    @POST("/api/admin/chapters/comic/{comicId}/with-images")
+    Call<Map<String, Object>> adminCreateChapterWithImages(
+            @Path("comicId") Integer comicId,
+            @Part("chapterNumber") RequestBody chapterNumber,
+            @Part("title") RequestBody title,
+            @Part List<MultipartBody.Part> files
+    );
+
+    @PUT("/api/admin/chapters/pages/reorder")
+    Call<Map<String, Object>> adminReorderPages(@Body List<Integer> imageIds);
+
+    @GET("/api/admin/chapters/comments/{commentId}/reports")
+    Call<List<String>> adminGetCommentReports(@Path("commentId") Integer commentId);
+
+    @GET("/api/admin/chapters/{chapterId}/comments")
+    Call<List<Map<String, Object>>> adminGetChapterComments(@Path("chapterId") Integer chapterId);
 }

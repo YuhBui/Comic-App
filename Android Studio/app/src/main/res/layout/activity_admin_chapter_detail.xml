@@ -10,6 +10,7 @@
     <include android:id="@+id/layoutHeaderChapterDetail" layout="@layout/layout_header" />
 
     <androidx.core.widget.NestedScrollView
+        android:id="@+id/nestedScrollViewChapterDetail"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:fillViewport="true">

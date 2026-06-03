@@ -118,20 +118,40 @@ public class AdminEditComicActivity extends AppCompatActivity {
     }
 
     private void loadCategoriesFromServer() {
+        // Lấy chuỗi danh sách tên thể loại cũ được truyền từ màn hình Chi tiết sang
+        String currentGenresString = getIntent().getStringExtra("CURRENT_GENRES_STRING");
+
         ApiClient.getApiService().getAllCategories().enqueue(new Callback<List<Category>>() {
             @Override
             public void onResponse(Call<List<Category>> call, Response<List<Category>> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     allCategories = response.body();
                     checkedItems = new boolean[allCategories.size()];
-                } else {
-                    Toast.makeText(AdminEditComicActivity.this, "Không thể tải danh sách thể loại từ máy chủ", Toast.LENGTH_SHORT).show();
+                    selectedCategoryIds.clear();
+
+                    StringBuilder displayText = new StringBuilder();
+
+                    // ĐÃ SỬA: Quét kiểm tra đối chiếu khôi phục trạng thái tích chọn danh mục cũ
+                    for (int i = 0; i < allCategories.size(); i++) {
+                        Category category = allCategories.get(i);
+                        if (currentGenresString != null && currentGenresString.contains(category.getName())) {
+                            checkedItems[i] = true;
+                            selectedCategoryIds.add(category.getCategoryId());
+
+                            if (displayText.length() > 0) displayText.append(", ");
+                            displayText.append(category.getName());
+                        }
+                    }
+
+                    // Đổ text hiển thị danh sách thể loại đã tích chọn sẵn lên màn hình
+                    if (selectedCategoryIds.isEmpty()) {
+                        tvComicCategoriesSelect.setText("Bấm vào đây để chọn thể loại...");
+                    } else {
+                        tvComicCategoriesSelect.setText(displayText.toString());
+                    }
                 }
             }
-            @Override
-            public void onFailure(Call<List<Category>> call, Throwable t) {
-                Toast.makeText(AdminEditComicActivity.this, "Lỗi kết nối danh mục thể loại", Toast.LENGTH_SHORT).show();
-            }
+            @Override public void onFailure(Call<List<Category>> call, Throwable t) {}
         });
     }
 

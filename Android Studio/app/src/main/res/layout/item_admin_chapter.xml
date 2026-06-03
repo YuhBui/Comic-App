@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:padding="12dp"
+    android:background="?android:attr/selectableItemBackground"
+    android:layout_marginBottom="4dp">
+
+    <TextView
+        android:id="@+id/tvAdminChapterName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="Chương 1"
+        android:textSize="14sp"
+        android:textColor="#333333" />
+
+    <TextView
+        android:id="@+id/btnAdminDeleteChapterItem"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="🗑️ Xóa"
+        android:textColor="#E74C3C"
+        android:textSize="13sp"
+        android:textStyle="bold"
+        android:padding="6dp"
+        android:clickable="true"
+        android:focusable="true"/>
+</LinearLayout>

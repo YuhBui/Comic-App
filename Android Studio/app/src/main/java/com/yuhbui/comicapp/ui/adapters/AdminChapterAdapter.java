@@ -34,8 +34,8 @@ public class AdminChapterAdapter extends RecyclerView.Adapter<AdminChapterAdapte
     @NonNull
     @Override
     public ChapterViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        // Nạp tệp layout item_chapter hợp lệ
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_chapter, parent, false);
+        // ĐÃ SỬA: Nạp layout chứa nút xóa dành riêng cho quản trị
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_admin_chapter, parent, false);
         return new ChapterViewHolder(view);
     }
 
@@ -47,20 +47,20 @@ public class AdminChapterAdapter extends RecyclerView.Adapter<AdminChapterAdapte
         Number num = (Number) chapter.get("chapterNumber");
         double chapterNum = num != null ? num.doubleValue() : 0.0;
 
-        // Đổ thông tin chương truyện vào ô hiển thị duy nhất
         if (titleStr != null && !titleStr.isEmpty()) {
             holder.tvChapterName.setText("Chương " + chapterNum + ": " + titleStr);
         } else {
             holder.tvChapterName.setText("Chương " + chapterNum);
         }
 
-        // Bấm nhanh để mở màn hình quản lý nạp/xóa từng trang ảnh truyện
         holder.itemView.setOnClickListener(v -> listener.onClick(chapter));
 
-        // Nhấn giữ lâu dòng chương để hiện Dialog Form Sửa hoặc Xóa chương vĩnh viễn
-        holder.itemView.setOnLongClickListener(v -> {
-            listener.onEdit(chapter);
-            return true;
+        // Sự kiện xử lý bấm nút Xóa chương trực tiếp hàng ngang
+        holder.btnDelete.setOnClickListener(v -> {
+            if (chapter.get("chapterId") != null) {
+                int chapterId = ((Double) chapter.get("chapterId")).intValue();
+                listener.onDelete(chapterId, position);
+            }
         });
     }
 
@@ -68,12 +68,12 @@ public class AdminChapterAdapter extends RecyclerView.Adapter<AdminChapterAdapte
     public int getItemCount() { return list.size(); }
 
     static class ChapterViewHolder extends RecyclerView.ViewHolder {
-        TextView tvChapterName; // Đã loại bỏ biến tvTime lỗi
+        TextView tvChapterName, btnDelete;
 
         public ChapterViewHolder(@NonNull View itemView) {
             super(itemView);
-            // Chỉ ánh xạ đúng ID duy nhất tồn tại trong file item_chapter.xml
-            tvChapterName = itemView.findViewById(R.id.tvChapterName);
+            tvChapterName = itemView.findViewById(R.id.tvAdminChapterName);
+            btnDelete = itemView.findViewById(R.id.btnAdminDeleteChapterItem);
         }
     }
 }

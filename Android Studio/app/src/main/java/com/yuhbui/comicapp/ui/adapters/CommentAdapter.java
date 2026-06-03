@@ -20,7 +20,9 @@ import com.yuhbui.comicapp.data.api.ApiClient;
 import com.yuhbui.comicapp.data.model.Comment;
 import com.yuhbui.comicapp.utils.SharedPrefsManager;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -29,6 +31,10 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
 
     private List<Comment> commentList = new ArrayList<>();
     private OnCommentClickListener replyListener;
+
+    // Bộ nhớ đệm giữ data và số lượng trang hiển thị phản hồi con tránh lỗi tái sử dụng ô khi cuộn
+    private final Map<Integer, List<Comment>> repliesCache = new HashMap<>();
+    private final Map<Integer, Integer> displayedCountCache = new HashMap<>();
 
     public interface OnCommentClickListener {
         void onReplyClick(Comment parentComment);
@@ -54,8 +60,8 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
     public void onBindViewHolder(@NonNull CommentViewHolder holder, int position) {
         Comment comment = commentList.get(position);
         Context context = holder.itemView.getContext();
+        int commentId = comment.getCommentId();
 
-        // --- 1. NÂNG CẤP: ĐỔ TÊN THẬT, TAG CHAPTER VÀ LOAD AVATAR BẰNG GLIDE ---
         if (comment.getUserDisplayName() != null && !comment.getUserDisplayName().isEmpty()) {
             holder.tvUserComment.setText(comment.getUserDisplayName());
         } else {
@@ -71,53 +77,66 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
 
         Glide.with(context)
                 .load(comment.getUserAvatarUrl())
-                .placeholder(R.drawable.ic_launcher_background) // Ảnh mặc định khi chờ load
-                .circleCrop() // Bo tròn avatar chuẩn UX chuyên nghiệp
+                .placeholder(R.drawable.ic_launcher_background)
+                .circleCrop()
                 .into(holder.imgUserAvatar);
 
         holder.tvCommentContent.setText(comment.getContent());
 
-        // Hiển thị số lượng đếm Like, Dislike, và Phản hồi từ database
         holder.btnLike.setText("👍 Thích (" + comment.getLikeCount() + ")");
         holder.btnDislike.setText("👎 Ghét (" + comment.getDislikeCount() + ")");
         holder.btnReply.setText("💬 Phản hồi (" + comment.getReplyCount() + ")");
 
-        // Khởi tạo RecyclerView con cho dòng này
+        // Cài đặt danh sách phản hồi con thụt lề dọc
         holder.rvReplies.setLayoutManager(new LinearLayoutManager(context));
         ReplyAdapter replyAdapter = new ReplyAdapter();
         holder.rvReplies.setAdapter(replyAdapter);
 
-        // Reset lại bộ nhớ đệm cục bộ khi ViewHolder này được tái sử dụng để tránh lỗi cuộn lặp data
-        holder.fullRepliesList.clear();
-        holder.currentDisplayedCount = 0;
+        // Khởi tạo cache nếu chưa tồn tại
+        if (!repliesCache.containsKey(commentId)) {
+            repliesCache.put(commentId, new ArrayList<>());
+            displayedCountCache.put(commentId, 0);
+        }
 
-        replyAdapter.setOnReplyToReplyClickListener(new ReplyAdapter.OnReplyToReplyClickListener() {
-            @Override
-            public void onReplyToReplyClick(Comment childComment) {
-                if (replyListener != null) {
-                    Comment ghostComment = new Comment();
-                    ghostComment.setCommentId(comment.getCommentId()); // Gắn ID của cha lớn
-                    ghostComment.setUserId(childComment.getUserId());  // Gắn ID của đứa con vừa được chọn để tag
-                    replyListener.onReplyClick(ghostComment);
-                }
+        List<Comment> cachedReplies = repliesCache.get(commentId);
+        int currentDisplayedCount = displayedCountCache.get(commentId);
+        int totalRepliesCount = comment.getReplyCount();
+
+        // Khôi phục trạng thái từ bộ nhớ đệm khi ViewHolder bị cuộn lặp
+        if (currentDisplayedCount > 0 && !cachedReplies.isEmpty()) {
+            holder.rvReplies.setVisibility(View.VISIBLE);
+            int endBound = Math.min(currentDisplayedCount, cachedReplies.size());
+            replyAdapter.setReplies(new ArrayList<>(cachedReplies.subList(0, endBound)));
+
+            int remaining = totalRepliesCount - currentDisplayedCount;
+            if (remaining > 0) {
+                holder.tvLoadMoreReplies.setText("—— Xem thêm " + Math.min(10, remaining) + " phản hồi ——");
+            } else {
+                holder.tvLoadMoreReplies.setText("—— Thu gọn phản hồi ——");
+            }
+            holder.tvLoadMoreReplies.setVisibility(View.VISIBLE);
+        } else {
+            holder.rvReplies.setVisibility(View.GONE);
+            replyAdapter.setReplies(new ArrayList<>());
+            if (totalRepliesCount > 0) {
+                holder.tvLoadMoreReplies.setVisibility(View.VISIBLE);
+                holder.tvLoadMoreReplies.setText("—— Xem phản hồi (" + totalRepliesCount + ") ——");
+            } else {
+                holder.tvLoadMoreReplies.setVisibility(View.GONE);
+            }
+        }
+
+        replyAdapter.setOnReplyToReplyClickListener(childComment -> {
+            if (replyListener != null) {
+                Comment ghostComment = new Comment();
+                ghostComment.setCommentId(comment.getCommentId());
+                ghostComment.setUserId(childComment.getUserId());
+                replyListener.onReplyClick(ghostComment);
             }
         });
 
-        // Định cấu hình chữ cho nút Xem thêm ban đầu
-        int totalRepliesCount = comment.getReplyCount();
-        if (totalRepliesCount > 0) {
-            holder.tvLoadMoreReplies.setVisibility(View.VISIBLE);
-            int showAmount = Math.min(10, totalRepliesCount);
-            holder.tvLoadMoreReplies.setText("—— Xem thêm " + showAmount + " phản hồi ——");
-        } else {
-            holder.tvLoadMoreReplies.setVisibility(View.GONE);
-            holder.rvReplies.setVisibility(View.GONE);
-        }
-
-        // Lấy ID của người dùng hiện tại đang đăng nhập máy từ SharedPreferences
         int currentUserId = SharedPrefsManager.getUserId(context);
 
-        // Sự kiện khi bấm nút LIKE (gửi type = 1 lên server)
         holder.btnLike.setOnClickListener(v -> {
             if (currentUserId == -1) {
                 Toast.makeText(context, "Vui lòng đăng nhập để tương tác!", Toast.LENGTH_SHORT).show();
@@ -126,7 +145,6 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
             executeInteraction(holder, comment.getCommentId(), currentUserId, 1);
         });
 
-        // Sự kiện khi bấm nút DISLIKE (gửi type = -1 lên server)
         holder.btnDislike.setOnClickListener(v -> {
             if (currentUserId == -1) {
                 Toast.makeText(context, "Vui lòng đăng nhập để tương tác!", Toast.LENGTH_SHORT).show();
@@ -135,42 +153,31 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
             executeInteraction(holder, comment.getCommentId(), currentUserId, -1);
         });
 
-        // XỬ LÝ SỰ KIỆN BẤM NÚT PHẢN HỒI (REPLY)
         holder.btnReply.setOnClickListener(v -> {
             if (replyListener != null) {
                 replyListener.onReplyClick(comment);
             }
         });
 
-        // ĐỔI NÚT BÁO CÁO THÀNH NÚT XÓA NẾU LÀ CHÍNH CHỦ
         if (comment.getUserId() == currentUserId && currentUserId != -1) {
             holder.btnReport.setText("🗑️ Xóa");
-            holder.btnReport.setTextColor(Color.parseColor("#F44336")); // Màu đỏ trực quan
-
-            holder.btnReport.setOnClickListener(v -> {
-                new AlertDialog.Builder(context)
-                        .setTitle("Xóa bình luận")
-                        .setMessage("Bạn có chắc chắn muốn xóa bình luận này không?")
-                        .setPositiveButton("Xóa", (dialog, which) -> {
-                            executeDeleteComment(comment.getCommentId(), currentUserId, context, holder.getAdapterPosition());
-                        })
-                        .setNegativeButton("Hủy", null)
-                        .show();
-            });
+            holder.btnReport.setTextColor(Color.parseColor("#F44336"));
+            holder.btnReport.setOnClickListener(v -> new AlertDialog.Builder(context)
+                    .setTitle("Xóa bình luận")
+                    .setMessage("Bạn có chắc chắn muốn xóa bình luận này không?")
+                    .setPositiveButton("Xóa", (dialog, which) -> executeDeleteComment(comment.getCommentId(), currentUserId, context, holder.getAdapterPosition()))
+                    .setNegativeButton("Hủy", null)
+                    .show());
         } else {
-            // Nếu không phải chính chủ -> Giữ nguyên giao diện và logic Báo cáo (Report) cũ
             holder.btnReport.setText("⚠️ Báo cáo");
             holder.btnReport.setTextColor(Color.parseColor("#E91E63"));
-
             holder.btnReport.setOnClickListener(v -> {
                 if (currentUserId == -1) {
                     Toast.makeText(context, "Vui lòng đăng nhập để báo cáo!", Toast.LENGTH_SHORT).show();
                     return;
                 }
-
                 View dialogView = LayoutInflater.from(context).inflate(R.layout.dialog_report, null);
                 EditText edtReason = dialogView.findViewById(R.id.edtReportReason);
-
                 new AlertDialog.Builder(context)
                         .setTitle("Báo cáo bình luận xấu")
                         .setView(dialogView)
@@ -187,62 +194,55 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
             });
         }
 
-        // XỬ LÝ SỰ KIỆN CLICK XEM THÊM 10 PHẢN HỒI HOẶC THU GỌN
         holder.tvLoadMoreReplies.setOnClickListener(v -> {
-            if (holder.fullRepliesList.isEmpty()) {
-                ApiClient.getApiService().getRepliesByParentId(comment.getCommentId())
+            List<Comment> currentList = repliesCache.get(commentId);
+            if (currentList == null || currentList.isEmpty()) {
+                ApiClient.getApiService().getRepliesByParentId(commentId)
                         .enqueue(new Callback<List<Comment>>() {
                             @Override
                             public void onResponse(Call<List<Comment>> call, Response<List<Comment>> response) {
                                 if (response.isSuccessful() && response.body() != null) {
-                                    holder.fullRepliesList = response.body();
-                                    holder.currentDisplayedCount = 0;
-                                    paginateReplies(holder, replyAdapter, totalRepliesCount);
+                                    repliesCache.put(commentId, response.body());
+                                    paginateReplies(commentId, holder, replyAdapter, totalRepliesCount);
                                 }
                             }
-
-                            @Override
-                            public void onFailure(Call<List<Comment>> call, Throwable t) {
-                                Log.e("YUH_TEST", "Không thể lấy danh sách phản hồi con: " + t.getMessage());
-                            }
+                            @Override public void onFailure(Call<List<Comment>> call, Throwable t) {}
                         });
             } else {
-                paginateReplies(holder, replyAdapter, totalRepliesCount);
+                paginateReplies(commentId, holder, replyAdapter, totalRepliesCount);
             }
         });
     }
 
-    // HÀM LỌC PHÂN TRANG VÀ QUAY VÒNG LẶP BAN ĐẦU
-    private void paginateReplies(CommentViewHolder holder, ReplyAdapter replyAdapter, int totalCount) {
-        if (holder.currentDisplayedCount >= holder.fullRepliesList.size()) {
-            holder.currentDisplayedCount = 0;
+    private void paginateReplies(int commentId, CommentViewHolder holder, ReplyAdapter replyAdapter, int totalCount) {
+        List<Comment> fullList = repliesCache.get(commentId);
+        int currentCount = displayedCountCache.get(commentId);
+
+        if (currentCount >= fullList.size()) {
+            displayedCountCache.put(commentId, 0);
             holder.rvReplies.setVisibility(View.GONE);
             replyAdapter.setReplies(new ArrayList<>());
-
-            int nextAmount = Math.min(10, totalCount);
-            holder.tvLoadMoreReplies.setText("—— Xem thêm " + nextAmount + " phản hồi ——");
+            holder.tvLoadMoreReplies.setText("—— Xem phản hồi (" + totalCount + ") ——");
             return;
         }
 
-        holder.currentDisplayedCount += 10;
-        if (holder.currentDisplayedCount > holder.fullRepliesList.size()) {
-            holder.currentDisplayedCount = holder.fullRepliesList.size();
+        currentCount += 10;
+        if (currentCount > fullList.size()) {
+            currentCount = fullList.size();
         }
+        displayedCountCache.put(commentId, currentCount);
 
-        List<Comment> subList = holder.fullRepliesList.subList(0, holder.currentDisplayedCount);
         holder.rvReplies.setVisibility(View.VISIBLE);
-        replyAdapter.setReplies(subList);
+        replyAdapter.setReplies(new ArrayList<>(fullList.subList(0, currentCount)));
 
-        int remaining = totalCount - holder.currentDisplayedCount;
+        int remaining = totalCount - currentCount;
         if (remaining > 0) {
-            int nextAmount = Math.min(10, remaining);
-            holder.tvLoadMoreReplies.setText("—— Xem thêm " + nextAmount + " phản hồi ——");
+            holder.tvLoadMoreReplies.setText("—— Xem thêm " + Math.min(10, remaining) + " phản hồi ——");
         } else {
             holder.tvLoadMoreReplies.setText("—— Thu gọn phản hồi ——");
         }
     }
 
-    // Hàm thực hiện gọi API Like/Dislike
     private void executeInteraction(CommentViewHolder holder, int commentId, int userId, int type) {
         ApiClient.getApiService().interactWithComment(commentId, userId, type)
                 .enqueue(new Callback<Comment>() {
@@ -252,19 +252,12 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
                             Comment updatedComment = response.body();
                             holder.btnLike.setText("👍 Thích (" + updatedComment.getLikeCount() + ")");
                             holder.btnDislike.setText("👎 Ghét (" + updatedComment.getDislikeCount() + ")");
-                        } else {
-                            Log.e("YUH_TEST", "Tương tác thất bại. Mã lỗi: " + response.code());
                         }
                     }
-
-                    @Override
-                    public void onFailure(Call<Comment> call, Throwable t) {
-                        Log.e("YUH_TEST", "Lỗi mạng khi tương tác: " + t.getMessage());
-                    }
+                    @Override public void onFailure(Call<Comment> call, Throwable t) {}
                 });
     }
 
-    // HÀM THỰC HIỆN GỌI API XÓA BÌNH LUẬN CHÍNH CHỦ
     private void executeDeleteComment(int commentId, int userId, Context context, int position) {
         ApiClient.getApiService().deleteComment(commentId, userId)
                 .enqueue(new Callback<Comment>() {
@@ -272,25 +265,17 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
                     public void onResponse(Call<Comment> call, Response<Comment> response) {
                         if (response.isSuccessful()) {
                             Toast.makeText(context, "Đã xóa bình luận!", Toast.LENGTH_SHORT).show();
-
                             if (position != RecyclerView.NO_POSITION && position < commentList.size()) {
                                 commentList.remove(position);
                                 notifyItemRemoved(position);
                                 notifyItemRangeChanged(position, commentList.size());
                             }
-                        } else {
-                            Toast.makeText(context, "Không thể xóa bình luận lúc này.", Toast.LENGTH_SHORT).show();
                         }
                     }
-
-                    @Override
-                    public void onFailure(Call<Comment> call, Throwable t) {
-                        Log.e("YUH_TEST", "Lỗi kết nối mạng khi xóa bình luận: " + t.getMessage());
-                    }
+                    @Override public void onFailure(Call<Comment> call, Throwable t) {}
                 });
     }
 
-    // Hàm thực hiện gửi báo cáo lên server
     private void executeReport(int commentId, int userId, String reason, Context context) {
         ApiClient.getApiService().reportComment(commentId, userId, reason)
                 .enqueue(new Callback<String>() {
@@ -298,15 +283,9 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
                     public void onResponse(Call<String> call, Response<String> response) {
                         if (response.isSuccessful()) {
                             Toast.makeText(context, "Cảm ơn bạn đã báo cáo!", Toast.LENGTH_SHORT).show();
-                        } else {
-                            Toast.makeText(context, "Bạn đã báo cáo bình luận này rồi.", Toast.LENGTH_SHORT).show();
                         }
                     }
-
-                    @Override
-                    public void onFailure(Call<String> call, Throwable t) {
-                        Log.e("YUH_TEST", "Lỗi kết nối mạng khi báo cáo: " + t.getMessage());
-                    }
+                    @Override public void onFailure(Call<String> call, Throwable t) {}
                 });
     }
 
@@ -316,18 +295,9 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
     }
 
     static class CommentViewHolder extends RecyclerView.ViewHolder {
-        TextView tvUserComment, tvCommentContent;
-        TextView btnLike, btnDislike;
-        TextView btnReply, btnReport;
-
-        // --- NÂNG CẤP: THÊM CÁC TRƯỜNG THÔNG TIN MỚI VÀO VIEW HOLDER ---
+        TextView tvUserComment, tvCommentContent, btnLike, btnDislike, btnReply, btnReport, tvCommentChapterTag, tvLoadMoreReplies;
         ImageView imgUserAvatar;
-        TextView tvCommentChapterTag;
-
         RecyclerView rvReplies;
-        TextView tvLoadMoreReplies;
-        List<Comment> fullRepliesList = new ArrayList<>();
-        int currentDisplayedCount = 0;
 
         public CommentViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -337,17 +307,16 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
             btnDislike = itemView.findViewById(R.id.btnDislikeComment);
             btnReply = itemView.findViewById(R.id.btnReplyComment);
             btnReport = itemView.findViewById(R.id.btnReportComment);
-
-            // Ánh xạ thành phần giao diện mới nâng cấp
             imgUserAvatar = itemView.findViewById(R.id.imgUserAvatar);
             tvCommentChapterTag = itemView.findViewById(R.id.tvCommentChapterTag);
-
             rvReplies = itemView.findViewById(R.id.recyclerViewReplies);
             tvLoadMoreReplies = itemView.findViewById(R.id.tvLoadMoreReplies);
         }
     }
 
     public void resetRepliesCache(int parentCommentId) {
+        repliesCache.remove(parentCommentId);
+        displayedCountCache.put(parentCommentId, 0);
         for (int i = 0; i < commentList.size(); i++) {
             if (commentList.get(i).getCommentId() == parentCommentId) {
                 notifyItemChanged(i);

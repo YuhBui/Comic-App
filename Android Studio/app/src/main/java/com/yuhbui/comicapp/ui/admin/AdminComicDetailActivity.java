@@ -37,18 +37,13 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
 
     private int comicId;
     private ImageView imgCover;
-    private TextView tvTitle, tvAuthor, tvStatus, tvDesc;
-    private Button btnEdit, btnDelete;
-    private RecyclerView rvComments;
-    private AdminCommentAdapter commentAdapter;
-    private Comic currentComic;
+    private TextView tvTitle, tvAuthor, tvStatus, tvDesc, tvGenre, tvRelease, tvViews, tvFavorites, tvRating;
+    private Button btnEdit, btnDelete, btnAdminSendComment, btnAdminAddChapter;
     private EditText edtAdminCommentInput;
-    private Button btnAdminSendComment;
-
-    // Các thành phần xử lý quản trị Chương truyện
-    private RecyclerView rvChapters;
+    private RecyclerView rvComments, rvChapters;
+    private AdminCommentAdapter commentAdapter;
     private AdminChapterAdapter chapterAdapter;
-    private Button btnAdminAddChapter;
+    private Comic currentComic;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,21 +62,23 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
         headerLogo.setTextColor(Color.parseColor("#E74C3C"));
         headerMenu.setOnClickListener(v -> finish());
 
-        // Ánh xạ View chính
+        // Ánh xạ toàn bộ View bao gồm khối thông tin nâng cấp mở rộng
         imgCover = findViewById(R.id.imgAdminDetailCover);
         tvTitle = findViewById(R.id.tvAdminDetailTitle);
         tvAuthor = findViewById(R.id.tvAdminDetailAuthor);
         tvStatus = findViewById(R.id.tvAdminDetailStatus);
+        tvGenre = findViewById(R.id.tvAdminDetailGenre);
+        tvRelease = findViewById(R.id.tvAdminDetailRelease);
+        tvViews = findViewById(R.id.tvAdminDetailViews);
+        tvFavorites = findViewById(R.id.tvAdminDetailFavorites);
+        tvRating = findViewById(R.id.tvAdminDetailRating);
         tvDesc = findViewById(R.id.tvAdminDetailDesc);
+
         btnEdit = findViewById(R.id.btnAdminEditComicDetail);
         btnDelete = findViewById(R.id.btnAdminDeleteComicDetail);
         rvComments = findViewById(R.id.rvAdminDetailComments);
-
-        // Ánh xạ phần ô nhập và nút gửi bình luận của Admin từ Layout XML
         edtAdminCommentInput = findViewById(R.id.edtAdminCommentInput);
         btnAdminSendComment = findViewById(R.id.btnAdminSendComment);
-
-        // ĐÃ SỬA: Ánh xạ thành phần Quản lý chương truyện từ giao diện Layout XML
         rvChapters = findViewById(R.id.rvAdminDetailChapters);
         btnAdminAddChapter = findViewById(R.id.btnAdminAddChapter);
 
@@ -90,12 +87,11 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
         commentAdapter = new AdminCommentAdapter(this);
         rvComments.setAdapter(commentAdapter);
 
-        // ĐÃ SỬA: Khởi tạo RecyclerView cấu hình Adapter Chương truyện
+        // Khởi tạo RecyclerView cấu hình Adapter Chương truyện
         rvChapters.setLayoutManager(new LinearLayoutManager(this));
         chapterAdapter = new AdminChapterAdapter(new AdminChapterAdapter.OnChapterAdminActionListener() {
             @Override
             public void onClick(Map<String, Object> chapter) {
-                // Click xem chi tiết -> Mở màn hình quản trị nội dung các trang ảnh truyện
                 Number idNum = (Number) chapter.get("chapterId");
                 int id = idNum != null ? idNum.intValue() : -1;
 
@@ -107,21 +103,18 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
 
             @Override
             public void onEdit(Map<String, Object> chapter) {
-                // Giữ lâu dòng chương truyện bất kỳ để mở Form Chỉnh sửa hoặc Xóa chương
                 showChapterFormDialog(chapter);
             }
 
             @Override
             public void onDelete(int chapterId, int position) {
-                // Đã được tích hợp trực tiếp vào trong Dialog Form để giao diện sạch đẹp
+                // Đã được tích hợp trực tiếp vào danh sách chương hàng ngang hoặc Dialog
             }
         });
         rvChapters.setAdapter(chapterAdapter);
 
-        // Sự kiện khi Admin bấm nút thêm chương mới
         btnAdminAddChapter.setOnClickListener(v -> showChapterFormDialog(null));
 
-        // Xử lý sự kiện khi Admin bấm nút gửi bình luận trực tiếp tại đây
         btnAdminSendComment.setOnClickListener(v -> {
             String content = edtAdminCommentInput.getText().toString().trim();
             if (content.isEmpty()) {
@@ -147,19 +140,12 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
                         Toast.makeText(AdminComicDetailActivity.this, "Đăng bình luận thành công!", Toast.LENGTH_SHORT).show();
                         edtAdminCommentInput.setText("");
                         loadCommentsData();
-                    } else {
-                        Toast.makeText(AdminComicDetailActivity.this, "Lỗi đăng bình luận từ server!", Toast.LENGTH_SHORT).show();
                     }
                 }
-
-                @Override
-                public void onFailure(Call<Comment> call, Throwable t) {
-                    Toast.makeText(AdminComicDetailActivity.this, "Lỗi mạng, không thể gửi bình luận!", Toast.LENGTH_SHORT).show();
-                }
+                @Override public void onFailure(Call<Comment> call, Throwable t) {}
             });
         });
 
-        // Sự kiện click nút Sửa truyện
         btnEdit.setOnClickListener(v -> {
             if (currentComic == null) return;
             Intent intent = new Intent(this, AdminEditComicActivity.class);
@@ -172,12 +158,11 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
             startActivity(intent);
         });
 
-        // Sự kiện click nút Xóa truyện
         btnDelete.setOnClickListener(v -> {
             if (currentComic == null) return;
             new AlertDialog.Builder(this)
                     .setTitle("Xác nhận xóa truyện")
-                    .setMessage("Bạn có chắc chắn muốn xóa vĩnh viễn bộ truyện '" + currentComic.getTitle() + "' không? Hành động này sẽ xóa tất cả các chương và bình luận liên quan!")
+                    .setMessage("Bạn có chắc chắn muốn xóa vĩnh viễn bộ truyện '" + currentComic.getTitle() + "' không?")
                     .setPositiveButton("Xóa vĩnh viễn", (dialog, which) -> {
                         ApiClient.getApiService().adminDeleteComic(comicId).enqueue(new Callback<ResponseBody>() {
                             @Override
@@ -185,14 +170,9 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
                                 if (response.isSuccessful()) {
                                     Toast.makeText(AdminComicDetailActivity.this, "Đã xóa truyện khỏi hệ thống thành công!", Toast.LENGTH_SHORT).show();
                                     finish();
-                                } else {
-                                    Toast.makeText(AdminComicDetailActivity.this, "Xóa thất bại từ phía Server!", Toast.LENGTH_SHORT).show();
                                 }
                             }
-                            @Override
-                            public void onFailure(Call<ResponseBody> call, Throwable t) {
-                                Toast.makeText(AdminComicDetailActivity.this, "Lỗi mạng khi thực hiện xóa truyện!", Toast.LENGTH_SHORT).show();
-                            }
+                            @Override public void onFailure(Call<ResponseBody> call, Throwable t) {}
                         });
                     })
                     .setNegativeButton("Hủy", null).show();
@@ -203,11 +183,10 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
     protected void onResume() {
         super.onResume();
         loadComicDetailData();
-        loadChaptersData(); // Tải lại danh sách chương khi màn hình hiển thị hoặc quay lại
+        loadChaptersData();
         loadCommentsData();
     }
 
-    // ĐA CHỨC NĂNG DIALOG: Thêm mới, Chỉnh sửa, Xóa chương truyện tích hợp chung một form nhập liệu
     private void showChapterFormDialog(@Nullable Map<String, Object> chapterData) {
         LinearLayout layout = new LinearLayout(this);
         layout.setOrientation(LinearLayout.VERTICAL);
@@ -230,7 +209,6 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
             edtNum.setText(String.valueOf(chapterData.get("chapterNumber")));
             edtTitle.setText((String) chapterData.get("title"));
 
-            // Nếu luồng sửa: Bổ sung thêm nút XÓA CHƯƠNG ở góc trái thanh Dialog
             builder.setNeutralButton("XÓA CHƯƠNG", (dialog, which) -> {
                 Number idNum = (Number) chapterData.get("chapterId");
                 int chId = idNum != null ? idNum.intValue() : -1;
@@ -251,26 +229,20 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
         builder.setPositiveButton("LƯU THÔNG TIN", (dialog, which) -> {
             String numStr = edtNum.getText().toString().trim();
             String title = edtTitle.getText().toString().trim();
-            if (numStr.isEmpty()) {
-                Toast.makeText(AdminComicDetailActivity.this, "Số thứ tự chương không được rỗng!", Toast.LENGTH_SHORT).show();
-                return;
-            }
+            if (numStr.isEmpty()) return;
 
             double num = Double.parseDouble(numStr);
             if (!isEdit) {
-                // CHẠY TIẾN TRÌNH TẠO MỚI CHƯƠNG TRUYỆN
                 ApiClient.getApiService().adminCreateChapter(comicId, num, title).enqueue(new Callback<Map<String, Object>>() {
                     @Override
                     public void onResponse(Call<Map<String, Object>> call, Response<Map<String, Object>> response) {
                         if (response.isSuccessful()) {
-                            Toast.makeText(AdminComicDetailActivity.this, "Đã thêm chương truyện mới!", Toast.LENGTH_SHORT).show();
                             loadChaptersData();
                         }
                     }
                     @Override public void onFailure(Call<Map<String, Object>> call, Throwable t) {}
                 });
             } else {
-                // CHẠY TIẾN TRÌNH CẬP NHẬT CHƯƠNG TRUYỆN
                 Number idNum = (Number) chapterData.get("chapterId");
                 int chId = idNum != null ? idNum.intValue() : -1;
 
@@ -278,7 +250,6 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
                     @Override
                     public void onResponse(Call<Map<String, Object>> call, Response<Map<String, Object>> response) {
                         if (response.isSuccessful()) {
-                            Toast.makeText(AdminComicDetailActivity.this, "Cập nhật chương thành công!", Toast.LENGTH_SHORT).show();
                             loadChaptersData();
                         }
                     }
@@ -298,8 +269,19 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
                     currentComic = response.body().getComic();
                     tvTitle.setText(currentComic.getTitle());
                     tvAuthor.setText("Tác giả: " + currentComic.getAuthor());
-                    tvStatus.setText(currentComic.getStatus());
+                    tvStatus.setText("Tình trạng: " + currentComic.getStatus());
                     tvDesc.setText(currentComic.getDescription());
+
+                    tvViews.setText("👁️ " + currentComic.getViewCount());
+                    tvRating.setText("⭐ " + currentComic.getRating() + "/5");
+                    tvFavorites.setText("❤️ " + currentComic.getFollowCount());
+                    tvRelease.setText("Phát hành: " + (currentComic.getCreatedAt() != null ? currentComic.getCreatedAt() : "Đang cập nhật"));
+
+                    if (response.body().getGenres() != null && !response.body().getGenres().isEmpty()) {
+                        tvGenre.setText("Thể loại: " + response.body().getGenres());
+                    } else {
+                        tvGenre.setText("Thể loại: Đang cập nhật");
+                    }
 
                     if (!AdminComicDetailActivity.this.isDestroyed()) {
                         Glide.with(AdminComicDetailActivity.this)
@@ -313,7 +295,6 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
         });
     }
 
-    // ĐÃ BỔ SUNG: Hàm tải danh sách chương truyện từ Backend đổ vào Adapter
     private void loadChaptersData() {
         ApiClient.getApiService().adminGetChapters(comicId).enqueue(new Callback<List<Map<String, Object>>>() {
             @Override
@@ -338,11 +319,55 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
         });
     }
 
+    // ĐÃ SỬA: Thực hiện đúng chức năng Gắn tag phản hồi khi nhấn nút Phản hồi / Trả lời
     @Override
     public void onReply(Map<String, Object> comment) {
-        if (comment.get("commentId") != null) {
-            Toast.makeText(this, "Chức năng trả lời bình luận ID: " + comment.get("commentId"), Toast.LENGTH_SHORT).show();
+        String username = (String) comment.get("username");
+        if (username != null) {
+            edtAdminCommentInput.setText("@" + username + " ");
+            edtAdminCommentInput.requestFocus();
+            edtAdminCommentInput.setSelection(edtAdminCommentInput.getText().length());
         }
+    }
+
+    // ĐÃ BỔ SUNG: Chức năng xử lý khi bấm vào dòng văn bản Báo cáo sẽ hiển thị danh sách lý do
+    @Override
+    public void onShowReports(int commentId) {
+        ApiClient.getApiService().adminGetCommentReports(commentId).enqueue(new Callback<List<String>>() {
+            @Override
+            public void onResponse(Call<List<String>> call, Response<List<String>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    List<String> reports = response.body();
+                    if (reports.isEmpty()) {
+                        Toast.makeText(AdminComicDetailActivity.this, "Bình luận này chưa có lượt báo cáo chi tiết nào!", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    CharSequence[] items = reports.toArray(new CharSequence[0]);
+                    new AlertDialog.Builder(AdminComicDetailActivity.this)
+                            .setTitle("Nội dung người dùng báo cáo (" + reports.size() + ")")
+                            .setItems(items, null)
+                            .setPositiveButton("Đóng", null).show();
+                }
+            }
+            @Override public void onFailure(Call<List<String>> call, Throwable t) {}
+        });
+    }
+
+    // ĐÃ BỔ SUNG: Kích hoạt chức năng tương tác nút Like/Dislike trực tiếp dành cho Admin
+    @Override
+    public void onInteract(int commentId, int type, int position) {
+        int currentUserId = SharedPrefsManager.getUserId(this);
+        if (currentUserId == -1) return;
+
+        ApiClient.getApiService().interactWithComment(commentId, currentUserId, type).enqueue(new Callback<Comment>() {
+            @Override
+            public void onResponse(Call<Comment> call, Response<Comment> response) {
+                if (response.isSuccessful()) {
+                    loadCommentsData(); // Tải lại danh sách để cập nhật số lượt tương tác nhảy ngay lập tức
+                }
+            }
+            @Override public void onFailure(Call<Comment> call, Throwable t) {}
+        });
     }
 
     @Override
@@ -357,8 +382,6 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
                             if (response.isSuccessful()) {
                                 Toast.makeText(AdminComicDetailActivity.this, "Đã xóa bình luận khỏi hệ thống!", Toast.LENGTH_SHORT).show();
                                 loadCommentsData();
-                            } else {
-                                Toast.makeText(AdminComicDetailActivity.this, "Xóa thất bại từ phía Server!", Toast.LENGTH_SHORT).show();
                             }
                         }
                         @Override public void onFailure(Call<Map<String, Object>> call, Throwable t) {}
