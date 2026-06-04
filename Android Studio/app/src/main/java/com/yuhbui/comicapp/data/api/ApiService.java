@@ -139,10 +139,7 @@ public interface ApiService {
 
     @Multipart
     @POST("/api/users/upload-avatar/{id}")
-    Call<java.util.Map<String, String>> uploadAvatar(
-            @Path("id") int userId,
-            @Part MultipartBody.Part file
-    );
+    Call<java.util.Map<String, String>> uploadAvatar(@Path("id") int userId, @Part MultipartBody.Part file);
 
     @GET("/api/comics/search")
     Call<List<Comic>> searchComics(@Query("keyword") String keyword);
@@ -210,12 +207,7 @@ public interface ApiService {
 
     @Multipart
     @POST("/api/admin/chapters/comic/{comicId}/with-images")
-    Call<Map<String, Object>> adminCreateChapterWithImages(
-            @Path("comicId") Integer comicId,
-            @Part("chapterNumber") RequestBody chapterNumber,
-            @Part("title") RequestBody title,
-            @Part List<MultipartBody.Part> files
-    );
+    Call<Map<String, Object>> adminCreateChapterWithImages(@Path("comicId") Integer comicId, @Part("chapterNumber") RequestBody chapterNumber, @Part("title") RequestBody title, @Part List<MultipartBody.Part> files);
 
     @PUT("/api/admin/chapters/pages/reorder")
     Call<Map<String, Object>> adminReorderPages(@Body List<Integer> imageIds);
@@ -227,17 +219,36 @@ public interface ApiService {
     Call<List<Map<String, Object>>> adminGetChapterComments(@Path("chapterId") Integer chapterId);
 
     @GET("/api/admin/users")
-    Call<List<User>> adminGetUsers(
+    Call<Map<String, Object>> adminGetUsers(
             @Query("keyword") String keyword,
-            @Query("role") String role
+            @Query("role") String role,
+            @Query("page") int page,
+            @Query("size") int size
     );
 
+    @Multipart
     @POST("/api/admin/users")
-    Call<User> adminCreateUser(@Body User user);
+    Call<User> adminCreateUser(
+            @Part MultipartBody.Part displayName,
+            @Part MultipartBody.Part email,
+            @Part MultipartBody.Part password,
+            @Part MultipartBody.Part role,
+            @Part MultipartBody.Part file
+    );
 
     @PUT("/api/admin/users/{id}")
     Call<User> adminUpdateUser(@Path("id") int id, @Body User user);
 
+    @Multipart
+    @PUT("/api/admin/users/{id}")
+    Call<User> adminUpdateUserWithAvatar(
+            @Path("id") int id,
+            @Part MultipartBody.Part displayName,
+            @Part MultipartBody.Part email,
+            @Part MultipartBody.Part password,
+            @Part MultipartBody.Part role,
+            @Part MultipartBody.Part file
+    );
     @PUT("/api/admin/users/{id}/toggle-ban")
     Call<Map<String, Object>> adminToggleBanUser(@Path("id") int id);
 

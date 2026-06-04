@@ -48,7 +48,42 @@
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvAdminManageUsers"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:padding="8dp"
         android:scrollbars="vertical"/>
+
+    <LinearLayout
+        android:id="@+id/layoutPaginationBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:padding="6dp"
+        android:background="#FFFFFF">
+
+        <Button
+            android:id="@+id/btnPrevPage"
+            android:layout_width="44dp"
+            android:layout_height="40dp"
+            android:text="&lt;"
+            android:textSize="14sp"
+            style="?android:attr/borderlessButtonStyle"/>
+
+        <LinearLayout
+            android:id="@+id/layoutPageNumbersContainer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"/>
+
+        <Button
+            android:id="@+id/btnNextPage"
+            android:layout_width="44dp"
+            android:layout_height="40dp"
+            android:text="&gt;"
+            android:textSize="14sp"
+            style="?android:attr/borderlessButtonStyle"/>
+    </LinearLayout>
+
 </LinearLayout>

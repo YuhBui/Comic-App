@@ -50,13 +50,15 @@ public class AdminUserAdapter extends RecyclerView.Adapter<AdminUserAdapter.User
         holder.tvRole.setText(user.getRole());
         holder.tvStatus.setText(user.getStatus());
 
-        // Thay đổi màu sắc trạng thái trực quan
+        // Khôi phục trạng thái hiển thị và cập nhật viền đỏ cảnh báo tài khoản bị Ban
         if ("Banned".equalsIgnoreCase(user.getStatus())) {
             holder.tvStatus.setTextColor(android.graphics.Color.RED);
             holder.btnBan.setText("✅ Unban");
+            holder.itemView.setBackgroundResource(R.drawable.bg_banned_user_border);
         } else {
             holder.tvStatus.setTextColor(android.graphics.Color.parseColor("#4CAF50"));
             holder.btnBan.setText("🚷 Ban");
+            holder.itemView.setBackgroundResource(R.drawable.bg_normal_user);
         }
 
         Glide.with(holder.itemView.getContext())

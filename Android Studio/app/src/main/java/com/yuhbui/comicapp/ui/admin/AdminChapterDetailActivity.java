@@ -201,6 +201,8 @@ public class AdminChapterDetailActivity extends AppCompatActivity implements Adm
                     edtCommentInput.setText("");
                     Toast.makeText(AdminChapterDetailActivity.this, "Đã đăng bình luận chương thành công!", Toast.LENGTH_SHORT).show();
                     loadChapterComments();
+                } else if (response.code() == 403) {
+                    Toast.makeText(AdminChapterDetailActivity.this, "Tài khoản đang bị khóa chức năng bình luận!", Toast.LENGTH_LONG).show();
                 }
             }
             @Override public void onFailure(Call<Comment> call, Throwable t) {}

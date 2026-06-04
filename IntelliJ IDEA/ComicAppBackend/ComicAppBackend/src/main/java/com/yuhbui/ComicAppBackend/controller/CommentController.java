@@ -3,12 +3,12 @@ package com.yuhbui.ComicAppBackend.controller;
 import com.yuhbui.ComicAppBackend.entity.Comment;
 import com.yuhbui.ComicAppBackend.entity.CommentInteraction;
 import com.yuhbui.ComicAppBackend.entity.CommentReport;
-import com.yuhbui.ComicAppBackend.dto.CommentResponseDTO; // Import DTO mới tạo
+import com.yuhbui.ComicAppBackend.dto.CommentResponseDTO;
 import com.yuhbui.ComicAppBackend.repository.CommentRepository;
 import com.yuhbui.ComicAppBackend.repository.CommentInteractionRepository;
 import com.yuhbui.ComicAppBackend.repository.CommentReportRepository;
-import com.yuhbui.ComicAppBackend.repository.UserRepository;       // Bổ sung repo user
-import com.yuhbui.ComicAppBackend.repository.ChapterRepository;    // Bổ sung repo chapter
+import com.yuhbui.ComicAppBackend.repository.UserRepository;
+import com.yuhbui.ComicAppBackend.repository.ChapterRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -33,12 +33,11 @@ public class CommentController {
     private CommentReportRepository reportRepository;
 
     @Autowired
-    private UserRepository userRepository; // Inject thêm để lấy Tên thật và Avatar
+    private UserRepository userRepository;
 
     @Autowired
-    private ChapterRepository chapterRepository; // Inject thêm để lấy Tên Chapter
+    private ChapterRepository chapterRepository;
 
-    // --- HÀM PHỤ TRỢ: Chuyển đổi từ Comment Entity sang CommentResponseDTO đầy đủ thông tin ---
     private CommentResponseDTO convertToDTO(Comment comment) {
         CommentResponseDTO dto = new CommentResponseDTO();
         dto.setCommentId(comment.getCommentId());
@@ -52,69 +51,67 @@ public class CommentController {
         dto.setIsDeleted(comment.getIsDeleted());
         dto.setCreatedAt(comment.getCreatedAt());
 
-        // 1. Lấy thông tin Tên hiển thị và Avatar từ bảng Users
         userRepository.findById(comment.getUserId()).ifPresent(user -> {
             dto.setUserDisplayName(user.getDisplayName());
             dto.setUserAvatarUrl(user.getAvatarUrl());
         });
 
-        // 2. Lấy tên Chapter tag từ bảng Chapters nếu có gắn ChapterID
         if (comment.getChapterId() != null) {
             chapterRepository.findById(comment.getChapterId()).ifPresent(chapter -> {
                 dto.setChapterName("Chương " + chapter.getChapterNumber());
             });
         } else {
-            dto.setChapterName(""); // Để trống nếu bình luận ở ngoài màn hình chi tiết truyện
+            dto.setChapterName("");
         }
 
         return dto;
     }
 
-    // 1. API lấy bình luận gốc của một truyện (Đã chuyển sang trả về DTO + Lọc sạch IsDeleted)
     @GetMapping("/comic/{comicId}")
     public List<CommentResponseDTO> getCommentsByComic(@PathVariable Integer comicId) {
         List<Comment> rawList = commentRepository.findByComicIdAndParentCommentIdIsNullOrderByCreatedAtDesc(comicId);
-
         return rawList.stream()
                 .filter(c -> c.getIsDeleted() == null || !c.getIsDeleted())
-                .map(this::convertToDTO) // Biến đổi sang DTO
+                .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
 
-    // 2. API lấy các phản hồi (replies) của một bình luận (Đã chuyển sang trả về DTO + Lọc sạch IsDeleted)
     @GetMapping("/{parentCommentId}/replies")
     public List<CommentResponseDTO> getReplies(@PathVariable Integer parentCommentId) {
         List<Comment> rawList = commentRepository.findByParentCommentIdOrderByCreatedAtAsc(parentCommentId);
-
         return rawList.stream()
                 .filter(c -> c.getIsDeleted() == null || !c.getIsDeleted())
-                .map(this::convertToDTO) // Biến đổi sang DTO
+                .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
 
-    // 3. API lấy bình luận gốc của một CHAPTER cụ thể (Đã chuyển sang trả về DTO + Lọc sạch IsDeleted)
     @GetMapping("/chapter/{chapterId}")
     public List<CommentResponseDTO> getCommentsByChapter(@PathVariable Integer chapterId) {
         List<Comment> rawList = commentRepository.findByChapterIdAndParentCommentIdIsNullOrderByCreatedAtDesc(chapterId);
-
         return rawList.stream()
                 .filter(c -> c.getIsDeleted() == null || !c.getIsDeleted())
-                .map(this::convertToDTO) // Biến đổi sang DTO
+                .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
 
-    // 4. API gửi bình luận mới (Hoặc phản hồi nếu truyền parentCommentId)
+    // 4. API GỬI BÌNH LUẬN MỚI (Đmap: ĐÃ TÍCH HỢP TÍNH NĂNG KHÓA CHAT CHO TÀI KHOẢN BỊ BAN)
     @PostMapping("/post")
     public ResponseEntity<?> postComment(@RequestBody Comment comment) {
         if (comment.getContent() == null || comment.getContent().trim().isEmpty()) {
             return ResponseEntity.badRequest().body("Nội dung bình luận không được để trống!");
         }
 
+        // BỔ SUNG: Kiểm tra xem tài khoản này có đang bị BAN (Khóa) hay không
+        Optional<com.yuhbui.ComicAppBackend.entity.User> userOpt = userRepository.findById(comment.getUserId());
+        if (userOpt.isPresent() && "Banned".equalsIgnoreCase(userOpt.get().getStatus())) {
+            // Trả về mã lỗi 403 Forbidden chặn không cho lưu xuống DB
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Tài khoản của bạn đã bị khóa chức năng bình luận do vi phạm quy chế!");
+        }
+
         comment.setCommentId(null);
         comment.setCreatedAt(LocalDateTime.now());
         Comment savedComment = commentRepository.save(comment);
 
-        // Nếu đây là một bình luận phản hồi, tự động tăng số lượng đếm của bình luận cha
         if (savedComment.getParentCommentId() != null) {
             commentRepository.findById(savedComment.getParentCommentId()).ifPresent(parentComment -> {
                 parentComment.setReplyCount(parentComment.getReplyCount() + 1);
@@ -125,7 +122,6 @@ public class CommentController {
         return ResponseEntity.ok(savedComment);
     }
 
-    // 5. API tương tác Like/Dislike bình luận
     @PostMapping("/{commentId}/interact")
     public ResponseEntity<?> interactWithComment(
             @PathVariable Integer commentId,
@@ -175,7 +171,6 @@ public class CommentController {
         return ResponseEntity.ok(comment);
     }
 
-    // 6. API Gửi báo cáo bình luận xấu lên hệ thống
     @PostMapping("/{commentId}/report")
     public ResponseEntity<?> reportComment(
             @PathVariable Integer commentId,
@@ -204,7 +199,6 @@ public class CommentController {
         return ResponseEntity.ok("Báo cáo đã được ghi nhận thành công!");
     }
 
-    // 7. API Xóa bình luận (Chuyển trạng thái IsDeleted thành true và trả về đối tượng)
     @PutMapping("/{commentId}/delete")
     public ResponseEntity<?> deleteComment(
             @PathVariable Integer commentId,

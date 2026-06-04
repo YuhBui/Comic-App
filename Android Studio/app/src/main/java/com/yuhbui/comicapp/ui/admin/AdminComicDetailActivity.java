@@ -140,6 +140,10 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
                         Toast.makeText(AdminComicDetailActivity.this, "Đăng bình luận thành công!", Toast.LENGTH_SHORT).show();
                         edtAdminCommentInput.setText("");
                         loadCommentsData();
+                    } else if (response.code() == 403) {
+                        Toast.makeText(AdminComicDetailActivity.this, "Tài khoản đang bị khóa chức năng bình luận!", Toast.LENGTH_LONG).show();
+                    } else {
+                        Toast.makeText(AdminComicDetailActivity.this, "Lỗi đăng bình luận từ server!", Toast.LENGTH_SHORT).show();
                     }
                 }
                 @Override public void onFailure(Call<Comment> call, Throwable t) {}

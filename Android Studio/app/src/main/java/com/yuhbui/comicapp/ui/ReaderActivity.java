@@ -319,8 +319,9 @@ public class ReaderActivity extends AppCompatActivity {
                         commentAdapter.resetRepliesCache(targetParentCommentId);
                     }
                     targetParentCommentId = null;
-
                     loadChapterComments(currentChapterId);
+                } else if (response.code() == 403) {
+                    Toast.makeText(ReaderActivity.this, "Tài khoản của bạn đang bị khóa chức năng bình luận!", Toast.LENGTH_LONG).show();
                 }
             }
             @Override

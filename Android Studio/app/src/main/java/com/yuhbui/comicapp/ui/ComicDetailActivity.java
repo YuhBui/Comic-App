@@ -22,6 +22,7 @@ import com.yuhbui.comicapp.data.model.Chapter;
 import com.yuhbui.comicapp.data.model.Comic;
 import com.yuhbui.comicapp.data.model.ComicDetailResponse;
 import com.yuhbui.comicapp.data.model.Comment;
+import com.yuhbui.comicapp.data.model.User; // Đã có sẵn model User phục vụ kiểm tra trạng thái
 import com.yuhbui.comicapp.ui.adapters.ChapterAdapter;
 import com.yuhbui.comicapp.ui.adapters.CommentAdapter;
 import com.yuhbui.comicapp.utils.SharedPrefsManager;
@@ -46,6 +47,7 @@ public class ComicDetailActivity extends AppCompatActivity {
     private TextView btnToggleFavorite;
 
     private boolean isCurrentlyFavorite = false;
+    private boolean isUserBanned = false; // BỔ SUNG: Cờ kiểm tra trạng thái cấm chat của tài khoản
 
     // Thành phần xử lý danh sách chương truyện (MVVM)
     private ComicDetailViewModel viewModel;
@@ -102,12 +104,10 @@ public class ComicDetailActivity extends AppCompatActivity {
         headerMenu.setOnClickListener(v -> showHeaderPopupMenu(v));
 
         headerLogo.setOnClickListener(v -> {
-            // Nhấn logo có thể quay về màn hình chính hoặc kết thúc Activity hiện tại
             finish();
         });
 
         headerSearch.setOnClickListener(v -> {
-            // Chuyển hướng về MainActivity và xóa các Activity xếp chồng phía trước
             Intent intent = new Intent(ComicDetailActivity.this, MainActivity.class);
             intent.putExtra("OPEN_SEARCH", true);
             intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
@@ -117,7 +117,6 @@ public class ComicDetailActivity extends AppCompatActivity {
 
         headerNotification.setOnClickListener(v -> Toast.makeText(this, "Mở thông báo", Toast.LENGTH_SHORT).show());
         headerAvatar.setOnClickListener(v -> Toast.makeText(this, "Mở thông tin tài khoản người dùng", Toast.LENGTH_SHORT).show());
-
 
         // 2. Cài đặt cấu trúc hiển thị danh sách Chương truyện
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -133,6 +132,12 @@ public class ComicDetailActivity extends AppCompatActivity {
         commentAdapter.setOnCommentClickListener(new CommentAdapter.OnCommentClickListener() {
             @Override
             public void onReplyClick(Comment parentComment) {
+                // ĐÃ SỬA: Nếu bị ban thì chặn không cho kích hoạt khung phản hồi lồng nhau
+                if (isUserBanned) {
+                    Toast.makeText(ComicDetailActivity.this, "Bạn hiện đang bị cấm chat!", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
                 targetParentCommentId = parentComment.getCommentId();
                 if (parentComment.getParentCommentId() == null && parentComment.getUserId() != 0) {
                     String tagText = "@Thành viên #" + parentComment.getUserId() + " ";
@@ -154,6 +159,11 @@ public class ComicDetailActivity extends AppCompatActivity {
         tvTitle.setText(currentComicTitle);
 
         int currentUserId = SharedPrefsManager.getUserId(this);
+
+        // BỔ SUNG: Gọi hàm kiểm tra trạng thái tài khoản Banned từ server ngay khi vào trang
+        if (currentUserId != -1) {
+            checkCurrentUserBanStatus(currentUserId);
+        }
 
         // 5. Kết nối luồng dữ liệu MVVM để cập nhật Chương truyện
         viewModel = new ViewModelProvider(this).get(ComicDetailViewModel.class);
@@ -225,7 +235,42 @@ public class ComicDetailActivity extends AppCompatActivity {
         });
 
         // 9. Bắt sự kiện bấm nút GỬI bình luận
-        btnSendComment.setOnClickListener(v -> sendCommentToServer());
+        btnSendComment.setOnClickListener(v -> {
+            // ĐÃ SỬA: Chặn cứng hành vi bấm gửi nếu tài khoản nằm trong danh sách đen
+            if (isUserBanned) {
+                Toast.makeText(this, "Bạn hiện đang bị cấm chat!", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            sendCommentToServer();
+        });
+    }
+
+    // BỔ SUNG: Kiểm tra thời gian thực trạng thái Ban của User từ Database để khóa UI thích ứng
+    private void checkCurrentUserBanStatus(int userId) {
+        ApiClient.getApiService().getUserProfile(userId).enqueue(new Callback<User>() {
+            @Override
+            public void onResponse(Call<User> call, Response<User> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    User user = response.body();
+                    if ("Banned".equalsIgnoreCase(user.getStatus())) {
+                        isUserBanned = true;
+
+                        // ĐÃ SỬA: Khóa cứng hộp text chat, đổi Hint cảnh báo và vô hiệu hóa nút gửi
+                        edtCommentInput.setEnabled(false);
+                        btnSendComment.setEnabled(false);
+                        edtCommentInput.setHint("Bạn hiện đang bị cấm chat");
+
+                        // Đăng ký thêm sự kiện click trực tiếp vào ô để nhắc nhở người dùng bằng Toast
+                        edtCommentInput.setOnClickListener(v ->
+                                Toast.makeText(ComicDetailActivity.this, "Tài khoản của bạn hiện đang bị cấm chat!", Toast.LENGTH_SHORT).show()
+                        );
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<User> call, Throwable t) {}
+        });
     }
 
     private void updateFavoriteButtonUI(boolean isFav) {
@@ -303,7 +348,7 @@ public class ComicDetailActivity extends AppCompatActivity {
             public void onResponse(Call<List<Comment>> call, Response<List<Comment>> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     commentAdapter.setComments(response.body());
-                    commentAdapter.notifyDataSetChanged(); // FIX: Thêm làm mới adapter bình luận để RecyclerView cập nhật và hiển thị nội dung
+                    commentAdapter.notifyDataSetChanged();
                 }
             }
 
@@ -358,13 +403,8 @@ public class ComicDetailActivity extends AppCompatActivity {
     }
 
     private void showHeaderPopupMenu(View anchorView) {
-        // Khởi tạo PopupMenu gắn vào nút Menu trên Header
         androidx.appcompat.widget.PopupMenu popupMenu = new androidx.appcompat.widget.PopupMenu(this, anchorView);
-
-        // Nạp giao diện menu XML đã định nghĩa ở Bước 1 vào popup
         popupMenu.getMenuInflater().inflate(R.menu.menu_header_options, popupMenu.getMenu());
-
-        // Cài đặt sự kiện lắng nghe khi người dùng chọn một mục trong menu
         popupMenu.setOnMenuItemClickListener(item -> {
             int id = item.getItemId();
 
@@ -390,8 +430,6 @@ public class ComicDetailActivity extends AppCompatActivity {
 
             return false;
         });
-
-        // Hiển thị menu lên màn hình
         popupMenu.show();
     }
 }

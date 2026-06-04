@@ -2,6 +2,7 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:fillViewport="true"
     android:background="#FFFFFF">
 
@@ -41,25 +42,41 @@
             android:background="#F0F0F0"
             android:layout_marginBottom="16dp"/>
 
-        <EditText
-            android:id="@+id/edtRegisterPassword"
+        <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
-            android:layout_height="55dp"
-            android:hint="Mật khẩu"
-            android:inputType="textPassword"
-            android:padding="16dp"
-            android:background="#F0F0F0"
-            android:layout_marginBottom="16dp"/>
+            android:layout_height="wrap_content"
+            app:passwordToggleEnabled="true"
+            app:passwordToggleTint="#2196F3"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
-        <EditText
-            android:id="@+id/edtRegisterConfirmPassword"
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/edtRegisterPassword"
+                android:layout_width="match_parent"
+                android:layout_height="55dp"
+                android:hint="Mật khẩu"
+                android:inputType="textPassword"
+                android:padding="16dp"
+                android:background="#F0F0F0"
+                android:layout_marginBottom="16dp"/>
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
-            android:layout_height="55dp"
-            android:hint="Xác nhận lại mật khẩu"
-            android:inputType="textPassword"
-            android:padding="16dp"
-            android:background="#F0F0F0"
-            android:layout_marginBottom="32dp"/>
+            android:layout_height="wrap_content"
+            app:passwordToggleEnabled="true"
+            app:passwordToggleTint="#2196F3"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/edtRegisterConfirmPassword"
+                android:layout_width="match_parent"
+                android:layout_height="55dp"
+                android:hint="Xác nhận lại mật khẩu"
+                android:inputType="textPassword"
+                android:padding="16dp"
+                android:background="#F0F0F0"
+                android:layout_marginBottom="32dp"/>
+        </com.google.android.material.textfield.TextInputLayout>
 
         <Button
             android:id="@+id/btnRegister"

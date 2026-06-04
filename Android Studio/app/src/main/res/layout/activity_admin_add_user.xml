@@ -7,7 +7,7 @@
     android:background="#FFFFFF"
     android:fitsSystemWindows="true">
 
-    <include android:id="@+id/layoutHeaderUserDetail" layout="@layout/layout_header" />
+    <include android:id="@+id/layoutHeaderAddUser" layout="@layout/layout_header" />
 
     <ScrollView
         android:layout_width="match_parent"
@@ -21,7 +21,7 @@
             android:gravity="center_horizontal">
 
             <ImageView
-                android:id="@+id/imgAdminUserDetailAvatar"
+                android:id="@+id/imgAddUserSelectAvatar"
                 android:layout_width="90dp"
                 android:layout_height="90dp"
                 android:src="@android:drawable/sym_def_app_icon"
@@ -31,17 +31,18 @@
                 android:layout_marginBottom="6dp"/>
 
             <Button
-                android:id="@+id/btnChooseAvatarDetail"
+                android:id="@+id/btnChooseAvatarAdd"
                 android:layout_width="wrap_content"
                 android:layout_height="32dp"
                 android:text="Chọn ảnh đại diện"
                 android:textSize="11sp"
                 android:backgroundTint="#2196F3"
+                android:textColor="#FFFFFF"
                 android:layout_marginBottom="16dp"
                 android:padding="0dp"/>
 
             <EditText
-                android:id="@+id/edtDetailName"
+                android:id="@+id/edtAddUserName"
                 android:layout_width="match_parent"
                 android:layout_height="46dp"
                 android:hint="Tên hiển thị người dùng"
@@ -51,10 +52,10 @@
                 android:layout_marginBottom="12dp"/>
 
             <EditText
-                android:id="@+id/edtDetailEmail"
+                android:id="@+id/edtAddUserEmail"
                 android:layout_width="match_parent"
                 android:layout_height="46dp"
-                android:hint="Địa chỉ Email"
+                android:hint="Địa chỉ Email đăng nhập"
                 android:background="@android:drawable/edit_text"
                 android:paddingStart="12dp"
                 android:textSize="14sp"
@@ -65,13 +66,14 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 app:passwordToggleEnabled="true"
+                app:passwordToggleTint="#555555"
                 android:layout_marginBottom="12dp"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
                 <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/edtDetailPassword"
+                    android:id="@+id/edtAddUserPassword"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Mật khẩu mới (Để trống nếu không đổi)"
+                    android:hint="Nhập mật khẩu truy cập"
                     android:textSize="14sp"
                     android:inputType="textPassword"/>
             </com.google.android.material.textfield.TextInputLayout>
@@ -80,63 +82,43 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 app:passwordToggleEnabled="true"
-                android:layout_marginBottom="12dp"
+                app:passwordToggleTint="#555555"
+                android:layout_marginBottom="16dp"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
                 <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/edtDetailConfirmPassword"
+                    android:id="@+id/edtAddUserConfirmPassword"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Xác nhận mật khẩu mới"
+                    android:hint="Nhập lại mật khẩu để xác minh"
                     android:textSize="14sp"
                     android:inputType="textPassword"/>
             </com.google.android.material.textfield.TextInputLayout>
 
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Phân quyền vai trò:"
+                android:textStyle="bold"
+                android:textColor="#000000"
+                android:textSize="13sp"
+                android:layout_marginBottom="4dp"/>
+
             <Spinner
-                android:id="@+id/spinnerDetailRole"
+                android:id="@+id/spinnerAddUserRole"
                 android:layout_width="match_parent"
                 android:layout_height="44dp"
                 android:background="@android:drawable/btn_dropdown"
-                android:layout_marginBottom="12dp"/>
+                android:layout_marginBottom="28dp"/>
 
-            <TextView
-                android:id="@+id/tvDetailCreatedAt"
+            <Button
+                android:id="@+id/btnAdminAddUserSubmit"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="📅 Ngày tạo tài khoản: --"
-                android:textColor="#555555"
-                android:textSize="13sp"
-                android:padding="8dp"
-                android:layout_marginBottom="24dp"/>
+                android:layout_height="48dp"
+                android:text="TIẾN HÀNH TẠO THÀNH VIÊN"
+                android:textStyle="bold"
+                android:backgroundTint="#4CAF50"
+                android:textColor="#FFFFFF"/>
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-                <Button
-                    android:id="@+id/btnAdminUserDetailSave"
-                    android:layout_width="0dp"
-                    android:layout_height="48dp"
-                    android:layout_weight="1.2"
-                    android:text="💾 LƯU THAY ĐỔI"
-                    android:textStyle="bold"
-                    android:backgroundTint="#4CAF50"/>
-                <Button
-                    android:id="@+id/btnAdminUserDetailBan"
-                    android:layout_width="0dp"
-                    android:layout_height="48dp"
-                    android:layout_weight="1"
-                    android:layout_marginStart="4dp"
-                    android:text="🚷 BAN"
-                    android:backgroundTint="#E91E63"/>
-                <Button
-                    android:id="@+id/btnAdminUserDetailDelete"
-                    android:layout_width="0dp"
-                    android:layout_height="48dp"
-                    android:layout_weight="0.8"
-                    android:layout_marginStart="4dp"
-                    android:text="🗑️ XÓA"
-                    android:backgroundTint="#F44336"/>
-            </LinearLayout>
         </LinearLayout>
     </ScrollView>
 </LinearLayout>
