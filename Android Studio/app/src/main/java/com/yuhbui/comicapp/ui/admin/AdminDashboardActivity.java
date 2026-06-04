@@ -248,7 +248,11 @@ public class AdminDashboardActivity extends AppCompatActivity {
                 startActivity(new Intent(AdminDashboardActivity.this, AdminManageComicsActivity.class));
                 return true;
             } else if (id == R.id.menu_admin_manage_users) {
-                Toast.makeText(this, "Chức năng quản lý người dùng đang phát triển", Toast.LENGTH_SHORT).show();
+                // ĐÃ SỬA: Thay thế Toast cũ bằng lệnh Intent mở trang Quản lý người dùng chuyên sâu
+                startActivity(new Intent(AdminDashboardActivity.this, AdminManageUsersActivity.class));
+                return true;
+            } else if (id == R.id.menu_admin_manage_notifications) {
+                Toast.makeText(this, "Chức năng quản lý thông báo đang phát triển", Toast.LENGTH_SHORT).show();
                 return true;
             } else if (id == R.id.menu_admin_logout) {
                 // Đăng xuất xóa bộ nhớ tạm và đẩy về Login

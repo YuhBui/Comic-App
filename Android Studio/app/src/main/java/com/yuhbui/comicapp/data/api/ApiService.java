@@ -225,4 +225,22 @@ public interface ApiService {
 
     @GET("/api/admin/chapters/{chapterId}/comments")
     Call<List<Map<String, Object>>> adminGetChapterComments(@Path("chapterId") Integer chapterId);
+
+    @GET("/api/admin/users")
+    Call<List<User>> adminGetUsers(
+            @Query("keyword") String keyword,
+            @Query("role") String role
+    );
+
+    @POST("/api/admin/users")
+    Call<User> adminCreateUser(@Body User user);
+
+    @PUT("/api/admin/users/{id}")
+    Call<User> adminUpdateUser(@Path("id") int id, @Body User user);
+
+    @PUT("/api/admin/users/{id}/toggle-ban")
+    Call<Map<String, Object>> adminToggleBanUser(@Path("id") int id);
+
+    @DELETE("/api/admin/users/{id}")
+    Call<Map<String, Object>> adminDeleteUser(@Path("id") int id);
 }
