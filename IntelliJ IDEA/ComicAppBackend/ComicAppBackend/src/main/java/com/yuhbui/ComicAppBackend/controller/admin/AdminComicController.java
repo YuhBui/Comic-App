@@ -1,5 +1,6 @@
 package com.yuhbui.ComicAppBackend.controller.admin;
 
+import com.yuhbui.ComicAppBackend.entity.Category;
 import com.yuhbui.ComicAppBackend.entity.Comic;
 import com.yuhbui.ComicAppBackend.repository.ComicRepository;
 import jakarta.persistence.EntityManager;
@@ -27,9 +28,70 @@ public class AdminComicController {
     @PersistenceContext
     private EntityManager entityManager;
 
+    // 1. ĐÃ NÂNG CẤP: API lấy danh sách truyện tích hợp Phân trang, Tìm kiếm, Lọc theo thể loại đa năng
     @GetMapping
-    public ResponseEntity<List<Comic>> getAllComicsForAdmin() {
-        return ResponseEntity.ok(comicRepository.findAll());
+    public ResponseEntity<Map<String, Object>> getAllComicsForAdmin(
+            @RequestParam(value = "keyword", required = false) String keyword,
+            @RequestParam(value = "categoryId", required = false) Integer categoryId,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size) {
+
+        String baseWhere = " WHERE 1=1";
+
+        // Lọc theo từ khóa Tìm kiếm (Tiêu đề hoặc Tác giả)
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            baseWhere += " AND (c.Title LIKE :keyword OR c.Author LIKE :keyword)";
+        }
+
+        // Lọc theo mã thể loại kết nối bảng trung gian Comic_Categories
+        if (categoryId != null && categoryId > 0) {
+            baseWhere += " AND c.ComicID IN (SELECT cc.ComicID FROM Comic_Categories cc WHERE cc.CategoryID = :categoryId)";
+        }
+
+        // Câu lệnh đếm tổng số phần tử để tính toán số trang
+        String countSql = "SELECT COUNT(DISTINCT c.ComicID) FROM Comics c" + baseWhere;
+        var countQuery = entityManager.createNativeQuery(countSql);
+        if (keyword != null && !keyword.trim().isEmpty()) countQuery.setParameter("keyword", "%" + keyword.trim() + "%");
+        if (categoryId != null && categoryId > 0) countQuery.setParameter("categoryId", categoryId);
+
+        long totalItems = ((Number) countQuery.getSingleResult()).longValue();
+        int totalPages = (int) Math.ceil((double) totalItems / size);
+        int offset = page * size;
+
+        // Câu lệnh truy vấn lấy dữ liệu phân trang thực tế
+        String selectSql = "SELECT DISTINCT c.* FROM Comics c" + baseWhere + " ORDER BY c.CreatedAt DESC LIMIT :size OFFSET :offset";
+        var selectQuery = entityManager.createNativeQuery(selectSql, Comic.class);
+        if (keyword != null && !keyword.trim().isEmpty()) selectQuery.setParameter("keyword", "%" + keyword.trim() + "%");
+        if (categoryId != null && categoryId > 0) selectQuery.setParameter("categoryId", categoryId);
+        selectQuery.setParameter("size", size);
+        selectQuery.setParameter("offset", offset);
+
+        @SuppressWarnings("unchecked")
+        List<Comic> comics = selectQuery.getResultList();
+
+        // Đóng gói JSON trả về đồng nhất cấu hình phía Android
+        Map<String, Object> response = new HashMap<>();
+        response.put("comics", comics);
+        response.put("totalPages", totalPages);
+        response.put("currentPage", page);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/categories-list")
+    public ResponseEntity<List<Category>> getCategoriesListForFilter() {
+        @SuppressWarnings("unchecked")
+        List<Category> categories = entityManager.createQuery("FROM Category ORDER BY name ASC", Category.class).getResultList();
+        List<Category> responseList = new ArrayList<>();
+
+        // Tạo một phần tử "Tất cả" ảo có ID bằng 0 đưa lên đầu hàng
+        Category allCat = new Category();
+        allCat.setCategoryId(0);
+        allCat.setName("Tất cả");
+        responseList.add(allCat);
+        responseList.addAll(categories);
+
+        return ResponseEntity.ok(responseList);
     }
 
     // Nâng cấp API thêm truyện: Tự động kết nối thể loại vào bảng trung gian
@@ -181,5 +243,60 @@ public class AdminComicController {
         entityManager.createNativeQuery("DELETE FROM Comment_Reports WHERE CommentID = :id").setParameter("id", commentId).executeUpdate();
         entityManager.createNativeQuery("DELETE FROM Comments WHERE CommentID = :id").setParameter("id", commentId).executeUpdate();
         return ResponseEntity.ok(Map.of("success", true));
+    }
+
+    // ĐÃ THÊM: API tiếp nhận danh sách CategoryIds từ Android gửi lên để lọc nâng cao
+    @GetMapping("/paged")
+    public ResponseEntity<Map<String, Object>> getComicsPagedForAdmin(
+            @RequestParam(value = "keyword", required = false) String keyword,
+            @RequestParam(value = "categoryIds", required = false) List<Integer> categoryIds,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size) {
+
+        String baseWhere = " WHERE 1=1";
+        boolean hasKeyword = keyword != null && !keyword.trim().isEmpty();
+        boolean hasCategories = categoryIds != null && !categoryIds.isEmpty();
+
+        if (hasKeyword) {
+            baseWhere += " AND (c.Title LIKE :keyword OR c.Author LIKE :keyword)";
+        }
+        if (hasCategories) {
+            // Gom nhóm theo từng truyện và ép buộc số lượng thể loại trùng khớp phải bằng đúng số lượng ID gửi lên
+            baseWhere += " AND c.ComicID IN (SELECT cc.ComicID FROM Comic_Categories cc WHERE cc.CategoryID IN (:categoryIds) GROUP BY cc.ComicID HAVING COUNT(DISTINCT cc.CategoryID) = :categoryCount)";
+        }
+
+        // 1. Tính toán tổng số trang dữ liệu dựa trên bộ lọc hiện tại
+        String countSql = "SELECT COUNT(DISTINCT c.ComicID) FROM Comics c" + baseWhere;
+        var countQuery = entityManager.createNativeQuery(countSql);
+        if (hasKeyword) countQuery.setParameter("keyword", "%" + keyword.trim() + "%");
+        if (hasCategories) {
+            countQuery.setParameter("categoryIds", categoryIds);
+            countQuery.setParameter("categoryCount", categoryIds.size()); // Gửi số lượng thể loại đang chọn
+        }
+
+        long totalItems = ((Number) countQuery.getSingleResult()).longValue();
+        int totalPages = (int) Math.ceil((double) totalItems / size);
+        int offset = page * size;
+
+        // 2. Truy vấn danh sách truyện thực tế theo trang phân phối
+        String selectSql = "SELECT DISTINCT c.* FROM Comics c" + baseWhere + " ORDER BY c.ComicID DESC LIMIT :size OFFSET :offset";
+        var selectQuery = entityManager.createNativeQuery(selectSql, Comic.class);
+        if (hasKeyword) selectQuery.setParameter("keyword", "%" + keyword.trim() + "%");
+        if (hasCategories) {
+            selectQuery.setParameter("categoryIds", categoryIds);
+            selectQuery.setParameter("categoryCount", categoryIds.size()); // Gửi số lượng thể loại đang chọn
+        }
+        selectQuery.setParameter("size", size);
+        selectQuery.setParameter("offset", offset);
+
+        @SuppressWarnings("unchecked")
+        List<Comic> comics = selectQuery.getResultList();
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("comics", comics);
+        response.put("totalPages", totalPages);
+        response.put("currentPage", page);
+
+        return ResponseEntity.ok(response);
     }
 }

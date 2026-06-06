@@ -33,6 +33,8 @@ import com.yuhbui.comicapp.ui.adapters.ComicAdapter;
 import com.yuhbui.comicapp.ui.adapters.RankingAdapter;
 import com.yuhbui.comicapp.ui.adapters.RecommendedBannerAdapter;
 import com.yuhbui.comicapp.utils.SharedPrefsManager;
+
+import java.util.ArrayList;
 import java.util.List;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -63,6 +65,7 @@ public class MainActivity extends AppCompatActivity {
     private CategoryFilterAdapter catFilterAdapter;
     private Integer activeFilterCategoryId = null;
     private String activeFilterCategoryName = null;
+    private List<Category> serverCategoriesList = new ArrayList<>();
 
     // ========== PHẦN 3: BẢNG XẾP HẠNG TOP 10 ==========
     private RecyclerView rvTopRank;
@@ -462,8 +465,8 @@ public class MainActivity extends AppCompatActivity {
         RecyclerView rvPopup = dialogView.findViewById(R.id.rvCategoryPopup);
         TextView tvClear = dialogView.findViewById(R.id.tvClearFilter);
 
-        catFilterAdapter = new CategoryFilterAdapter(category -> {
-            if (category == null) {
+        catFilterAdapter = new CategoryFilterAdapter(selectedIds -> {
+            if (selectedIds == null || selectedIds.isEmpty() || selectedIds.contains(0)) {
                 activeFilterCategoryId = null;
                 activeFilterCategoryName = null;
                 tvActiveFilter.setVisibility(View.GONE);
@@ -471,14 +474,25 @@ public class MainActivity extends AppCompatActivity {
                 currentPage = 0;
                 loadNewUpdatesComics(currentPage);
             } else {
-                activeFilterCategoryId = category.getCategoryId();
-                activeFilterCategoryName = category.getName();
-                tvActiveFilter.setText("Đang lọc: " + category.getName());
+                // Phía User nhấp chọn phát đóng luôn nên phần tử cần lọc luôn nằm ở vị trí đầu tiên (index 0)
+                int selectedId = selectedIds.get(0);
+                activeFilterCategoryId = selectedId;
+
+                // Vòng lặp duyệt tìm tên thể loại tương ứng từ danh sách serverCategoriesList đã lưu trữ
+                activeFilterCategoryName = "Thể loại";
+                for (Category cat : serverCategoriesList) {
+                    if (cat.getCategoryId() == selectedId) {
+                        activeFilterCategoryName = cat.getName();
+                        break;
+                    }
+                }
+
+                tvActiveFilter.setText("Đang lọc: " + activeFilterCategoryName);
                 tvActiveFilter.setVisibility(View.VISIBLE);
                 currentPage = 0;
                 loadComicsByCategory(activeFilterCategoryId);
             }
-            dialog.dismiss();
+            dialog.dismiss(); // Đóng hộp thoại bộ lọc ngay lập tức sau khi chọn giống logic cũ
         });
 
         rvPopup.setLayoutManager(new GridLayoutManager(this, 3));
@@ -488,7 +502,9 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call<List<Category>> call, Response<List<Category>> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    catFilterAdapter.setCategories(response.body());
+                    // ĐÃ SỬA: Gán dữ liệu vào biến toàn cục để phục vụ tra cứu tìm kiếm tên phía trên
+                    serverCategoriesList = response.body();
+                    catFilterAdapter.setCategories(serverCategoriesList);
                 }
             }
             @Override

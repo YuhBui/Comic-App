@@ -2,6 +2,8 @@ package com.yuhbui.ComicAppBackend.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.LocalDateTime;
 
 @Entity
@@ -18,7 +20,10 @@ public class User {
     private String email;
 
     @Column(name = "PasswordHash", nullable = false)
-    private String password; // Trong đồ án thực tế, bạn nên mã hóa cột này (như MD5 hoặc BCrypt)
+    // SỬA: Chỉ cho phép Frontend gửi mật khẩu lên, cấm trả về trong chuỗi JSON.
+    // Giúp loại bỏ hoàn toàn các hàm setPassword(null) gây lỗi sập DB.
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    private String password;
 
     @Column(name = "AvatarUrl")
     private String avatarUrl;
@@ -32,6 +37,9 @@ public class User {
     @Column(name = "Status")
     private String status = "Active";
 
-    @Column(name = "CreatedAt", updatable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
+    // SỬA: Cấm Hibernate tự ý thêm/sửa cột này trong SQL.
+    // MySQL sẽ tự động gán CURRENT_TIMESTAMP khi thêm mới nên an toàn tuyệt đối!
+    @Column(name = "CreatedAt", insertable = false, updatable = false)
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime createdAt;
 }

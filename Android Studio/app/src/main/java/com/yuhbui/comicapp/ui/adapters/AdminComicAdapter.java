@@ -6,10 +6,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+import android.widget.TextView;
 import com.bumptech.glide.Glide;
 import com.yuhbui.comicapp.R;
 import com.yuhbui.comicapp.data.model.Comic;
@@ -22,7 +21,6 @@ public class AdminComicAdapter extends RecyclerView.Adapter<AdminComicAdapter.Ad
     private List<Comic> list = new ArrayList<>();
     private OnComicActionListener listener;
 
-    // Interface định nghĩa các hành động: Sửa và Xóa (Thay đổi từ ẩn sang xóa hoàn toàn)
     public interface OnComicActionListener {
         void onEdit(Comic comic);
         void onDelete(Comic comic, int position);
@@ -48,27 +46,40 @@ public class AdminComicAdapter extends RecyclerView.Adapter<AdminComicAdapter.Ad
     public void onBindViewHolder(@NonNull AdminViewHolder holder, int position) {
         Comic comic = list.get(position);
 
+        // 1. Đổ dữ liệu tiêu đề và chương truyện từ Model Comic vào TextView
         holder.tvTitle.setText(comic.getTitle());
-        holder.tvAuthor.setText("Tác giả: " + comic.getAuthor());
-        holder.tvStatus.setText(comic.getStatus());
 
-        // Hiển thị ảnh bìa bằng Glide
+        String latestChapter = comic.getLatestChapterNumber();
+        if (latestChapter != null && !latestChapter.trim().isEmpty()) {
+            holder.tvLatestChapter.setText("Chương " + latestChapter);
+        } else {
+            holder.tvLatestChapter.setText("Chưa có chương");
+        }
+
+        // 2. Đổ dữ liệu thời gian cập nhật
+        String timeUpdate = comic.getTimeUpdated();
+        holder.tvTimeUpdate.setText(timeUpdate != null ? timeUpdate : "Đang cập nhật");
+
+        // 3. Định dạng chuỗi thông số tương tác (👁️ Lượt xem, ❤️ Yêu thích, 💬 Bình luận)
+        holder.tvViews.setText("👁️ " + formatNumber(comic.getViewCount()));
+        holder.tvLikes.setText("❤️ " + formatNumber(comic.getFollowCount()));
+        holder.tvComments.setText("💬 " + formatNumber(comic.getCommentCount()));
+
+        // 4. Tải ảnh bìa truyện bằng Glide
         Glide.with(holder.itemView.getContext())
                 .load(comic.getCoverImageUrl())
                 .placeholder(R.drawable.ic_launcher_background)
                 .into(holder.imgCover);
 
-        // THÊM: Sự kiện click vào cả dòng truyện để xem chi tiết quản trị và quản lý bình luận
+        // Sự kiện nhấp chuột vào ô dòng truyện xem chi tiết quản lý
         holder.itemView.setOnClickListener(v -> {
             Intent intent = new Intent(holder.itemView.getContext(), AdminComicDetailActivity.class);
             intent.putExtra("COMIC_ID", comic.getComicId());
             holder.itemView.getContext().startActivity(intent);
         });
 
-        // Sự kiện click nút Sửa
+        // Sự kiện nhấp nút hành động điều phối
         holder.btnEdit.setOnClickListener(v -> listener.onEdit(comic));
-
-        // Sự kiện click nút Xóa mới (Gọi sang callback onDelete của Activity)
         holder.btnDelete.setOnClickListener(v -> listener.onDelete(comic, position));
     }
 
@@ -77,21 +88,35 @@ public class AdminComicAdapter extends RecyclerView.Adapter<AdminComicAdapter.Ad
         return list != null ? list.size() : 0;
     }
 
+    /**
+     * Hàm trợ giúp rút gọn định dạng số hiển thị tương thích phong cách Top 10 (Ví dụ: 1200 -> 1.2K)
+     */
+    private String formatNumber(long number) {
+        if (number >= 1_000_000) {
+            return String.format("%.1fM", (double) number / 1_000_000).replace(".0", "");
+        } else if (number >= 1_000) {
+            return String.format("%.1fK", (double) number / 1_000).replace(".0", "");
+        }
+        return String.valueOf(number);
+    }
+
     static class AdminViewHolder extends RecyclerView.ViewHolder {
         ImageView imgCover;
-        TextView tvTitle, tvAuthor, tvStatus;
+        TextView tvTitle, tvLatestChapter, tvTimeUpdate;
+        TextView tvViews, tvLikes, tvComments;
         Button btnEdit, btnDelete;
-        LinearLayout layoutItem;
 
         public AdminViewHolder(@NonNull View itemView) {
             super(itemView);
             imgCover = itemView.findViewById(R.id.imgAdminComicCover);
             tvTitle = itemView.findViewById(R.id.tvAdminComicTitle);
-            tvAuthor = itemView.findViewById(R.id.tvAdminComicAuthor);
-            tvStatus = itemView.findViewById(R.id.tvAdminComicStatus);
+            tvLatestChapter = itemView.findViewById(R.id.tvAdminComicLatestChapter);
+            tvTimeUpdate = itemView.findViewById(R.id.tvAdminComicTimeUpdate);
+            tvViews = itemView.findViewById(R.id.tvAdminComicViews);
+            tvLikes = itemView.findViewById(R.id.tvAdminComicLikes);
+            tvComments = itemView.findViewById(R.id.tvAdminComicComments);
             btnEdit = itemView.findViewById(R.id.btnAdminEditComic);
-            btnDelete = itemView.findViewById(R.id.btnAdminDeleteComic); // Ánh xạ sang ID nút Xóa mới
-            layoutItem = itemView.findViewById(R.id.layoutAdminComicItem);
+            btnDelete = itemView.findViewById(R.id.btnAdminDeleteComic);
         }
     }
 }

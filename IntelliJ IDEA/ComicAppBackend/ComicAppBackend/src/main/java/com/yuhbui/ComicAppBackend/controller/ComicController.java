@@ -218,21 +218,35 @@ public class ComicController {
     // 9. API BỘ LỌC TRUYỆN THEO THỂ LOẠI (Path variable version)
     @GetMapping("/filter/category/{catId}")
     public ResponseEntity<List<ComicHomeResponseDTO>> filterComicsByCategory(@PathVariable Integer catId) {
-        List<Object[]> rawData = comicRepository.getComicHomeDataByCategory(catId);
+        List<Object[]> rawData = comicRepository.getComicHomeDataByCategoriesRaw(java.util.List.of(catId), 1);
         List<ComicHomeResponseDTO> dtoList = rawData.stream()
                 .map(this::mapRowToDTO)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(dtoList);
     }
 
-    // 10. API BỘ LỌC TRUYỆN THEO THỂ LOẠI (Query param version - dùng bởi Android)
+    // 10. ĐÃ SỬA: API BỘ LỌC TRUYỆN ĐA THỂ LOẠI (AND LOGIC) + PHÂN TRANG Y HỆT TRUYỆN MỚI CẬP NHẬT
     @GetMapping("/filter")
-    public ResponseEntity<List<ComicHomeResponseDTO>> filterByCat(@RequestParam Integer catId) {
-        List<Object[]> rawData = comicRepository.getComicHomeDataByCategory(catId);
+    public ResponseEntity<List<ComicHomeResponseDTO>> filterByCat(
+            @RequestParam List<Integer> categoryIds,
+            @RequestParam(defaultValue = "0") int page) {
+
+        // Gọi câu lệnh Query vạn năng nhận mảng ID và kích thước mảng để chạy logic AND
+        List<Object[]> rawData = comicRepository.getComicHomeDataByCategoriesRaw(categoryIds, categoryIds.size());
+
+        // Ánh xạ dữ liệu thô (Object Array) sang định dạng đối tượng DTO chuyên biệt gửi cho Android
         List<ComicHomeResponseDTO> dtoList = rawData.stream()
                 .map(this::mapRowToDTO)
                 .collect(Collectors.toList());
-        return ResponseEntity.ok(dtoList);
+
+        // Cơ chế phân trang lũy tiến cắt mảng (Cắt cụm 10 phần tử dựa theo tham số ?page=) y hệt getHomeUpdates
+        int start = page * 10;
+        if (start >= dtoList.size()) {
+            return ResponseEntity.ok(new java.util.ArrayList<>()); // Trả về danh sách rỗng nếu lướt quá trang cuối
+        }
+        int end = Math.min(start + 10, dtoList.size());
+
+        return ResponseEntity.ok(dtoList.subList(start, end));
     }
 
     // 11. API LẤY DANH SÁCH TRUYỆN YÊU THÍCH CỦA NGƯỜI DÙNG (kèm đầy đủ thông số)

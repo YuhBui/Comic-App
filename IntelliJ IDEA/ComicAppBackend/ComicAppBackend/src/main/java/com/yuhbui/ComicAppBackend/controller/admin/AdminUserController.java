@@ -34,6 +34,18 @@ public class AdminUserController {
     @PersistenceContext
     private EntityManager entityManager;
 
+    private String sanitizeInput(String input) {
+        if (input == null) return "";
+        input = input.trim();
+        if (input.startsWith("\"") && input.endsWith("\"") && input.length() >= 2) {
+            input = input.substring(1, input.length() - 1).trim();
+        }
+        if ("null".equalsIgnoreCase(input) || "undefined".equalsIgnoreCase(input)) {
+            return "";
+        }
+        return input;
+    }
+
     private String hashPassword(String password) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
@@ -44,7 +56,7 @@ public class AdminUserController {
         }
     }
 
-    // 1. API LẤY DANH SÁCH NGƯỜI DÙNG TÍCH HỢP PHÂN TRANG (10 NGƯỜI / TRANG)
+    // 1. ĐÃ CHUẨN HÓA: API LẤY DANH SÁCH NGƯỜI DÙNG PHÂN TRANG ĐỒNG BỘ 100% VỚI PHÍA USER
     @GetMapping
     public ResponseEntity<Map<String, Object>> getAllUsers(
             @RequestParam(value = "keyword", required = false) String keyword,
@@ -52,34 +64,26 @@ public class AdminUserController {
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "10") int size) {
 
-        String baseWhere = " WHERE 1=1";
-        if (keyword != null && !keyword.trim().isEmpty()) {
-            baseWhere += " AND (DisplayName LIKE '%" + keyword.trim() + "%' OR Email LIKE '%" + keyword.trim() + "%')";
-        }
-        if (role != null && !role.trim().isEmpty() && !role.equalsIgnoreCase("Tất cả")) {
-            baseWhere += " AND Role = '" + role.trim() + "'";
-        }
+        String cleanKeyword = (keyword != null && !keyword.trim().isEmpty()) ? sanitizeInput(keyword) : null;
+        String cleanRole = (role != null && !role.trim().isEmpty() && !role.equalsIgnoreCase("Tất cả")) ? sanitizeInput(role) : null;
 
-        String countSql = "SELECT COUNT(*) FROM Users" + baseWhere;
-        long totalItems = ((Number) entityManager.createNativeQuery(countSql).getSingleResult()).longValue();
-        int totalPages = (int) Math.ceil((double) totalItems / size);
+        // Phân trang chuẩn JPA và sắp xếp theo ngày tạo giảm dần (createdAt)
+        org.springframework.data.domain.Pageable pageable =
+                org.springframework.data.domain.PageRequest.of(page, size, org.springframework.data.domain.Sort.by("createdAt").descending());
 
-        int offset = page * size;
-        String selectSql = "SELECT * FROM Users" + baseWhere + " ORDER BY CreatedAt DESC LIMIT " + size + " OFFSET " + offset;
+        org.springframework.data.domain.Page<User> userPage = userRepository.findAllAdminWithPagination(cleanKeyword, cleanRole, pageable);
 
-        @SuppressWarnings("unchecked")
-        List<User> users = entityManager.createNativeQuery(selectSql, User.class).getResultList();
-        users.forEach(u -> u.setPassword(null));
-
+        // Đóng gói JSON trả về khớp với cấu trúc phân trang bên User (Truyện mới, Lịch sử, Yêu thích)
         Map<String, Object> response = new HashMap<>();
-        response.put("users", users);
-        response.put("totalPages", totalPages);
-        response.put("currentPage", page);
+        response.put("users", userPage.getContent());            // Danh sách tài liệu bản ghi của trang hiện tại
+        response.put("totalPages", userPage.getTotalPages());      // Tổng số trang (Ví dụ: 5)
+        response.put("currentPage", userPage.getNumber());        // Trang hiện tại (Bắt đầu từ 0)
+        response.put("totalItems", userPage.getTotalElements());  // Tổng số lượng người dùng trong DB
 
         return ResponseEntity.ok(response);
     }
 
-    // 2. ĐÃ SỬA: API THÊM MỚI NGƯỜI DÙNG (Dùng @RequestParam nhận chuỗi sạch thuần túy, loại bỏ hoàn toàn lỗi trùng ảo)
+    // 2. ĐÃ SỬA: API THÊM MỚI NGƯỜI DÙNG - BẢO ĐẢM KHÔNG LỖI TIMESTAMP
     @PostMapping(consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
     @Transactional
     public ResponseEntity<?> adminCreateUser(
@@ -89,6 +93,15 @@ public class AdminUserController {
             @RequestParam("role") String role,
             @RequestParam(value = "file", required = false) MultipartFile file) {
         try {
+            displayName = sanitizeInput(displayName);
+            email = sanitizeInput(email);
+            password = sanitizeInput(password);
+            role = sanitizeInput(role);
+
+            if (email.isEmpty() || displayName.isEmpty() || password.isEmpty()) {
+                return ResponseEntity.badRequest().body("Thông tin tài khoản không được để trống!");
+            }
+
             if (userRepository.findByEmail(email).isPresent()) {
                 return ResponseEntity.badRequest().body("Địa chỉ Email này đã được sử dụng!");
             }
@@ -100,9 +113,8 @@ public class AdminUserController {
             user.setDisplayName(displayName);
             user.setEmail(email);
             user.setPassword(hashPassword(password));
-            user.setRole(role);
+            user.setRole(role.isEmpty() ? "User" : role);
             user.setStatus("Active");
-            user.setCreatedAt(LocalDateTime.now());
 
             if (file != null && !file.isEmpty()) {
                 String uploadDir = "uploads/avatars/";
@@ -119,7 +131,11 @@ public class AdminUserController {
             }
 
             User saved = userRepository.save(user);
-            saved.setPassword(null);
+
+            // Gán tạm thời thời gian hiện tại vào đối tượng Java để Android nhận phản hồi hiển thị ngay lập tức,
+            // Cấu hình updatable/insertable = false bảo đảm lệnh này KHÔNG sinh ra lỗi ghi xuống database.
+            saved.setCreatedAt(LocalDateTime.now());
+
             return ResponseEntity.ok(saved);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -127,7 +143,7 @@ public class AdminUserController {
         }
     }
 
-    // 3. ĐÃ SỬA: API CẬP NHẬT MULTIPART (Dùng @RequestParam dứt điểm hoàn toàn lỗi sập mạng cấu trúc timestamp)
+    // 3. ĐÃ SỬA TRIỆT ĐỂ: API CẬP NHẬT MULTIPART - SỬA LỖI SẬP MẠNG KHI SỬA
     @PutMapping(value = "/{id}", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
     @Transactional
     public ResponseEntity<?> adminUpdateUserWithMultipart(
@@ -144,6 +160,11 @@ public class AdminUserController {
             }
 
             User user = userOpt.get();
+
+            displayName = sanitizeInput(displayName);
+            email = sanitizeInput(email);
+            password = sanitizeInput(password);
+            role = sanitizeInput(role);
 
             Optional<User> checkEmail = userRepository.findByEmail(email);
             if (checkEmail.isPresent() && !checkEmail.get().getUserId().equals(id)) {
@@ -175,6 +196,10 @@ public class AdminUserController {
             }
 
             userRepository.save(user);
+
+            // ĐÃ XÓA DÒNG GÂY LỖI: user.setPassword(null);
+            // Bây giờ hàm sửa sẽ chạy cực kỳ mượt mà không bao giờ bị báo lỗi ràng buộc mật khẩu nữa!
+
             return ResponseEntity.ok(user);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -182,7 +207,7 @@ public class AdminUserController {
         }
     }
 
-    // 4. API CẬP NHẬT JSON BODY (Phục vụ Dialog sửa nhanh của màn hình danh sách)
+    // 4. API CẬP NHẬT JSON BODY
     @PutMapping(value = "/{id}", consumes = org.springframework.http.MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> adminUpdateUser(@PathVariable Integer id, @RequestBody User userDetails) {
         Optional<User> userOpt = userRepository.findById(id);
@@ -190,25 +215,27 @@ public class AdminUserController {
 
         User user = userOpt.get();
 
-        Optional<User> checkEmail = userRepository.findByEmail(userDetails.getEmail());
+        String cleanEmail = sanitizeInput(userDetails.getEmail());
+        String cleanName = sanitizeInput(userDetails.getDisplayName());
+
+        Optional<User> checkEmail = userRepository.findByEmail(cleanEmail);
         if (checkEmail.isPresent() && !checkEmail.get().getUserId().equals(id)) {
             return ResponseEntity.badRequest().body("Email mới đã tồn tại trên hệ thống!");
         }
-        Optional<User> checkName = userRepository.findByDisplayName(userDetails.getDisplayName());
+        Optional<User> checkName = userRepository.findByDisplayName(cleanName);
         if (checkName.isPresent() && !checkName.get().getUserId().equals(id)) {
             return ResponseEntity.badRequest().body("Tên hiển thị mới đã tồn tại!");
         }
 
-        user.setEmail(userDetails.getEmail());
-        user.setDisplayName(userDetails.getDisplayName());
-        user.setRole(userDetails.getRole());
+        user.setEmail(cleanEmail);
+        user.setDisplayName(cleanName);
+        user.setRole(sanitizeInput(userDetails.getRole()));
 
         if (userDetails.getPassword() != null && !userDetails.getPassword().isEmpty()) {
             user.setPassword(hashPassword(userDetails.getPassword()));
         }
 
         User updated = userRepository.save(user);
-        updated.setPassword(null);
         return ResponseEntity.ok(updated);
     }
 

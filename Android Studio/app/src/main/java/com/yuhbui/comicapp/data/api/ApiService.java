@@ -159,6 +159,16 @@ public interface ApiService {
     @PUT("/api/admin/comics/{id}/toggle-hidden")
     Call<Boolean> adminToggleHiddenComic(@Path("id") Integer id);
 
+    @GET("/api/admin/comics/paged")
+    Call<Map<String, Object>> adminGetComicsPaged(
+            @Query("keyword") String keyword,
+            @Query("categoryIds") List<Integer> categoryIds,
+            @Query("page") int page,
+            @Query("size") int size
+    );
+
+    @GET("api/admin/comics/categories-list")
+    Call<List<Map<String, Object>>> adminGetFilterCategories();
     @POST("/api/categories")
     Call<Category> createCategory(@Body Category category);
 

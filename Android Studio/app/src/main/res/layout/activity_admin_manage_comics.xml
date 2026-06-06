@@ -10,13 +10,93 @@
         android:id="@+id/layoutHeaderManageComics"
         layout="@layout/layout_header" />
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvAdminManageComics"
+    <LinearLayout
+        android:id="@+id/layoutSearchBox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/layoutHeaderManageComics"
+        android:orientation="horizontal"
+        android:padding="12dp"
+        android:gravity="center_vertical"
+        android:background="#FFFFFF">
+
+        <EditText
+            android:id="@+id/edtComicSearch"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:hint="Tìm tên truyện, tên tác giả..."
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:textSize="14sp"
+            android:background="@android:drawable/edit_text" />
+
+        <ImageView
+            android:id="@+id/imgAdminComicFilter"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="8dp"
+            android:padding="8dp"
+            android:src="@drawable/ic_filter"
+            android:background="?android:attr/selectableItemBackground"
+            android:contentDescription="Bộ lọc thể loại" />
+    </LinearLayout>
+
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/layoutHeaderManageComics"
-        android:padding="8dp"
-        android:scrollbars="vertical" />
+        android:layout_below="@id/layoutSearchBox"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="80dp">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvAdminManageComics"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="6dp"
+                android:nestedScrollingEnabled="false" />
+
+            <LinearLayout
+                android:id="@+id/layoutComicPaginationBar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="16dp">
+
+                <Button
+                    android:id="@+id/btnComicPrevPage"
+                    android:layout_width="40dp"
+                    android:layout_height="36dp"
+                    android:text="&lt;"
+                    android:textColor="#FFFFFF"
+                    android:background="@drawable/bg_nav_btn" />
+
+                <LinearLayout
+                    android:id="@+id/layoutComicPageNumbersContainer"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginEnd="8dp"
+                    android:gravity="center" />
+
+                <Button
+                    android:id="@+id/btnComicNextPage"
+                    android:layout_width="40dp"
+                    android:layout_height="36dp"
+                    android:text="&gt;"
+                    android:textColor="#FFFFFF"
+                    android:background="@drawable/bg_nav_btn" />
+            </LinearLayout>
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabAddComic"
@@ -24,9 +104,9 @@
         android:layout_height="wrap_content"
         android:layout_alignParentEnd="true"
         android:layout_alignParentBottom="true"
-        android:layout_margin="24dp"
+        android:layout_margin="20dp"
         android:src="@android:drawable/ic_input_add"
         app:backgroundTint="#2196F3"
-        app:tint="#FFFFFF"
-        android:contentDescription="Thêm truyện mới" />
+        app:tint="#FFFFFF" />
+
 </RelativeLayout>

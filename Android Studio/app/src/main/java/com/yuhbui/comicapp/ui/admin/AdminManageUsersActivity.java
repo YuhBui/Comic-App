@@ -1,6 +1,7 @@
 package com.yuhbui.comicapp.ui.admin;
 
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.text.Editable;
@@ -33,17 +34,16 @@ public class AdminManageUsersActivity extends AppCompatActivity {
     private RecyclerView rvUsers;
     private AdminUserAdapter adapter;
 
-    // Khai báo các View phân trang mới bổ sung
+    // Các thành phần xử lý thanh điều hướng phân trang
     private Button btnPrevPage, btnNextPage;
     private LinearLayout layoutPageNumbersContainer;
 
     private String currentKeyword = "";
     private String currentRoleFilter = "Tất cả";
 
-    // Các biến trạng thái quản trị phân trang
     private int currentPage = 0;
     private int totalPages = 0;
-    private final int pageSize = 10; // Cố định hiển thị 10 người dùng trên 1 trang
+    private final int pageSize = 10; // Đọc cấu hình phân trang 10 phần tử/trang
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,7 +64,7 @@ public class AdminManageUsersActivity extends AppCompatActivity {
         btnAdd = findViewById(R.id.btnAdminAddUser);
         rvUsers = findViewById(R.id.rvAdminManageUsers);
 
-        // Ánh xạ View phân trang mới
+        // Ánh xạ thành phần giao diện điều phối trang
         btnPrevPage = findViewById(R.id.btnPrevPage);
         btnNextPage = findViewById(R.id.btnNextPage);
         layoutPageNumbersContainer = findViewById(R.id.layoutPageNumbersContainer);
@@ -83,12 +83,12 @@ public class AdminManageUsersActivity extends AppCompatActivity {
                 startActivity(intent);
             }
             @Override public void onToggleBan(User user, int pos) { executeToggleBan(user.getUserId()); }
-            @Override public void onEdit(User user, int pos) { /* Sửa qua màn Detail trực tiếp */ }
+            @Override public void onEdit(User user, int pos) { }
             @Override public void onDelete(User user, int pos) { executeDeleteUser(user); }
         });
         rvUsers.setAdapter(adapter);
 
-        // Sự kiện chuyển trang lùi về sau
+        // Sự kiện click nút mũi tên Trái
         btnPrevPage.setOnClickListener(v -> {
             if (currentPage > 0) {
                 currentPage--;
@@ -96,7 +96,7 @@ public class AdminManageUsersActivity extends AppCompatActivity {
             }
         });
 
-        // Sự kiện bấm chuyển tiếp sang trang mới
+        // Sự kiện click nút mũi tên Phải
         btnNextPage.setOnClickListener(v -> {
             if (currentPage < totalPages - 1) {
                 currentPage++;
@@ -108,7 +108,7 @@ public class AdminManageUsersActivity extends AppCompatActivity {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
                 currentKeyword = s.toString().trim();
-                currentPage = 0; // Trở về trang đầu khi gõ tìm kiếm mới
+                currentPage = 0;
                 loadUsersDataFromServer();
             }
             @Override public void afterTextChanged(Editable s) {}
@@ -142,74 +142,83 @@ public class AdminManageUsersActivity extends AppCompatActivity {
                         if (response.isSuccessful() && response.body() != null) {
                             Map<String, Object> result = response.body();
 
-                            // Trích xuất mảng tổng số trang và trang hiện tại từ Map phản hồi
                             totalPages = ((Number) (result.get("totalPages") != null ? result.get("totalPages") : 0)).intValue();
                             currentPage = ((Number) (result.get("currentPage") != null ? result.get("currentPage") : 0)).intValue();
 
-                            // Parse danh sách User an toàn qua Gson
                             Gson gson = new Gson();
                             String jsonUsers = gson.toJson(result.get("users"));
                             List<User> usersList = gson.fromJson(jsonUsers, new TypeToken<List<User>>(){}.getType());
 
                             adapter.setData(usersList);
-                            renderPaginationUIControls(); // Vẽ loạt nút bấm số trang
+                            renderPaginationUIControls(); // Gọi hàm vẽ lại thanh điều hướng
                         }
                     }
                     @Override public void onFailure(Call<Map<String, Object>> call, Throwable t) {}
                 });
     }
 
-    // ĐÃ THÊM: Vẽ bộ điều khiển số thứ tự trang động dạng < 1 2 3 ... n > kèm tự động vô hiệu hóa nút bấm kịch biên
+    // ĐÃ SỬA: Thay đổi cấu trúc hiển thị số trang & Điều khiển nút < > luôn hiện, khóa bấm nếu kịch trang
     private void renderPaginationUIControls() {
         layoutPageNumbersContainer.removeAllViews();
 
-        // Ép trạng thái vô hiệu hóa nút chuyển lùi < nếu ở trang đầu tiên
+        // 1. XỬ LÝ NÚT < >: Luôn luôn hiện diện, nếu kịch biên thì disable + đặt độ mờ nhạt (Alpha = 0.3f)
         btnPrevPage.setEnabled(currentPage > 0);
         btnPrevPage.setAlpha(currentPage > 0 ? 1.0f : 0.3f);
 
-        // Ép trạng thái vô hiệu hóa nút chuyển tiếp > nếu ở trang cuối cùng
         btnNextPage.setEnabled(currentPage < totalPages - 1);
         btnNextPage.setAlpha(currentPage < totalPages - 1 ? 1.0f : 0.3f);
 
-        if (totalPages <= 1) return; // Chỉ có 1 trang không cần hiện số
+        if (totalPages <= 0) return;
 
-        for (int i = 0; i < totalPages; i++) {
-            // Rút gọn bớt dấu ... nếu tổng số trang hiển thị quá lớn (Giữ chuẩn UX cấu trúc hình cây)
-            if (totalPages > 5) {
-                if (i > 0 && i < totalPages - 1 && Math.abs(i - currentPage) > 1) {
-                    if (i == 1 || i == totalPages - 2) {
-                        TextView tvEllipses = new TextView(this);
-                        tvEllipses.setText("...");
-                        tvEllipses.setPadding(16, 4, 16, 4);
-                        layoutPageNumbersContainer.addView(tvEllipses);
-                    }
-                    continue;
-                }
-            }
+        // 2. Thuật toán cửa sổ trượt (Sliding Window) vẽ tối đa 5 ô số trang liền kề giống hệt phía màn hình User
+        int maxVisible = 5;
+        int startPage = Math.max(0, currentPage - maxVisible / 2);
+        int endPage = Math.min(totalPages - 1, startPage + maxVisible - 1);
 
+        if (endPage - startPage < maxVisible - 1) {
+            startPage = Math.max(0, endPage - maxVisible + 1);
+        }
+
+        int btnSize = dpToPx(34); // Quy đổi kích thước chuẩn 34dp giống màn hình History của User
+        int btnMargin = dpToPx(3);
+
+        for (int i = startPage; i <= endPage; i++) {
             final int targetPageIndex = i;
-            Button btnPageNumber = new Button(this);
-            btnPageNumber.setText(String.valueOf(i + 1));
-            btnPageNumber.setTextSize(12);
+            TextView tvPage = new TextView(this);
 
-            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(90, 90);
-            params.setMargins(6, 0, 6, 0);
-            btnPageNumber.setLayoutParams(params);
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(btnSize, btnSize);
+            params.setMargins(btnMargin, 0, btnMargin, 0);
+            tvPage.setLayoutParams(params);
+
+            tvPage.setText(String.valueOf(i + 1));
+            tvPage.setGravity(android.view.Gravity.CENTER);
+            tvPage.setTextSize(13);
+            tvPage.setTypeface(null, android.graphics.Typeface.BOLD);
+
+            // Gán background bo góc tròn mềm mại từ resource hệ thống có sẵn của bạn
+            tvPage.setBackgroundResource(R.drawable.bg_page_btn);
 
             if (i == currentPage) {
-                // Làm nổi bật màu đỏ cho trang quản trị hiện tại đang mở xem
-                btnPageNumber.setBackgroundColor(Color.parseColor("#E74C3C"));
-                btnPageNumber.setTextColor(Color.WHITE);
+                // Trang hiện tại đang xem: Nền đỏ thương hiệu Admin, chữ trắng
+                tvPage.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#E74C3C")));
+                tvPage.setTextColor(Color.WHITE);
             } else {
-                btnPageNumber.setBackgroundColor(Color.TRANSPARENT);
-                btnPageNumber.setTextColor(Color.BLACK);
-                btnPageNumber.setOnClickListener(v -> {
+                // Các trang thông thường khác: Nền xám nhạt dịu mắt, chữ xám đen
+                tvPage.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#EEEEEE")));
+                tvPage.setTextColor(Color.parseColor("#333333"));
+                tvPage.setOnClickListener(v -> {
                     currentPage = targetPageIndex;
-                    loadUsersDataFromServer(); // Nhảy sang số trang đích chọn trực tiếp
+                    loadUsersDataFromServer();
                 });
             }
-            layoutPageNumbersContainer.addView(btnPageNumber);
+            layoutPageNumbersContainer.addView(tvPage);
         }
+    }
+
+    // ĐÃ THÊM: Hàm quy đổi dp sang Pixel động phục vụ căn chỉnh kích cỡ nút số trang
+    private int dpToPx(int dp) {
+        float density = getResources().getDisplayMetrics().density;
+        return Math.round(dp * density);
     }
 
     private void executeToggleBan(int userId) {

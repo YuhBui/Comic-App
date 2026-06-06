@@ -1,25 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/layoutAdminComicItem"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:padding="10dp"
-    android:layout_marginBottom="6dp"
-    android:background="#FFFFFF"
-    android:elevation="1dp">
+    android:padding="8dp"
+    android:background="?android:attr/selectableItemBackground">
 
     <ImageView
         android:id="@+id/imgAdminComicCover"
-        android:layout_width="70dp"
-        android:layout_height="95dp"
+        android:layout_width="80dp"
+        android:layout_height="110dp"
         android:scaleType="centerCrop"
-        android:background="#DDDDDD" />
+        android:background="#DDDDDD"/>
 
     <LinearLayout
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:orientation="vertical"
         android:layout_marginStart="12dp">
 
@@ -27,58 +23,101 @@
             android:id="@+id/tvAdminComicTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Tên truyện tranh"
+            android:text="Tên Truyện Tranh"
             android:textStyle="bold"
             android:textColor="#000000"
             android:textSize="15sp"
-            android:maxLines="1" />
+            android:maxLines="2"
+            android:ellipsize="end"/>
 
-        <TextView
-            android:id="@+id/tvAdminComicAuthor"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Tác giả: ..."
-            android:textColor="#666666"
-            android:textSize="13sp"
-            android:layout_marginTop="2dp" />
+            android:orientation="horizontal"
+            android:layout_marginTop="6dp">
 
-        <TextView
-            android:id="@+id/tvAdminComicStatus"
-            android:layout_width="wrap_content"
+            <TextView
+                android:id="@+id/tvAdminComicLatestChapter"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="Chương 0"
+                android:textColor="#FF9800"
+                android:textStyle="bold"
+                android:textSize="13sp"/>
+
+            <TextView
+                android:id="@+id/tvAdminComicTimeUpdate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Đang cập nhật"
+                android:textColor="#999999"
+                android:textSize="12sp"
+                android:textStyle="italic"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Ongoing"
-            android:textColor="#FF9800"
-            android:textStyle="bold"
-            android:textSize="12sp"
-            android:layout_marginTop="4dp" />
-    </LinearLayout>
+            android:orientation="horizontal"
+            android:layout_marginTop="12dp">
 
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:gravity="center"
-        android:layout_marginStart="8dp">
+            <TextView
+                android:id="@+id/tvAdminComicViews"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="👁️ 0"
+                android:textColor="#666666"
+                android:textSize="12sp"/>
 
-        <Button
-            android:id="@+id/btnAdminEditComic"
-            android:layout_width="75dp"
-            android:layout_height="34dp"
-            android:text="Sửa"
-            android:textSize="12sp"
-            android:backgroundTint="#4CAF50"
-            android:textColor="#FFFFFF"
-            android:padding="0dp" />
+            <View android:layout_width="16dp" android:layout_height="1dp"/>
 
-        <Button
-            android:id="@+id/btnAdminDeleteComic"
-            android:layout_width="75dp"
-            android:layout_height="34dp"
-            android:layout_marginTop="6dp"
-            android:text="Xóa"
-            android:textSize="12sp"
-            android:backgroundTint="#E74C3C"
-            android:textColor="#FFFFFF"
-            android:padding="0dp" />
+            <TextView
+                android:id="@+id/tvAdminComicLikes"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="❤️ 0"
+                android:textColor="#666666"
+                android:textSize="12sp"/>
+
+            <View android:layout_width="16dp" android:layout_height="1dp"/>
+
+            <TextView
+                android:id="@+id/tvAdminComicComments"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="💬 0"
+                android:textColor="#666666"
+                android:textSize="12sp"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp"
+            android:gravity="end">
+
+            <Button
+                android:id="@+id/btnAdminEditComic"
+                android:layout_width="70dp"
+                android:layout_height="32dp"
+                android:text="Sửa"
+                android:textSize="11sp"
+                android:textColor="#FFFFFF"
+                android:backgroundTint="#3498DB"
+                android:padding="0dp"/>
+
+            <Button
+                android:id="@+id/btnAdminDeleteComic"
+                android:layout_width="70dp"
+                android:layout_height="32dp"
+                android:layout_marginStart="8dp"
+                android:text="Xóa"
+                android:textSize="11sp"
+                android:textColor="#FFFFFF"
+                android:backgroundTint="#E74C3C"
+                android:padding="0dp"/>
+        </LinearLayout>
     </LinearLayout>
 </LinearLayout>
