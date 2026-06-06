@@ -26,7 +26,6 @@
             android:background="#FFFFFF"
             android:paddingBottom="16dp">
 
-            <!-- Tiêu đề section -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -43,17 +42,16 @@
                     android:textColor="#E91E63"
                     android:textSize="16sp"/>
 
-                <!-- Số lượng truyện yêu thích -->
-                <TextView
-                    android:id="@+id/tvFavoritesCount"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="0 truyện"
-                    android:textColor="#888888"
-                    android:textSize="13sp"/>
+                <ImageView
+                    android:id="@+id/imgPageFilter"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:padding="6dp"
+                    android:src="@drawable/ic_filter"
+                    android:background="?android:attr/selectableItemBackground"
+                    android:contentDescription="Bộ lọc thể loại" />
             </LinearLayout>
 
-            <!-- Thông báo khi chưa có truyện yêu thích -->
             <LinearLayout
                 android:id="@+id/layoutEmptyFavorites"
                 android:layout_width="match_parent"
@@ -85,7 +83,6 @@
                     android:textSize="12sp"/>
             </LinearLayout>
 
-            <!-- Grid 2 cột danh sách truyện yêu thích -->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recyclerViewFavorites"
                 android:layout_width="match_parent"
@@ -94,7 +91,6 @@
                 android:paddingEnd="8dp"
                 android:nestedScrollingEnabled="false"/>
 
-            <!-- Phân trang: < | 1 2 3 ... N | > -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

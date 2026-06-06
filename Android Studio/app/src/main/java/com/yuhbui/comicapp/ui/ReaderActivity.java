@@ -77,10 +77,10 @@ public class ReaderActivity extends AppCompatActivity {
         recyclerViewImages = findViewById(R.id.recyclerViewImages);
         recyclerViewImages.setLayoutManager(new LinearLayoutManager(this));
 
-        // ĐÃ SỬA: Cấu hình tối ưu bộ nhớ đệm và layout đo đạc kích cỡ để hiển thị đầy đủ loạt ảnh chương truyện
-        recyclerViewImages.setHasFixedSize(true);
+        // ĐÃ SỬA: Đặt thành false để RecyclerView tự động co giãn chiều cao khi ảnh truyện được tải về bất đồng bộ
+        recyclerViewImages.setHasFixedSize(false);
         recyclerViewImages.setItemViewCacheSize(30);
-        recyclerViewImages.setNestedScrollingEnabled(false); // Ngăn ngừa xung đột cuộn mượt khi bọc trong ScrollView cha
+        recyclerViewImages.setNestedScrollingEnabled(false);
 
         imageAdapter = new ImageAdapter();
         recyclerViewImages.setAdapter(imageAdapter);

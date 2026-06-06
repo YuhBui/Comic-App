@@ -14,20 +14,21 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.yuhbui.comicapp.R;
 import com.yuhbui.comicapp.data.api.ApiClient;
+import com.yuhbui.comicapp.data.model.Category;
 import com.yuhbui.comicapp.data.model.Comic;
 import com.yuhbui.comicapp.ui.adapters.ComicAdapter;
+import com.yuhbui.comicapp.ui.adapters.CategoryFilterAdapter;
 import com.yuhbui.comicapp.utils.SharedPrefsManager;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-/**
- * FavoritesActivity - Màn hình Truyện Yêu Thích
- * Hiển thị danh sách truyện user đã nhấn ❤ (yêu thích), grid 2 cột 5 hàng + phân trang
- */
 public class FollowActivity extends AppCompatActivity {
 
     private RecyclerView recyclerViewFavorites;
@@ -35,17 +36,16 @@ public class FollowActivity extends AppCompatActivity {
     private Button btnPrevPageFavorites, btnNextPageFavorites;
     private LinearLayout layoutPageNumbersFavorites;
     private LinearLayout layoutEmptyFavorites;
-    private TextView tvFavoritesCount;
-
+    private ImageView imgFavoritesFilter;
+    private CategoryFilterAdapter filterAdapter;
+    private List<Category> masterCategoriesList = new ArrayList<>(); // Bộ nhớ đệm danh sách thể loại từ server
+    private List<Integer> selectedCategoryIds = new ArrayList<>();
     private int currentPage = 0;
     private int totalPages = 1;
-    private static final int PAGE_SIZE = 10; // 2 cột x 5 hàng = 10 truyện/trang
+    private static final int PAGE_SIZE = 10;
     private int currentUserId = -1;
 
-    // Lưu toàn bộ danh sách để phân trang ở client (tránh gọi API nhiều lần)
     private List<Comic> allFavorites = null;
-
-    // Header
     private View layoutHeader;
     private ImageView headerMenu, headerSearch, headerNotification, headerAvatar;
     private TextView headerLogo;
@@ -59,7 +59,16 @@ public class FollowActivity extends AppCompatActivity {
         setupHeader();
         setupRecyclerView();
         setupPagination();
+
+        // Cấu hình ban đầu: Mặc định chọn nút ảo "Tất cả" (ID = 0)
+        selectedCategoryIds.add(0);
+        setupFilterAdapter();
+
+        // Lắng nghe sự kiện click nút hình phễu lọc -> Mở BottomSheetDialog
+        imgFavoritesFilter.setOnClickListener(v -> showCategoryFilterDialog());
+
         loadData();
+        loadCategoriesDataForFilter();
     }
 
     private void initViews() {
@@ -77,9 +86,51 @@ public class FollowActivity extends AppCompatActivity {
         btnNextPageFavorites       = findViewById(R.id.btnNextPageFavorites);
         layoutPageNumbersFavorites = findViewById(R.id.layoutPageNumbersFavorites);
         layoutEmptyFavorites       = findViewById(R.id.layoutEmptyFavorites);
-        tvFavoritesCount           = findViewById(R.id.tvFavoritesCount);
+
+        imgFavoritesFilter         = findViewById(R.id.imgPageFilter);
 
         currentUserId = SharedPrefsManager.getUserId(this);
+    }
+
+    // Hàm khởi tạo và gán Callback sự kiện đa chọn cho Adapter bộ lọc
+    private void setupFilterAdapter() {
+        filterAdapter = new CategoryFilterAdapter(new CategoryFilterAdapter.OnCatClickListener() {
+            @Override
+            public void onCatClick(List<Integer> selectedIds) {
+                selectedCategoryIds = selectedIds;
+                currentPage = 0; // Đổi bộ lọc thì reset về trang đầu tiên
+                loadData(); // Tải lại danh sách truyện yêu thích theo bộ lọc mới
+            }
+        });
+        if (!masterCategoriesList.isEmpty()) {
+            filterAdapter.setCategories(masterCategoriesList);
+        }
+    }
+
+    // ĐÃ THÊM: Hàm khởi tạo hộp thoại BottomSheet trượt hiển thị danh mục dạng Lưới 3 cột mượt mà
+    private void showCategoryFilterDialog() {
+        BottomSheetDialog dialog = new BottomSheetDialog(this);
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_category_filter, null);
+        dialog.setContentView(dialogView);
+
+        RecyclerView rvPopup = dialogView.findViewById(R.id.rvCategoryPopup);
+        TextView tvClear = dialogView.findViewById(R.id.tvClearFilter);
+
+        rvPopup.setLayoutManager(new GridLayoutManager(this, 3));
+        rvPopup.setAdapter(filterAdapter);
+
+        // Sự kiện click chữ "Xóa lọc" bên trong Dialog
+        tvClear.setOnClickListener(v -> {
+            selectedCategoryIds.clear();
+            selectedCategoryIds.add(0);
+            setupFilterAdapter(); // Làm mới trạng thái Adapter về mặc định nút "Tất cả"
+            rvPopup.setAdapter(filterAdapter);
+            currentPage = 0;
+            loadData();
+            dialog.dismiss();
+        });
+
+        dialog.show();
     }
 
     private void setupHeader() {
@@ -118,6 +169,29 @@ public class FollowActivity extends AppCompatActivity {
         });
     }
 
+    // Hàm lấy toàn bộ danh mục thể loại từ Server đổ vào bộ nhớ đệm
+    private void loadCategoriesDataForFilter() {
+        ApiClient.getApiService().getAllCategories().enqueue(new Callback<List<Category>>() {
+            @Override
+            public void onResponse(Call<List<Category>> call, Response<List<Category>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    masterCategoriesList.clear();
+
+                    // Tạo ô chọn ảo "Tất cả" có ID bằng 0 đưa lên đầu lưới bộ lọc
+                    Category allCat = new Category();
+                    allCat.setCategoryId(0);
+                    allCat.setName("Tất cả");
+
+                    masterCategoriesList.add(allCat);
+                    masterCategoriesList.addAll(response.body());
+                    filterAdapter.setCategories(masterCategoriesList);
+                }
+            }
+            @Override public void onFailure(Call<List<Category>> call, Throwable t) {}
+        });
+    }
+
+    // ĐÃ SỬA: Hàm nạp dữ liệu truyện yêu thích truyền mảng danh sách ID đa chọn lên Server
     private void loadData() {
         if (currentUserId == -1) {
             Toast.makeText(this, "Vui lòng đăng nhập để xem truyện yêu thích!", Toast.LENGTH_SHORT).show();
@@ -125,7 +199,14 @@ public class FollowActivity extends AppCompatActivity {
             return;
         }
 
-        ApiClient.getApiService().getFavoriteComics(currentUserId).enqueue(new Callback<List<Comic>>() {
+        List<Integer> idsToSend = new ArrayList<>(selectedCategoryIds);
+        // Nếu mảng đang chứa số 0 (Nút Tất cả) -> Tiến hành clear trống mảng để Server hiểu là không cần lọc cụ thể
+        if (idsToSend.contains(0)) {
+            idsToSend.clear();
+        }
+
+        // Gọi Endpoint API mới đã gá cổng bộ lọc đa chọn từ lượt trước
+        ApiClient.getApiService().getFavoriteComicsFiltered(currentUserId, idsToSend).enqueue(new Callback<List<Comic>>() {
             @Override
             public void onResponse(Call<List<Comic>> call, Response<List<Comic>> response) {
                 if (response.isSuccessful() && response.body() != null) {
@@ -134,9 +215,8 @@ public class FollowActivity extends AppCompatActivity {
                     if (allFavorites.isEmpty()) {
                         showEmptyState();
                     } else {
-                        // Tính tổng số trang
+                        // Tính toán chia trang dữ liệu (Client-side pagination mượt mà)
                         totalPages = (int) Math.ceil((double) allFavorites.size() / PAGE_SIZE);
-                        tvFavoritesCount.setText(allFavorites.size() + " truyện");
                         layoutEmptyFavorites.setVisibility(View.GONE);
                         recyclerViewFavorites.setVisibility(View.VISIBLE);
                         showPage(0);
@@ -156,9 +236,6 @@ public class FollowActivity extends AppCompatActivity {
         });
     }
 
-    /**
-     * Hiển thị trang hiện tại từ danh sách đã tải (phân trang client-side)
-     */
     private void showPage(int page) {
         if (allFavorites == null) return;
         currentPage = page;
@@ -175,7 +252,6 @@ public class FollowActivity extends AppCompatActivity {
     private void showEmptyState() {
         layoutEmptyFavorites.setVisibility(View.VISIBLE);
         recyclerViewFavorites.setVisibility(View.GONE);
-        tvFavoritesCount.setText("0 truyện");
         totalPages = 1;
         updatePageNumbers(0, 1);
     }
@@ -206,7 +282,7 @@ public class FollowActivity extends AppCompatActivity {
 
             if (i == currentPage) {
                 tvPage.setBackgroundResource(R.drawable.bg_page_btn);
-                tvPage.setBackgroundColor(Color.parseColor("#E91E63")); // Màu hồng cho favorites
+                tvPage.setBackgroundColor(Color.parseColor("#E91E63")); // Giữ màu hồng đặc trưng của trang yêu thích
                 tvPage.setTextColor(Color.WHITE);
                 tvPage.setTypeface(null, android.graphics.Typeface.BOLD);
             } else {
@@ -229,6 +305,15 @@ public class FollowActivity extends AppCompatActivity {
         return Math.round(dp * density);
     }
 
+    private void performLogout() {
+        Toast.makeText(this, "Đang đăng xuất...", Toast.LENGTH_SHORT).show();
+        SharedPrefsManager.logout(this);
+        Intent intent = new Intent(this, LoginActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
+    }
+
     private void showHeaderPopupMenu(View anchorView) {
         androidx.appcompat.widget.PopupMenu popupMenu =
                 new androidx.appcompat.widget.PopupMenu(this, anchorView);
@@ -237,14 +322,20 @@ public class FollowActivity extends AppCompatActivity {
             int id = item.getItemId();
             if (id == R.id.menu_home) {
                 startActivity(new Intent(this, MainActivity.class));
-                finish();
                 return true;
             } else if (id == R.id.menu_history) {
                 startActivity(new Intent(this, HistoryActivity.class));
-                finish();
                 return true;
             } else if (id == R.id.menu_follow) {
-                // Đã ở trang này
+                return true;
+            } else if (id == R.id.menu_downloads) {
+                Toast.makeText(this, "Truyện tải xuống", Toast.LENGTH_SHORT).show();
+                return true;
+            } else if (id == R.id.menu_profile) {
+                startActivity(new Intent(FollowActivity.this, ProfileActivity.class));
+                return true;
+            } else if (id == R.id.menu_logout) {
+                performLogout();
                 return true;
             }
             return false;

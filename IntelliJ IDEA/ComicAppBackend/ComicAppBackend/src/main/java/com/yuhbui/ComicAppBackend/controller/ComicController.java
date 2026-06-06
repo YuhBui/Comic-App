@@ -293,4 +293,30 @@ public class ComicController {
 
         return ResponseEntity.ok(filteredList);
     }
+
+    // ĐÃ THÊM: API lấy danh sách truyện Yêu thích có tích hợp bộ lọc đa chọn AND Logic
+    @GetMapping("/user-favorites/{userId}")
+    public ResponseEntity<List<Comic>> getFavoriteComicsFiltered(
+            @PathVariable("userId") Integer userId,
+            @RequestParam(value = "categoryIds", required = false) List<Integer> categoryIds) {
+
+        String sql = "SELECT c.* FROM Follows f JOIN Comics c ON f.ComicID = c.ComicID WHERE f.UserID = :userId";
+        boolean hasCategories = categoryIds != null && !categoryIds.isEmpty();
+
+        if (hasCategories) {
+            sql += " AND c.ComicID IN (SELECT cc.ComicID FROM Comic_Categories cc WHERE cc.CategoryID IN (:categoryIds) GROUP BY cc.ComicID HAVING COUNT(DISTINCT cc.CategoryID) = :categoryCount)";
+        }
+        sql += " ORDER BY f.ComicID DESC";
+
+        var query = entityManager.createNativeQuery(sql, Comic.class);
+        query.setParameter("userId", userId);
+        if (hasCategories) {
+            query.setParameter("categoryIds", categoryIds);
+            query.setParameter("categoryCount", categoryIds.size());
+        }
+
+        @SuppressWarnings("unchecked")
+        List<Comic> list = query.getResultList();
+        return ResponseEntity.ok(list);
+    }
 }

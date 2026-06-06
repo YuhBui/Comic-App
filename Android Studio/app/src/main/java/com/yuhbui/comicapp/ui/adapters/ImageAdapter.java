@@ -33,6 +33,8 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
         ChapterImage image = imageList.get(position);
         Glide.with(holder.itemView.getContext())
                 .load(image.getImageUrl())
+                .dontAnimate() // Tắt animation chuyển cảnh để ảnh hiển thị ngay lập tức, không gây lag chiều cao layout
+                .placeholder(android.R.drawable.progress_horizontal) // Hiện thanh tiến trình chờ tải
                 .into(holder.imgPage);
     }
 

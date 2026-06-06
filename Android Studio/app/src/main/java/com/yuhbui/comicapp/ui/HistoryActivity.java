@@ -16,9 +16,13 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.yuhbui.comicapp.R;
 import com.yuhbui.comicapp.data.api.ApiClient;
+import com.yuhbui.comicapp.data.model.Category;
 import com.yuhbui.comicapp.data.model.Comic;
+import com.yuhbui.comicapp.ui.adapters.CategoryFilterAdapter;
 import com.yuhbui.comicapp.ui.adapters.ComicAdapter;
 import com.yuhbui.comicapp.utils.SharedPrefsManager;
+
+import java.util.ArrayList;
 import java.util.List;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -39,6 +43,9 @@ public class HistoryActivity extends AppCompatActivity {
     private View layoutHeader;
     private ImageView headerMenu, headerSearch, headerNotification, headerAvatar;
     private TextView headerLogo;
+    private ImageView imgHistoryFilter;
+    private CategoryFilterAdapter filterAdapter;
+    private List<Integer> selectedCategoryIds = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -94,11 +101,60 @@ public class HistoryActivity extends AppCompatActivity {
         } else {
             Toast.makeText(this, "Vui lòng đăng nhập để xem lịch sử!", Toast.LENGTH_SHORT).show();
         }
+
+        imgHistoryFilter = findViewById(R.id.imgPageFilter);
+        selectedCategoryIds.add(0); // Mặc định gán chọn nút "Tất cả"
+
+        filterAdapter = new CategoryFilterAdapter(selectedIds -> {
+            selectedCategoryIds = selectedIds;
+            currentPage = 0; // Hủy trang về trang đầu khi thay đổi bộ lọc
+            if (currentUserId != -1) loadReadingHistory(currentUserId, currentPage);
+        });
+
+        imgHistoryFilter.setOnClickListener(v -> showCategoryFilterDialog());
+    }
+
+    private void showCategoryFilterDialog() {
+        com.google.android.material.bottomsheet.BottomSheetDialog dialog = new com.google.android.material.bottomsheet.BottomSheetDialog(this);
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_category_filter, null);
+        dialog.setContentView(dialogView);
+
+        RecyclerView rvPopup = dialogView.findViewById(R.id.rvCategoryPopup);
+        TextView tvClear = dialogView.findViewById(R.id.tvClearFilter);
+
+        rvPopup.setLayoutManager(new GridLayoutManager(this, 3));
+        rvPopup.setAdapter(filterAdapter);
+
+        // Tải danh mục nạp vào adapter
+        ApiClient.getApiService().getAllCategories().enqueue(new Callback<List<Category>>() {
+            @Override
+            public void onResponse(Call<List<Category>> call, Response<List<Category>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    List<Category> displayList = new ArrayList<>();
+                    Category all = new Category(); all.setCategoryId(0); all.setName("Tất cả");
+                    displayList.add(all);
+                    displayList.addAll(response.body());
+                    filterAdapter.setCategories(displayList);
+                }
+            }
+            @Override public void onFailure(Call<List<Category>> call, Throwable t) {}
+        });
+
+        tvClear.setOnClickListener(v -> {
+            selectedCategoryIds.clear(); selectedCategoryIds.add(0);
+            filterAdapter.notifyDataSetChanged();
+            currentPage = 0;
+            if (currentUserId != -1) loadReadingHistory(currentUserId, 0);
+            dialog.dismiss();
+        });
+        dialog.show();
     }
 
     private void loadReadingHistory(int userId, int page) {
-        // Lưu ý: Nếu ApiService chưa đổi cấu hình nhận Page, bạn hãy bổ sung params cho method getReadingHistoryByUserId(userId, page)
-        ApiClient.getApiService().getReadingHistoryByUserId(userId).enqueue(new Callback<List<Comic>>() {
+        List<Integer> idsToSend = new ArrayList<>(selectedCategoryIds);
+        if (idsToSend.contains(0)) idsToSend.clear();
+
+        ApiClient.getApiService().getReadingHistoryByUserId(userId, idsToSend).enqueue(new Callback<List<Comic>>() {
             @Override
             public void onResponse(Call<List<Comic>> call, Response<List<Comic>> response) {
                 if (response.isSuccessful() && response.body() != null) {
@@ -185,21 +241,37 @@ public class HistoryActivity extends AppCompatActivity {
         return Math.round(dp * density);
     }
 
+    private void performLogout() {
+        Toast.makeText(this, "Đang đăng xuất...", Toast.LENGTH_SHORT).show();
+        SharedPrefsManager.logout(this);
+        Intent intent = new Intent(this, LoginActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
+    }
+
     private void showHeaderPopupMenu(View anchorView) {
-        androidx.appcompat.widget.PopupMenu popupMenu = new androidx.appcompat.widget.PopupMenu(this, anchorView);
+        androidx.appcompat.widget.PopupMenu popupMenu =
+                new androidx.appcompat.widget.PopupMenu(this, anchorView);
         popupMenu.getMenuInflater().inflate(R.menu.menu_header_options, popupMenu.getMenu());
         popupMenu.setOnMenuItemClickListener(item -> {
             int id = item.getItemId();
             if (id == R.id.menu_home) {
                 startActivity(new Intent(this, MainActivity.class));
-                finish();
                 return true;
             } else if (id == R.id.menu_history) {
-                // Đã ở trang này
                 return true;
             } else if (id == R.id.menu_follow) {
                 startActivity(new Intent(this, FollowActivity.class));
-                finish();
+                return true;
+            } else if (id == R.id.menu_downloads) {
+                Toast.makeText(this, "Truyện tải xuống", Toast.LENGTH_SHORT).show();
+                return true;
+            } else if (id == R.id.menu_profile) {
+                startActivity(new Intent(HistoryActivity.this, ProfileActivity.class));
+                return true;
+            } else if (id == R.id.menu_logout) {
+                performLogout();
                 return true;
             }
             return false;

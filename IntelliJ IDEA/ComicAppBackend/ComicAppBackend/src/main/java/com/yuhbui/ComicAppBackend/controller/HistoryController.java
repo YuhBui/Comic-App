@@ -18,6 +18,9 @@ public class HistoryController {
     @Autowired
     private ReadingHistoryRepository historyRepository;
 
+    @jakarta.persistence.PersistenceContext
+    private jakarta.persistence.EntityManager entityManager;
+
     /**
      * Lưu hoặc cập nhật lịch sử đọc của người dùng
      */
@@ -44,15 +47,28 @@ public class HistoryController {
      * latestChapterNumber, timeUpdated, viewCount, followCount, commentCount
      */
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<ComicHomeResponseDTO>> getReadingHistory(
-            @PathVariable("userId") Integer userId) {
+    public ResponseEntity<List<com.yuhbui.ComicAppBackend.entity.Comic>> getReadingHistory(
+            @PathVariable("userId") Integer userId,
+            @RequestParam(value = "categoryIds", required = false) List<Integer> categoryIds) {
 
-        List<Object[]> rawData = historyRepository.findReadComicsWithStatsByUserId(userId);
-        List<ComicHomeResponseDTO> dtoList = rawData.stream()
-                .map(this::mapRowToDTO)
-                .collect(Collectors.toList());
+        String sql = "SELECT c.* FROM ReadingHistory h JOIN Comics c ON h.ComicID = c.ComicID WHERE h.UserID = :userId";
+        boolean hasCategories = categoryIds != null && !categoryIds.isEmpty();
 
-        return ResponseEntity.ok(dtoList);
+        if (hasCategories) {
+            sql += " AND c.ComicID IN (SELECT cc.ComicID FROM Comic_Categories cc WHERE cc.CategoryID IN (:categoryIds) GROUP BY cc.ComicID HAVING COUNT(DISTINCT cc.CategoryID) = :categoryCount)";
+        }
+        sql += " ORDER BY h.UpdatedAt DESC";
+
+        var query = entityManager.createNativeQuery(sql, com.yuhbui.ComicAppBackend.entity.Comic.class);
+        query.setParameter("userId", userId);
+        if (hasCategories) {
+            query.setParameter("categoryIds", categoryIds);
+            query.setParameter("categoryCount", categoryIds.size());
+        }
+
+        @SuppressWarnings("unchecked")
+        List<com.yuhbui.ComicAppBackend.entity.Comic> list = query.getResultList();
+        return ResponseEntity.ok(list);
     }
 
     /**

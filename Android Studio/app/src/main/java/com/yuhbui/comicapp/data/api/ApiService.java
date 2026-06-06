@@ -117,19 +117,25 @@ public interface ApiService {
 
     // Lấy danh sách truyện đã được lọc theo mã thể loại
     @GET("/api/comics/filter")
-    Call<List<Comic>> getComicsByCategory(@Query("catId") int catId);
-
+    Call<List<Comic>> filterComicsByCategories(
+            @Query("categoryIds") List<Integer> categoryIds,
+            @Query("page") int page
+    );
     // API lấy bảng xếp hạng top 10
     @GET("/api/comics/home/ranking")
     Call<List<Comic>> getTopRanking(@Query("type") String type);
 
     @GET("/api/history/user/{userId}")
-    Call<List<Comic>> getReadingHistoryByUserId(@Path("userId") int userId);
-
+    Call<List<Comic>> getReadingHistoryByUserId(
+            @Path("userId") int userId,
+            @Query("categoryIds") List<Integer> categoryIds
+    );
     // Lấy danh sách truyện yêu thích của người dùng (kèm đầy đủ thông số)
-    @GET("/api/comics/favorites/{userId}")
-    Call<List<Comic>> getFavoriteComics(@Path("userId") int userId);
-
+    @GET("/api/comics/user-favorites/{userId}")
+    Call<List<Comic>> getFavoriteComicsFiltered(
+            @Path("userId") int userId,
+            @Query("categoryIds") List<Integer> categoryIds
+    );
     @GET("/api/users/{id}")
     Call<User> getUserProfile(@Path("id") int userId);
 

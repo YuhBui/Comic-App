@@ -11,7 +11,6 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RadioGroup;
 import android.widget.TextView;
@@ -51,7 +50,7 @@ public class MainActivity extends AppCompatActivity {
     // ========== PHẦN 2: TRUYỆN MỚI CẬP NHẬT - Grid 2 cột ==========
     private RecyclerView recyclerViewComics;
     private ComicAdapter newUpdatesAdapter;
-    private ImageView btnFilterIcon;
+    private android.widget.ImageView btnFilterIcon;
     private TextView tvActiveFilter;
 
     // Phân trang
@@ -61,10 +60,9 @@ public class MainActivity extends AppCompatActivity {
     private int totalPages = 1;
     private static final int PAGE_SIZE = 10;
 
-    // Bộ lọc thể loại
+    // SỬA ĐỔI: Chuyển đổi từ biến ID đơn lẻ sang Danh sách mảng lưu đa chọn ID thể loại giống Admin
     private CategoryFilterAdapter catFilterAdapter;
-    private Integer activeFilterCategoryId = null;
-    private String activeFilterCategoryName = null;
+    private List<Integer> selectedCategoryIds = new ArrayList<>();
     private List<Category> serverCategoriesList = new ArrayList<>();
 
     // ========== PHẦN 3: BẢNG XẾP HẠNG TOP 10 ==========
@@ -74,7 +72,7 @@ public class MainActivity extends AppCompatActivity {
 
     // ========== HEADER VÀ TÌM KIẾM GỢI Ý ==========
     private View layoutHeader;
-    private ImageView headerMenu, headerSearch, headerNotification, headerAvatar;
+    private android.widget.ImageView headerMenu, headerSearch, headerNotification, headerAvatar;
     private EditText edtHeaderSearch;
     private TextView headerLogo;
     private android.widget.ListPopupWindow suggestionPopup;
@@ -85,12 +83,15 @@ public class MainActivity extends AppCompatActivity {
     private androidx.core.widget.NestedScrollView scrollMainContainer;
     private LinearLayout layoutSearchContainer;
     private RecyclerView recyclerViewSearchResults;
-    private ComicAdapter searchResultAdapter; // Adapter riêng biệt chạy item_comic_full hàng dọc
+    private ComicAdapter searchResultAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // Mặc định ban đầu khi vừa khởi động ứng dụng, tự động kích hoạt bộ lọc "Tất cả" (ID = 0)
+        selectedCategoryIds.add(0);
 
         initViews();
         setupHeader();
@@ -100,30 +101,22 @@ public class MainActivity extends AppCompatActivity {
         setupSearchSuggestions();
         loadAllData();
 
-        // Kiểm tra xem có nhận lệnh mở ô tìm kiếm từ màn hình khác (như ComicDetailActivity) hay không
         handleSearchIntent(getIntent());
 
-        // FIX SỬA LỖI: Đưa khối đăng ký nút Back cứng vào bên trong hàm onCreate() theo đúng tiêu chuẩn Java Android
         getOnBackPressedDispatcher().addCallback(this, new androidx.activity.OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
-                // Kiểm tra xem vùng chứa kết quả tìm kiếm hàng dọc có đang hiển thị không
                 if (layoutSearchContainer != null && layoutSearchContainer.getVisibility() == View.VISIBLE) {
-                    // Nếu đang hiện kết quả tìm kiếm, bấm nút Back sẽ đóng giao diện tìm kiếm để quay lại trang chủ
                     closeSearch();
                 } else {
-                    // Nếu đang ở trang chủ mặc định, cho phép thoát ứng dụng bình thường
-                    setEnabled(false); // Tạm thời vô hiệu hóa Callback này
-                    getOnBackPressedDispatcher().onBackPressed(); // Thực hiện hành vi Back hệ thống
-                    setEnabled(true);  // Kích hoạt lại Callback cho lần sau
+                    setEnabled(false);
+                    getOnBackPressedDispatcher().onBackPressed();
+                    setEnabled(true);
                 }
             }
         });
     }
 
-    /**
-     * Nhận Intent mới khi MainActivity gọi lại ở chế độ SINGLE_TOP
-     */
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
@@ -131,13 +124,10 @@ public class MainActivity extends AppCompatActivity {
         handleSearchIntent(intent);
     }
 
-    /**
-     * Xử lý tự động kích hoạt thanh tìm kiếm từ dữ liệu Intent
-     */
     private void handleSearchIntent(Intent intent) {
         if (intent != null && intent.getBooleanExtra("OPEN_SEARCH", false)) {
             if (edtHeaderSearch.getVisibility() == View.GONE) {
-                headerSearch.performClick(); // Kích hoạt sự kiện click để tự mở ô nhập liệu
+                headerSearch.performClick();
             }
         }
     }
@@ -166,7 +156,6 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
             }
-
             @Override
             public void onFailure(retrofit2.Call<com.yuhbui.comicapp.data.model.User> call, Throwable t) {
                 headerAvatar.setImageResource(android.R.drawable.sym_def_app_icon);
@@ -180,10 +169,7 @@ public class MainActivity extends AppCompatActivity {
         loadHeaderAvatar();
     }
 
-    // ========== KHỞI TẠO VIEW VÀ PHÂN TÁCH CONTAINER ==========
-
     private void initViews() {
-        // Header
         layoutHeader       = findViewById(R.id.layoutHeader);
         headerMenu         = layoutHeader.findViewById(R.id.headerMenu);
         headerLogo         = layoutHeader.findViewById(R.id.headerLogo);
@@ -192,13 +178,11 @@ public class MainActivity extends AppCompatActivity {
         headerNotification = layoutHeader.findViewById(R.id.headerNotification);
         headerAvatar       = layoutHeader.findViewById(R.id.headerAvatar);
 
-        // Phần 1: Slider
-        vpRecommended    = findViewById(R.id.vpRecommended);
-        btnSliderPrev    = findViewById(R.id.btnSliderPrev);
-        btnSliderNext    = findViewById(R.id.btnSliderNext);
+        vpRecommended      = findViewById(R.id.vpRecommended);
+        btnSliderPrev      = findViewById(R.id.btnSliderPrev);
+        btnSliderNext      = findViewById(R.id.btnSliderNext);
         layoutDotIndicator = findViewById(R.id.layoutDotIndicator);
 
-        // Phần 2: Truyện mới
         recyclerViewComics = findViewById(R.id.recyclerViewComics);
         btnFilterIcon      = findViewById(R.id.btnFilterIcon);
         tvActiveFilter     = findViewById(R.id.tvActiveFilter);
@@ -206,47 +190,34 @@ public class MainActivity extends AppCompatActivity {
         btnNextPage        = findViewById(R.id.btnNextPage);
         layoutPageNumbers  = findViewById(R.id.layoutPageNumbers);
 
-        // Phần 3: BXH
         rvTopRank    = findViewById(R.id.rvTopRank);
         rgRankFilter = findViewById(R.id.rgRankFilter);
 
-        // Bổ sung ánh xạ đầy đủ cho phần Tìm kiếm chuyên biệt Container hàng dọc
         scrollMainContainer       = findViewById(R.id.scrollMainContainer);
         layoutSearchContainer     = findViewById(R.id.layoutSearchContainer);
         recyclerViewSearchResults = findViewById(R.id.recyclerViewSearchResults);
 
-        // Khởi tạo cấu trúc hiển thị danh sách dọc cho kết quả tìm kiếm (isListView = true)
         if (recyclerViewSearchResults != null) {
             recyclerViewSearchResults.setLayoutManager(new LinearLayoutManager(this));
-            searchResultAdapter = new ComicAdapter(true); // true cấu hình dùng item_comic_full dọc
+            searchResultAdapter = new ComicAdapter(true);
             recyclerViewSearchResults.setAdapter(searchResultAdapter);
         }
     }
 
-    // ========== HEADER VÀ SỰ KIỆN TÌM KIẾM ==========
-
     private void setupHeader() {
         headerMenu.setOnClickListener(v -> showHeaderPopupMenu(v));
-        headerLogo.setOnClickListener(v -> Toast.makeText(this, "Trang chủ", Toast.LENGTH_SHORT).show());
         headerNotification.setOnClickListener(v -> Toast.makeText(this, "Thông báo", Toast.LENGTH_SHORT).show());
         headerAvatar.setOnClickListener(v -> showAvatarMenu(v));
 
-        // LOGIC ĐIỀU KHIỂN NÚT KÍNH LÚP / NÚT GỬI TÌM KIẾM
         headerSearch.setOnClickListener(v -> {
             if (edtHeaderSearch.getVisibility() == View.GONE) {
-                // Mở thanh tìm kiếm ra nếu đang ẩn
                 headerLogo.setVisibility(View.GONE);
                 edtHeaderSearch.setVisibility(View.VISIBLE);
                 edtHeaderSearch.requestFocus();
-
-                // Hiện bàn phím điện thoại
                 InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
                 if (imm != null) imm.showSoftInput(edtHeaderSearch, InputMethodManager.SHOW_IMPLICIT);
-
-                // Đổi icon kính lúp sang nút đóng (X)
                 headerSearch.setImageResource(android.R.drawable.ic_menu_close_clear_cancel);
             } else {
-                // Nếu thanh tìm kiếm đã mở, lấy text xem người dùng nhập gì chưa
                 String keyword = edtHeaderSearch.getText().toString().trim();
                 if (!keyword.isEmpty()) {
                     if (suggestionPopup.isShowing()) suggestionPopup.dismiss();
@@ -257,7 +228,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // Hỗ trợ thêm việc bấm nút "Tìm kiếm/Kính lúp" ngay trên bàn phím ảo điện thoại
         edtHeaderSearch.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_SEARCH) {
                 String keyword = edtHeaderSearch.getText().toString().trim();
@@ -271,17 +241,13 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    // ========== PHƯƠNG THỨC XỬ LÝ TÌM KIẾM VÀ KHÔI PHỤC ==========
-
     private void performSearch(String keyword) {
         InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
         if (imm != null) imm.hideSoftInputFromWindow(edtHeaderSearch.getWindowToken(), 0);
 
-        // Ẩn toàn bộ vùng chứa trang chủ, hiển thị khối giao diện hàng dọc độc lập
         if (scrollMainContainer != null) scrollMainContainer.setVisibility(View.GONE);
         if (layoutSearchContainer != null) layoutSearchContainer.setVisibility(View.VISIBLE);
 
-        // Gọi API lấy kết quả tìm kiếm đổ vào searchResultAdapter hàng dọc
         ApiClient.getApiService().searchComics(keyword).enqueue(new Callback<List<Comic>>() {
             @Override
             public void onResponse(Call<List<Comic>> call, Response<List<Comic>> response) {
@@ -305,11 +271,9 @@ public class MainActivity extends AppCompatActivity {
         headerLogo.setVisibility(View.VISIBLE);
         headerSearch.setImageResource(android.R.drawable.ic_menu_search);
 
-        // Hiện lại trang chủ và ẩn vùng tìm kiếm hàng dọc đi
         scrollMainContainer.setVisibility(View.VISIBLE);
         layoutSearchContainer.setVisibility(View.GONE);
 
-        // Xóa danh sách kết quả tìm kiếm cũ để giải phóng bộ nhớ
         if (searchResultAdapter != null) {
             searchResultAdapter.setComics(new java.util.ArrayList<>());
         }
@@ -349,8 +313,6 @@ public class MainActivity extends AppCompatActivity {
                                 }
                                 if (!suggestionList.isEmpty() && edtHeaderSearch.getVisibility() == View.VISIBLE) {
                                     suggestionAdapter.notifyDataSetChanged();
-
-                                    // Ép ListPopupWindow lấy độ rộng cụ thể bằng thanh nhập liệu để hiển thị nổi bật
                                     suggestionPopup.setWidth(edtHeaderSearch.getWidth() > 0 ? edtHeaderSearch.getWidth() : 800);
                                     suggestionPopup.setInputMethodMode(android.widget.ListPopupWindow.INPUT_METHOD_NEEDED);
                                     suggestionPopup.show();
@@ -368,8 +330,6 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    // ========== PHẦN 1: SLIDER TRUYỆN ĐỀ CỬ ==========
-
     private void setupRecommendedSlider() {
         bannerAdapter = new RecommendedBannerAdapter();
         vpRecommended.setAdapter(bannerAdapter);
@@ -385,10 +345,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         vpRecommended.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
-            @Override
-            public void onPageSelected(int position) {
-                updateDotIndicator(position);
-            }
+            @Override public void onPageSelected(int position) { updateDotIndicator(position); }
         });
     }
 
@@ -396,7 +353,6 @@ public class MainActivity extends AppCompatActivity {
         layoutDotIndicator.removeAllViews();
         int dp6 = dpToPx(6);
         int dp3 = dpToPx(3);
-
         for (int i = 0; i < count; i++) {
             View dot = new View(this);
             LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(dp6, dp6);
@@ -425,7 +381,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // ========== PHẦN 2: TRUYỆN MỚI CẬP NHẬT ==========
+    // ========== PHẦN 2: TRUYỆN MỚI CẬP NHẬT - ĐÃ SỬA ĐỒNG BỘ PHÂN TRANG ĐA CHỌN ==========
 
     private void setupNewUpdatesSection() {
         newUpdatesAdapter = new ComicAdapter();
@@ -435,28 +391,22 @@ public class MainActivity extends AppCompatActivity {
 
         btnFilterIcon.setOnClickListener(v -> showCategoryFilterDialog());
 
+        // Thay đổi sự kiện nút lùi/tiến trang gọi chung vào hàm xử lý đồng bộ loadComicsByCategories
         btnPrevPage.setOnClickListener(v -> {
             if (currentPage > 0) {
                 currentPage--;
-                if (activeFilterCategoryId != null) {
-                    loadComicsByCategory(activeFilterCategoryId);
-                } else {
-                    loadNewUpdatesComics(currentPage);
-                }
+                loadComicsByCategories(currentPage);
             }
         });
         btnNextPage.setOnClickListener(v -> {
             if (currentPage < totalPages - 1) {
                 currentPage++;
-                if (activeFilterCategoryId != null) {
-                    loadComicsByCategory(activeFilterCategoryId);
-                } else {
-                    loadNewUpdatesComics(currentPage);
-                }
+                loadComicsByCategories(currentPage);
             }
         });
     }
 
+    // ĐÃ SỬA TOÀN DIỆN: Đón nhận Callback mảng số danh sách đa chọn từ CategoryFilterAdapter
     private void showCategoryFilterDialog() {
         BottomSheetDialog dialog = new BottomSheetDialog(this);
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_category_filter, null);
@@ -466,69 +416,108 @@ public class MainActivity extends AppCompatActivity {
         TextView tvClear = dialogView.findViewById(R.id.tvClearFilter);
 
         catFilterAdapter = new CategoryFilterAdapter(selectedIds -> {
-            if (selectedIds == null || selectedIds.isEmpty() || selectedIds.contains(0)) {
-                activeFilterCategoryId = null;
-                activeFilterCategoryName = null;
+            selectedCategoryIds = selectedIds;
+            currentPage = 0; // Đổi bộ lọc reset số trang về 0
+
+            // Nếu rỗng hoặc chứa nút ảo "Tất cả" (ID = 0) -> Ẩn thông báo lọc dòng chữ
+            if (selectedCategoryIds == null || selectedCategoryIds.isEmpty() || selectedCategoryIds.contains(0)) {
                 tvActiveFilter.setVisibility(View.GONE);
                 tvActiveFilter.setText("");
-                currentPage = 0;
-                loadNewUpdatesComics(currentPage);
             } else {
-                // Phía User nhấp chọn phát đóng luôn nên phần tử cần lọc luôn nằm ở vị trí đầu tiên (index 0)
-                int selectedId = selectedIds.get(0);
-                activeFilterCategoryId = selectedId;
-
-                // Vòng lặp duyệt tìm tên thể loại tương ứng từ danh sách serverCategoriesList đã lưu trữ
-                activeFilterCategoryName = "Thể loại";
-                for (Category cat : serverCategoriesList) {
-                    if (cat.getCategoryId() == selectedId) {
-                        activeFilterCategoryName = cat.getName();
-                        break;
+                // Duyệt vòng lặp nối chuỗi các thể loại đang chọn cách nhau bởi dấu phẩy
+                List<String> activeNames = new ArrayList<>();
+                for (Integer id : selectedCategoryIds) {
+                    for (Category cat : serverCategoriesList) {
+                        if (cat.getCategoryId() == id) {
+                            activeNames.add(cat.getName());
+                            break;
+                        }
                     }
                 }
-
-                tvActiveFilter.setText("Đang lọc: " + activeFilterCategoryName);
+                tvActiveFilter.setText("Đang lọc: " + String.join(", ", activeNames));
                 tvActiveFilter.setVisibility(View.VISIBLE);
-                currentPage = 0;
-                loadComicsByCategory(activeFilterCategoryId);
             }
-            dialog.dismiss(); // Đóng hộp thoại bộ lọc ngay lập tức sau khi chọn giống logic cũ
+            loadComicsByCategories(currentPage); // Tải lại truyện theo trang đầu tiên của bộ lọc mới
         });
 
         rvPopup.setLayoutManager(new GridLayoutManager(this, 3));
         rvPopup.setAdapter(catFilterAdapter);
 
+        // Nạp danh sách từ bộ nhớ đệm hoặc từ Server đổ vào PopUp lưới 3 cột kèm nút ảo "Tất cả"
+        List<Category> fullDisplayList = new ArrayList<>();
+        Category allCatVirtual = new Category();
+        allCatVirtual.setCategoryId(0);
+        allCatVirtual.setName("Tất cả");
+        fullDisplayList.add(allCatVirtual);
+        fullDisplayList.addAll(serverCategoriesList);
+        catFilterAdapter.setCategories(fullDisplayList);
+
         ApiClient.getApiService().getCategories().enqueue(new Callback<List<Category>>() {
             @Override
             public void onResponse(Call<List<Category>> call, Response<List<Category>> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    // ĐÃ SỬA: Gán dữ liệu vào biến toàn cục để phục vụ tra cứu tìm kiếm tên phía trên
                     serverCategoriesList = response.body();
-                    catFilterAdapter.setCategories(serverCategoriesList);
+
+                    List<Category> refreshList = new ArrayList<>();
+                    Category allCat = new Category();
+                    allCat.setCategoryId(0);
+                    allCat.setName("Tất cả");
+                    refreshList.add(allCat);
+                    refreshList.addAll(serverCategoriesList);
+
+                    catFilterAdapter.setCategories(refreshList);
                 }
             }
-            @Override
-            public void onFailure(Call<List<Category>> call, Throwable t) {
-                Log.e("YUH_TEST", "Lỗi tải danh mục: " + t.getMessage());
-            }
+            @Override public void onFailure(Call<List<Category>> call, Throwable t) {}
         });
 
         tvClear.setOnClickListener(v -> {
-            activeFilterCategoryId = null;
-            activeFilterCategoryName = null;
+            selectedCategoryIds.clear();
+            selectedCategoryIds.add(0);
             tvActiveFilter.setVisibility(View.GONE);
             tvActiveFilter.setText("");
             currentPage = 0;
-            loadNewUpdatesComics(currentPage);
+            loadComicsByCategories(0);
             dialog.dismiss();
         });
 
         dialog.show();
     }
 
+    // ĐÃ THÊM MỚI: Hàm vạn năng gộp tải dữ liệu truyện phân trang theo bộ lọc đa chọn AND của User
+    private void loadComicsByCategories(int page) {
+        // Nếu bộ lọc chứa số 0 (Tất cả) hoặc trống -> Chạy hàm tải danh sách truyện mới mặc định ban đầu
+        if (selectedCategoryIds == null || selectedCategoryIds.isEmpty() || selectedCategoryIds.contains(0)) {
+            loadNewUpdatesComics(page);
+            return;
+        }
+
+        // Gọi kết nối API lọc đa danh mục AND kèm phân trang lũy tiến subList từ Server
+        ApiClient.getApiService().filterComicsByCategories(selectedCategoryIds, page).enqueue(new Callback<List<Comic>>() {
+            @Override
+            public void onResponse(Call<List<Comic>> call, Response<List<Comic>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    List<Comic> comics = response.body();
+                    newUpdatesAdapter.setComics(comics);
+
+                    // Thuật toán đếm tính toán số trang phân bố lũy tiến y hệt như hàm loadNewUpdatesComics
+                    if (comics.size() == PAGE_SIZE) {
+                        totalPages = Math.max(totalPages, page + 2);
+                    } else {
+                        totalPages = page + 1;
+                    }
+                    updatePageNumbers(page, totalPages);
+                }
+            }
+            @Override
+            public void onFailure(Call<List<Comic>> call, Throwable t) {
+                Log.e("YUH_TEST", "Lỗi lọc đa thể loại User: " + t.getMessage());
+            }
+        });
+    }
+
     private void updatePageNumbers(int currentPage, int totalPages) {
         layoutPageNumbers.removeAllViews();
-
         int maxVisible = 5;
         int startPage = Math.max(0, currentPage - maxVisible / 2);
         int endPage = Math.min(totalPages - 1, startPage + maxVisible - 1);
@@ -561,11 +550,7 @@ public class MainActivity extends AppCompatActivity {
                 tvPage.setTextColor(Color.parseColor("#333333"));
                 tvPage.setOnClickListener(v -> {
                     MainActivity.this.currentPage = pageIndex;
-                    if (activeFilterCategoryId != null) {
-                        loadComicsByCategory(activeFilterCategoryId);
-                    } else {
-                        loadNewUpdatesComics(pageIndex);
-                    }
+                    loadComicsByCategories(pageIndex); // Chuyển trang đồng bộ
                 });
             }
             layoutPageNumbers.addView(tvPage);
@@ -596,11 +581,9 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    // ========== LOAD DỮ LIỆU TỪ API ==========
-
     private void loadAllData() {
         loadRecommendedComics();
-        loadNewUpdatesComics(currentPage);
+        loadComicsByCategories(currentPage); // Sử dụng hàm đồng bộ đa chọn làm hàm nạp trang chủ mặc định
         loadRankingData("day");
     }
 
@@ -643,24 +626,6 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void loadComicsByCategory(int catId) {
-        ApiClient.getApiService().getComicsByCategory(catId).enqueue(new Callback<List<Comic>>() {
-            @Override
-            public void onResponse(Call<List<Comic>> call, Response<List<Comic>> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    List<Comic> comics = response.body();
-                    newUpdatesAdapter.setComics(comics);
-                    totalPages = 1;
-                    updatePageNumbers(0, 1);
-                }
-            }
-            @Override
-            public void onFailure(Call<List<Comic>> call, Throwable t) {
-                Log.e("YUH_TEST", "Lỗi lọc thể loại: " + t.getMessage());
-            }
-        });
-    }
-
     private void loadRankingData(String type) {
         ApiClient.getApiService().getTopRanking(type).enqueue(new Callback<List<Comic>>() {
             @Override
@@ -677,8 +642,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showHeaderPopupMenu(View anchorView) {
-        androidx.appcompat.widget.PopupMenu popupMenu =
-                new androidx.appcompat.widget.PopupMenu(this, anchorView);
+        androidx.appcompat.widget.PopupMenu popupMenu = new androidx.appcompat.widget.PopupMenu(this, anchorView);
         popupMenu.getMenuInflater().inflate(R.menu.menu_header_options, popupMenu.getMenu());
 
         popupMenu.setOnMenuItemClickListener(item -> {
@@ -708,9 +672,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showAvatarMenu(View anchorView) {
-        androidx.appcompat.widget.PopupMenu popupMenu =
-                new androidx.appcompat.widget.PopupMenu(this, anchorView);
-
+        androidx.appcompat.widget.PopupMenu popupMenu = new androidx.appcompat.widget.PopupMenu(this, anchorView);
         popupMenu.getMenu().add(0, 1, 0, "Hồ sơ cá nhân");
         popupMenu.getMenu().add(0, 2, 1, "Đăng xuất");
 
