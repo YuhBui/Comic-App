@@ -28,7 +28,7 @@ public class AdminComicController {
     @PersistenceContext
     private EntityManager entityManager;
 
-    // 1. ĐÃ NÂNG CẤP: API lấy danh sách truyện tích hợp Phân trang, Tìm kiếm, Lọc theo thể loại đa năng
+    // 1. ĐÃ NÂNG CẤP: API lấy danh sách truyện tích hợp Phân trang, Tìm kiếm, Lọc theo thể loại đa năng (ĐÃ ĐỒNG BỘ KEY)
     @GetMapping
     public ResponseEntity<Map<String, Object>> getAllComicsForAdmin(
             @RequestParam(value = "keyword", required = false) String keyword,
@@ -38,17 +38,14 @@ public class AdminComicController {
 
         String baseWhere = " WHERE 1=1";
 
-        // Lọc theo từ khóa Tìm kiếm (Tiêu đề hoặc Tác giả)
         if (keyword != null && !keyword.trim().isEmpty()) {
             baseWhere += " AND (c.Title LIKE :keyword OR c.Author LIKE :keyword)";
         }
 
-        // Lọc theo mã thể loại kết nối bảng trung gian Comic_Categories
         if (categoryId != null && categoryId > 0) {
             baseWhere += " AND c.ComicID IN (SELECT cc.ComicID FROM Comic_Categories cc WHERE cc.CategoryID = :categoryId)";
         }
 
-        // Câu lệnh đếm tổng số phần tử để tính toán số trang
         String countSql = "SELECT COUNT(DISTINCT c.ComicID) FROM Comics c" + baseWhere;
         var countQuery = entityManager.createNativeQuery(countSql);
         if (keyword != null && !keyword.trim().isEmpty()) countQuery.setParameter("keyword", "%" + keyword.trim() + "%");
@@ -58,7 +55,6 @@ public class AdminComicController {
         int totalPages = (int) Math.ceil((double) totalItems / size);
         int offset = page * size;
 
-        // Câu lệnh truy vấn lấy dữ liệu phân trang thực tế
         String selectSql = "SELECT DISTINCT c.* FROM Comics c" + baseWhere + " ORDER BY c.CreatedAt DESC LIMIT :size OFFSET :offset";
         var selectQuery = entityManager.createNativeQuery(selectSql, Comic.class);
         if (keyword != null && !keyword.trim().isEmpty()) selectQuery.setParameter("keyword", "%" + keyword.trim() + "%");
@@ -69,9 +65,51 @@ public class AdminComicController {
         @SuppressWarnings("unchecked")
         List<Comic> comics = selectQuery.getResultList();
 
-        // Đóng gói JSON trả về đồng nhất cấu hình phía Android
+        // ====================================================================
+        // ĐOẠN XỬ LÝ BỔ SUNG THÔNG SỐ TƯƠNG TÁC CHO DANH SÁCH TRUYỆN ADMIN (ĐÃ SỬA KHỚP ANDROID KEY)
+        // ====================================================================
+        List<Map<String, Object>> enrichedComics = new ArrayList<>();
+        for (Comic c : comics) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("comicId", c.getComicId());
+            map.put("title", c.getTitle());
+            map.put("author", c.getAuthor());
+            map.put("description", c.getDescription());
+            map.put("coverImageUrl", c.getCoverImageUrl());
+            map.put("viewCount", c.getViewCount() != null ? c.getViewCount() : 0);
+            map.put("rating", c.getRating());
+            map.put("status", c.getStatus());
+            map.put("isHidden", c.getIsHidden());
+            map.put("createdAt", c.getCreatedAt());
+
+            // 1. ĐÃ ĐỒNG BỘ KEY: Lấy Chương mới nhất & Thời gian cập nhật chương mới nhất
+            String chSql = "SELECT ChapterNumber, CreatedAt FROM Chapters WHERE ComicID = :comicId ORDER BY ChapterNumber DESC LIMIT 1";
+            @SuppressWarnings("unchecked")
+            List<Object[]> chData = entityManager.createNativeQuery(chSql).setParameter("comicId", c.getComicId()).getResultList();
+            if (!chData.isEmpty()) {
+                Object[] chRow = chData.get(0);
+                map.put("latestChapterNumber", chRow[0].toString());
+                map.put("timeUpdated", chRow[1] != null ? chRow[1].toString() : "Đang cập nhật");
+            } else {
+                map.put("latestChapterNumber", "");
+                map.put("timeUpdated", "Chưa cập nhật");
+            }
+
+            // 2. ĐÃ ĐỒNG BỘ KEY: Lấy Số lượt yêu thích (Follows) đổi sang followCount
+            String favSql = "SELECT COUNT(*) FROM Follows WHERE ComicID = :comicId";
+            long favCount = ((Number) entityManager.createNativeQuery(favSql).setParameter("comicId", c.getComicId()).getSingleResult()).longValue();
+            map.put("followCount", favCount);
+
+            // 3. Lấy Số lượng bình luận (Comments)
+            String cmtSql = "SELECT COUNT(*) FROM Comments WHERE ComicID = :comicId";
+            long cmtCount = ((Number) entityManager.createNativeQuery(cmtSql).setParameter("comicId", c.getComicId()).getSingleResult()).longValue();
+            map.put("commentCount", cmtCount);
+
+            enrichedComics.add(map);
+        }
+
         Map<String, Object> response = new HashMap<>();
-        response.put("comics", comics);
+        response.put("comics", enrichedComics);
         response.put("totalPages", totalPages);
         response.put("currentPage", page);
 
@@ -84,7 +122,6 @@ public class AdminComicController {
         List<Category> categories = entityManager.createQuery("FROM Category ORDER BY name ASC", Category.class).getResultList();
         List<Category> responseList = new ArrayList<>();
 
-        // Tạo một phần tử "Tất cả" ảo có ID bằng 0 đưa lên đầu hàng
         Category allCat = new Category();
         allCat.setCategoryId(0);
         allCat.setName("Tất cả");
@@ -94,20 +131,15 @@ public class AdminComicController {
         return ResponseEntity.ok(responseList);
     }
 
-    // Nâng cấp API thêm truyện: Tự động kết nối thể loại vào bảng trung gian
     @PostMapping
     @Transactional
     public ResponseEntity<Comic> createComic(@RequestBody Comic comic, @RequestParam(value = "categoryIds", required = false) List<Integer> categoryIds) {
-
-        // BỔ SUNG DÒNG NÀY: Sửa lỗi 500 do ID mặc định từ Android gửi lên bằng 0
         comic.setComicId(null);
-
         comic.setViewCount(0);
         comic.setRating(0.0f);
         comic.setIsHidden(false);
         Comic savedComic = comicRepository.save(comic);
 
-        // Đồng bộ chèn danh sách đa thể loại vào bảng trung gian Comic_Categories
         if (categoryIds != null && !categoryIds.isEmpty()) {
             for (Integer catId : categoryIds) {
                 entityManager.createNativeQuery("INSERT INTO Comic_Categories (ComicID, CategoryID) VALUES (:comicId, :catId)")
@@ -135,7 +167,6 @@ public class AdminComicController {
         comic.setStatus(comicDetails.getStatus());
         Comic updatedComic = comicRepository.save(comic);
 
-        // Làm sạch và cập nhật lại mối liên kết đa thể loại
         entityManager.createNativeQuery("DELETE FROM Comic_Categories WHERE ComicID = :comicId")
                 .setParameter("comicId", id).executeUpdate();
 
@@ -147,40 +178,79 @@ public class AdminComicController {
                         .executeUpdate();
             }
         }
+
+        // ====================================================================
+        // ĐÃ THÊM: TỰ ĐỘNG GỬI THÔNG BÁO CHO USER ĐANG THEO DÕI KHI CẬP NHẬT TRUYỆN
+        // ====================================================================
+        try {
+            @SuppressWarnings("unchecked")
+            List<Object> followerIds = entityManager.createNativeQuery("SELECT UserID FROM Follows WHERE ComicID = :id")
+                    .setParameter("id", id)
+                    .getResultList();
+            for (Object fId : followerIds) {
+                int uId = ((Number) fId).intValue();
+                entityManager.createNativeQuery("INSERT INTO Notifications (UserID, Title, Message, IsRead, ComicID, CreatedAt) VALUES (:userId, :title, :message, false, :comicId, NOW())")
+                        .setParameter("userId", uId)
+                        .setParameter("title", "Cập nhật thông tin truyện")
+                        .setParameter("message", "Truyện '" + updatedComic.getTitle() + "' bạn yêu thích vừa được cập nhật thông tin mới.")
+                        .setParameter("comicId", id)
+                        .executeUpdate();
+            }
+        } catch (Exception e) {
+            System.err.println("Lỗi gửi thông báo cập nhật truyện: " + e.getMessage());
+        }
+
         return ResponseEntity.ok(updatedComic);
     }
 
-    // ĐÃ SỬA LỖI XÓA 500: Dọn dẹp sạch sẽ 100% Khóa ngoại theo đúng tên bảng trong file comicapp.sql của bạn
     @DeleteMapping("/{id}")
     @Transactional
     public ResponseEntity<?> deleteComic(@PathVariable Integer id) {
-        if (!comicRepository.existsById(id)) {
+        Optional<Comic> comicOpt = comicRepository.findById(id);
+        if (!comicOpt.isPresent()) {
             return ResponseEntity.notFound().build();
         }
+        Comic comic = comicOpt.get();
 
-        // 1. Dọn dẹp các bảng tương tác bình luận con sâu nhất liên quan đến truyện này
+        // ====================================================================
+        // ĐÃ THÊM: TỰ ĐỘNG GỬI THÔNG BÁO CHO USER THEO DÕI TRƯỚC KHI XÓA TRUYỆN TRÊN DB
+        // ====================================================================
+        try {
+            @SuppressWarnings("unchecked")
+            List<Object> followerIds = entityManager.createNativeQuery("SELECT UserID FROM Follows WHERE ComicID = :id")
+                    .setParameter("id", id)
+                    .getResultList();
+            for (Object fId : followerIds) {
+                int uId = ((Number) fId).intValue();
+                entityManager.createNativeQuery("INSERT INTO Notifications (UserID, Title, Message, IsRead, ComicID, CreatedAt) VALUES (:userId, :title, :message, false, :comicId, NOW())")
+                        .setParameter("userId", uId)
+                        .setParameter("title", "Truyện yêu thích đã gỡ bỏ")
+                        .setParameter("message", "Rất tiếc, truyện tranh '" + comic.getTitle() + "' đã bị gỡ khỏi hệ thống theo yêu cầu bản quyền.")
+                        .setParameter("comicId", null) // Truyện bị xóa nên Deep-link bằng null
+                        .executeUpdate();
+            }
+        } catch (Exception e) {
+            System.err.println("Lỗi gửi thông báo xóa truyện: " + e.getMessage());
+        }
+
+        // Thực hiện tuần tự xóa sạch sẽ dữ liệu liên kết khóa ngoại
         entityManager.createNativeQuery("DELETE FROM Comment_Interactions WHERE CommentID IN (SELECT CommentID FROM Comments WHERE ComicID = :id)").setParameter("id", id).executeUpdate();
         entityManager.createNativeQuery("DELETE FROM Comment_Reports WHERE CommentID IN (SELECT CommentID FROM Comments WHERE ComicID = :id)").setParameter("id", id).executeUpdate();
         entityManager.createNativeQuery("DELETE FROM Comments WHERE ComicID = :id").setParameter("id", id).executeUpdate();
 
-        // 2. Dọn dẹp các bảng lịch sử, theo dõi, đánh giá
         entityManager.createNativeQuery("DELETE FROM ReadingHistory WHERE ComicID = :id").setParameter("id", id).executeUpdate();
         entityManager.createNativeQuery("DELETE FROM Follows WHERE ComicID = :id").setParameter("id", id).executeUpdate();
         entityManager.createNativeQuery("DELETE FROM Rating WHERE ComicID = :id").setParameter("id", id).executeUpdate();
 
-        // 3. Dọn dẹp ảnh chương truyện và chương truyện cha
         entityManager.createNativeQuery("DELETE FROM ChapterImages WHERE ChapterID IN (SELECT ChapterID FROM Chapters WHERE ComicID = :id)").setParameter("id", id).executeUpdate();
         entityManager.createNativeQuery("DELETE FROM Chapters WHERE ComicID = :id").setParameter("id", id).executeUpdate();
 
-        // 4. Dọn dẹp bảng trung gian thể loại truyện
         entityManager.createNativeQuery("DELETE FROM Comic_Categories WHERE ComicID = :id").setParameter("id", id).executeUpdate();
 
-        // 5. Xóa thực thể cha cuối cùng
         comicRepository.deleteById(id);
         return ResponseEntity.ok(Map.of("success", true));
     }
 
-    // ĐÃ SỬA LỖI 405: Khai báo chuẩn định dạng nhận dữ liệu tệp tin đa phần từ Android gửi lên
     @PostMapping(value = "/upload-cover", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> uploadComicCover(@RequestParam("file") MultipartFile file) {
         try {
@@ -192,7 +262,6 @@ public class AdminComicController {
             Path filePath = Paths.get(uploadDir + fileName);
             Files.write(filePath, file.getBytes());
 
-            // Đường link kết nối an toàn tương thích lệnh adb reverse cổng 8080 của bạn
             String coverUrl = "http://localhost:8080/uploads/covers/" + fileName;
             return ResponseEntity.ok(Map.of("coverUrl", coverUrl));
         } catch (Exception e) {
@@ -200,7 +269,6 @@ public class AdminComicController {
         }
     }
 
-    // 5. API LẤY DANH SÁCH BÌNH LUẬN KÈM ĐẦY ĐỦ THỐNG KÊ CHO ADMIN (ĐÃ SỬA TÊN CỘT DISPLAYNAME)
     @GetMapping("/{id}/comments")
     public ResponseEntity<List<Map<String, Object>>> getComicCommentsForAdmin(@PathVariable Integer id) {
         String sql = "SELECT c.CommentID, u.DisplayName, u.AvatarUrl, c.Content, " +
@@ -221,7 +289,7 @@ public class AdminComicController {
             for (Object[] row : rawData) {
                 Map<String, Object> map = new HashMap<>();
                 map.put("commentId", row[0]);
-                map.put("username", row[1]); // Trả về DisplayName của User
+                map.put("username", row[1]);
                 map.put("avatarUrl", row[2]);
                 map.put("content", row[3]);
                 map.put("likes", row[4]);
@@ -235,7 +303,6 @@ public class AdminComicController {
         }
     }
 
-    // 6. API XÓA BÌNH LUẬN BẤT KỲ CỦA USER
     @DeleteMapping("/comments/{commentId}")
     @Transactional
     public ResponseEntity<?> adminDeleteComment(@PathVariable Integer commentId) {
@@ -245,7 +312,6 @@ public class AdminComicController {
         return ResponseEntity.ok(Map.of("success", true));
     }
 
-    // ĐÃ THÊM: API tiếp nhận danh sách CategoryIds từ Android gửi lên để lọc nâng cao
     @GetMapping("/paged")
     public ResponseEntity<Map<String, Object>> getComicsPagedForAdmin(
             @RequestParam(value = "keyword", required = false) String keyword,
@@ -261,30 +327,27 @@ public class AdminComicController {
             baseWhere += " AND (c.Title LIKE :keyword OR c.Author LIKE :keyword)";
         }
         if (hasCategories) {
-            // Gom nhóm theo từng truyện và ép buộc số lượng thể loại trùng khớp phải bằng đúng số lượng ID gửi lên
             baseWhere += " AND c.ComicID IN (SELECT cc.ComicID FROM Comic_Categories cc WHERE cc.CategoryID IN (:categoryIds) GROUP BY cc.ComicID HAVING COUNT(DISTINCT cc.CategoryID) = :categoryCount)";
         }
 
-        // 1. Tính toán tổng số trang dữ liệu dựa trên bộ lọc hiện tại
         String countSql = "SELECT COUNT(DISTINCT c.ComicID) FROM Comics c" + baseWhere;
         var countQuery = entityManager.createNativeQuery(countSql);
         if (hasKeyword) countQuery.setParameter("keyword", "%" + keyword.trim() + "%");
         if (hasCategories) {
             countQuery.setParameter("categoryIds", categoryIds);
-            countQuery.setParameter("categoryCount", categoryIds.size()); // Gửi số lượng thể loại đang chọn
+            countQuery.setParameter("categoryCount", categoryIds.size());
         }
 
         long totalItems = ((Number) countQuery.getSingleResult()).longValue();
         int totalPages = (int) Math.ceil((double) totalItems / size);
         int offset = page * size;
 
-        // 2. Truy vấn danh sách truyện thực tế theo trang phân phối
         String selectSql = "SELECT DISTINCT c.* FROM Comics c" + baseWhere + " ORDER BY c.ComicID DESC LIMIT :size OFFSET :offset";
         var selectQuery = entityManager.createNativeQuery(selectSql, Comic.class);
         if (hasKeyword) selectQuery.setParameter("keyword", "%" + keyword.trim() + "%");
         if (hasCategories) {
             selectQuery.setParameter("categoryIds", categoryIds);
-            selectQuery.setParameter("categoryCount", categoryIds.size()); // Gửi số lượng thể loại đang chọn
+            selectQuery.setParameter("categoryCount", categoryIds.size());
         }
         selectQuery.setParameter("size", size);
         selectQuery.setParameter("offset", offset);
@@ -292,8 +355,45 @@ public class AdminComicController {
         @SuppressWarnings("unchecked")
         List<Comic> comics = selectQuery.getResultList();
 
+        List<Map<String, Object>> enrichedComics = new ArrayList<>();
+        for (Comic c : comics) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("comicId", c.getComicId());
+            map.put("title", c.getTitle());
+            map.put("author", c.getAuthor());
+            map.put("description", c.getDescription());
+            map.put("coverImageUrl", c.getCoverImageUrl());
+            map.put("viewCount", c.getViewCount() != null ? c.getViewCount() : 0);
+            map.put("rating", c.getRating());
+            map.put("status", c.getStatus());
+            map.put("isHidden", c.getIsHidden());
+            map.put("createdAt", c.getCreatedAt());
+
+            String chSql = "SELECT ChapterNumber, CreatedAt FROM Chapters WHERE ComicID = :comicId ORDER BY ChapterNumber DESC LIMIT 1";
+            @SuppressWarnings("unchecked")
+            List<Object[]> chData = entityManager.createNativeQuery(chSql).setParameter("comicId", c.getComicId()).getResultList();
+            if (!chData.isEmpty()) {
+                Object[] chRow = chData.get(0);
+                map.put("latestChapterNumber", chRow[0].toString());
+                map.put("timeUpdated", chRow[1] != null ? chRow[1].toString() : "Đang cập nhật");
+            } else {
+                map.put("latestChapterNumber", "");
+                map.put("timeUpdated", "Chưa cập nhật");
+            }
+
+            String favSql = "SELECT COUNT(*) FROM Follows WHERE ComicID = :comicId";
+            long favCount = ((Number) entityManager.createNativeQuery(favSql).setParameter("comicId", c.getComicId()).getSingleResult()).longValue();
+            map.put("followCount", favCount);
+
+            String cmtSql = "SELECT COUNT(*) FROM Comments WHERE ComicID = :comicId";
+            long cmtCount = ((Number) entityManager.createNativeQuery(cmtSql).setParameter("comicId", c.getComicId()).getSingleResult()).longValue();
+            map.put("commentCount", cmtCount);
+
+            enrichedComics.add(map);
+        }
+
         Map<String, Object> response = new HashMap<>();
-        response.put("comics", comics);
+        response.put("comics", enrichedComics);
         response.put("totalPages", totalPages);
         response.put("currentPage", page);
 

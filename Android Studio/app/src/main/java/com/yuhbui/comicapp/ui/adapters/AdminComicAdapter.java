@@ -56,9 +56,9 @@ public class AdminComicAdapter extends RecyclerView.Adapter<AdminComicAdapter.Ad
             holder.tvLatestChapter.setText("Chưa có chương");
         }
 
-        // 2. Đổ dữ liệu thời gian cập nhật
+        // 2. Đổ dữ liệu thời gian cập nhật chỉ lấy Ngày/Tháng/Năm
         String timeUpdate = comic.getTimeUpdated();
-        holder.tvTimeUpdate.setText(timeUpdate != null ? timeUpdate : "Đang cập nhật");
+        holder.tvTimeUpdate.setText(timeUpdate != null ? formatToDateOnly(timeUpdate) : "Đang cập nhật");
 
         // 3. Định dạng chuỗi thông số tương tác (👁️ Lượt xem, ❤️ Yêu thích, 💬 Bình luận)
         holder.tvViews.setText("👁️ " + formatNumber(comic.getViewCount()));
@@ -81,6 +81,23 @@ public class AdminComicAdapter extends RecyclerView.Adapter<AdminComicAdapter.Ad
         // Sự kiện nhấp nút hành động điều phối
         holder.btnEdit.setOnClickListener(v -> listener.onEdit(comic));
         holder.btnDelete.setOnClickListener(v -> listener.onDelete(comic, position));
+    }
+
+    private String formatToDateOnly(String rawDateTime) {
+        if (rawDateTime == null || rawDateTime.trim().isEmpty()) {
+            return "Đang cập nhật";
+        }
+        try {
+            // Tách lấy cụm ngày yyyy-MM-dd trước khoảng trắng hoặc chữ T
+            String datePart = rawDateTime.contains("T") ? rawDateTime.split("T")[0] : rawDateTime.split(" ")[0];
+            String[] parts = datePart.split("-");
+            if (parts.length == 3) {
+                return parts[2] + "/" + parts[1] + "/" + parts[0]; // Trả về dd/MM/yyyy
+            }
+            return datePart;
+        } catch (Exception e) {
+            return rawDateTime;
+        }
     }
 
     @Override

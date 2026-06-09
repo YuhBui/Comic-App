@@ -120,6 +120,8 @@ public class AdminDashboardActivity extends AppCompatActivity {
         // Đăng ký sự kiện nút menu tùy chọn và nạp ảnh đại diện Admin
         headerMenu.setOnClickListener(v -> showAdminPopupMenu(v));
         loadAdminHeaderAvatar();
+
+        headerAvatar.setOnClickListener(v -> showAvatarPopupMenu(v));
     }
 
     /**
@@ -244,21 +246,46 @@ public class AdminDashboardActivity extends AppCompatActivity {
             if (id == R.id.menu_admin_dashboard) {
                 return true; // Đang ở chính màn hình này
             } else if (id == R.id.menu_admin_manage_comics) {
-                // KÍCH HOẠT DÒNG NÀY ĐỂ MỞ TRANG QUẢN LÝ TRUYỆN TRANH CHUYÊN SÂU
                 startActivity(new Intent(AdminDashboardActivity.this, AdminManageComicsActivity.class));
                 return true;
             } else if (id == R.id.menu_admin_manage_users) {
-                // ĐÃ SỬA: Thay thế Toast cũ bằng lệnh Intent mở trang Quản lý người dùng chuyên sâu
                 startActivity(new Intent(AdminDashboardActivity.this, AdminManageUsersActivity.class));
                 return true;
             } else if (id == R.id.menu_admin_manage_notifications) {
-                Toast.makeText(this, "Chức năng quản lý thông báo đang phát triển", Toast.LENGTH_SHORT).show();
+                startActivity(new Intent(AdminDashboardActivity.this, AdminManageNotificationActivity.class));
                 return true;
             } else if (id == R.id.menu_admin_logout) {
-                // Đăng xuất xóa bộ nhớ tạm và đẩy về Login
                 SharedPrefsManager.logout(this);
                 android.content.Intent intent = new android.content.Intent(this, com.yuhbui.comicapp.ui.LoginActivity.class);
                 intent.setFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK | android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intent);
+                finish();
+                return true;
+            }
+            return false;
+        });
+        popupMenu.show();
+    }
+
+    private void showAvatarPopupMenu(View anchorView) {
+        androidx.appcompat.widget.PopupMenu popupMenu = new androidx.appcompat.widget.PopupMenu(this, anchorView);
+
+        // Thêm các mục lựa chọn trực tiếp bằng code (không cần tạo file XML menu mới)
+        popupMenu.getMenu().add(0, 1, 1, "👤 Hồ sơ cá nhân");
+        popupMenu.getMenu().add(0, 2, 2, "🚪 Đăng xuất hệ thống");
+
+        popupMenu.setOnMenuItemClickListener(item -> {
+            int id = item.getItemId();
+            if (id == 1) {
+                // TÁI SỬ DỤNG: Gọi trực tiếp ProfileActivity của User
+                Intent intent = new Intent(AdminDashboardActivity.this, com.yuhbui.comicapp.ui.ProfileActivity.class);
+                startActivity(intent);
+                return true;
+            } else if (id == 2) {
+                // ĐĂNG XUẤT: Xóa sạch Session và đẩy admin về màn hình đăng nhập
+                SharedPrefsManager.logout(this);
+                Intent intent = new Intent(this, com.yuhbui.comicapp.ui.LoginActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                 startActivity(intent);
                 finish();
                 return true;

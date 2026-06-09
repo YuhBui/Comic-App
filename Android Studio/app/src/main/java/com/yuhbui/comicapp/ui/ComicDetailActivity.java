@@ -132,20 +132,23 @@ public class ComicDetailActivity extends AppCompatActivity {
         commentAdapter.setOnCommentClickListener(new CommentAdapter.OnCommentClickListener() {
             @Override
             public void onReplyClick(Comment parentComment) {
-                // ĐÃ SỬA: Nếu bị ban thì chặn không cho kích hoạt khung phản hồi lồng nhau
                 if (isUserBanned) {
                     Toast.makeText(ComicDetailActivity.this, "Bạn hiện đang bị cấm chat!", Toast.LENGTH_SHORT).show();
                     return;
                 }
 
                 targetParentCommentId = parentComment.getCommentId();
-                if (parentComment.getParentCommentId() == null && parentComment.getUserId() != 0) {
-                    String tagText = "@Thành viên #" + parentComment.getUserId() + " ";
+
+                // Kiểm tra xem đây có phải phản hồi lồng cấp được gửi từ danh sách reply hay không
+                if (parentComment.getUserDisplayName() != null) {
+                    String tagText = "@" + parentComment.getUserDisplayName() + " ";
                     edtCommentInput.setText(tagText);
                     edtCommentInput.setSelection(tagText.length());
                     edtCommentInput.setHint("Đang trả lời...");
                 } else {
-                    edtCommentInput.setHint("Trả lời bình luận của #" + parentComment.getUserId() + ":");
+                    // Phản hồi trực tiếp bình luận gốc lớn nhất
+                    edtCommentInput.setText("");
+                    edtCommentInput.setHint("Viết phản hồi...");
                 }
                 edtCommentInput.requestFocus();
             }
@@ -293,18 +296,24 @@ public class ComicDetailActivity extends AppCompatActivity {
 
                     tvTitle.setText(comic.getTitle());
                     tvAuthor.setText("Tác giả: " + (comic.getAuthor() != null ? comic.getAuthor() : "Đang cập nhật"));
-                    tvStatus.setText("Tình trạng: " + (comic.getStatus() != null ? comic.getStatus() : "Đang tiến hành"));
                     tvViews.setText("👁️ " + comic.getViewCount());
                     tvDescription.setText(comic.getDescription());
-
                     tvGenre.setText("Thể loại: " + data.getGenres());
+
+                    // 1. Hiển thị số lượt yêu thích thực tế từ data gốc
                     tvFavorites.setText("❤️ " + String.valueOf(data.getFavoriteCount()));
                     tvRatingAverage.setText("⭐ " + comic.getRating() + "/5");
 
-                    if (comic.getCreatedAt() != null && comic.getCreatedAt().length() >= 4) {
-                        tvRelease.setText("Phát hành: " + comic.getCreatedAt().substring(0, 4));
+                    // 2. ĐÃ CẬP NHẬT: Ghép trạng thái đi kèm thông tin Chương mới nhất
+                    String statusStr = (comic.getStatus() != null ? comic.getStatus() : "Đang tiến hành");
+                    String latestChapStr = (data.getLatestChapterNumber() != null ? data.getLatestChapterNumber() : "Chưa có");
+                    tvStatus.setText("Tình trạng: " + statusStr + " (" + latestChapStr + ")");
+
+                    // ĐÃ SỬA: Thay thế vùng hiển thị năm phát hành thành Thời gian cập nhật chương mới (chỉ lấy Ngày/Tháng/Năm)
+                    if (data.getTimeUpdated() != null && !data.getTimeUpdated().isEmpty()) {
+                        tvRelease.setText("Cập nhật: " + formatToDateOnly(data.getTimeUpdated()));
                     } else {
-                        tvRelease.setText("Phát hành: Đang cập nhật");
+                        tvRelease.setText("Cập nhật: Đang cập nhật");
                     }
 
                     isCurrentlyFavorite = data.isFavorite();
@@ -319,9 +328,25 @@ public class ComicDetailActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(Call<ComicDetailResponse> call, Throwable t) {
-                Log.e("YUH_TEST", "Lỗi load kết nối database chi tiết truyện: " + t.getMessage());
+                Log.e("YUH_TEST", "Lỗi tải chi tiết truyện: " + t.getMessage());
             }
         });
+    }
+
+    private String formatToDateOnly(String rawDateTime) {
+        if (rawDateTime == null || rawDateTime.trim().isEmpty()) {
+            return "Đang cập nhật";
+        }
+        try {
+            String datePart = rawDateTime.contains("T") ? rawDateTime.split("T")[0] : rawDateTime.split(" ")[0];
+            String[] parts = datePart.split("-");
+            if (parts.length == 3) {
+                return parts[2] + "/" + parts[1] + "/" + parts[0];
+            }
+            return datePart;
+        } catch (Exception e) {
+            return rawDateTime;
+        }
     }
 
     private void sendRatingToServer(int comicId, int userId, int score) {

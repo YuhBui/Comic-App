@@ -270,4 +270,32 @@ public interface ApiService {
 
     @DELETE("/api/admin/users/{id}")
     Call<Map<String, Object>> adminDeleteUser(@Path("id") int id);
+
+    // Lấy số lượng thông báo chưa đọc để hiển thị Badge số lên Icon Header
+    @GET("api/notifications/unread-count/{userId}")
+    Call<Long> getUnreadNotificationCount(@Path("userId") int userId);
+
+    // Lấy danh sách toàn bộ thông báo của User
+    @GET("api/notifications/user/{userId}")
+    Call<List<com.yuhbui.comicapp.data.model.Notification>> getUserNotifications(@Path("userId") int userId);
+
+    // Đánh dấu thông báo đã đọc
+    @PUT("api/notifications/mark-read/{notifId}")
+    Call<Void> markNotificationAsRead(@Path("notifId") int notifId);
+
+    // API Admin tạo thông báo hệ thống
+    @POST("api/notifications/admin/create")
+    Call<Void> adminCreateNotification(@Body com.yuhbui.comicapp.data.model.Notification notification);
+
+    // Lấy toàn bộ danh sách thông báo hệ thống (Dành cho Admin quản lý)
+    @GET("api/notifications/user/1") // Tạm thời lấy danh sách tổng hoặc tạo endpoint riêng, ở đây ta gọi danh sách để hiển thị
+    Call<List<com.yuhbui.comicapp.data.model.Notification>> getAllNotificationsForAdmin();
+
+    // API cập nhật sửa đổi thông báo
+    @PUT("api/notifications/admin/edit/{id}")
+    Call<Void> adminUpdateNotification(@Path("id") int id, @Body com.yuhbui.comicapp.data.model.Notification notification);
+
+    // API xóa bỏ thông báo
+    @DELETE("api/notifications/admin/delete/{id}")
+    Call<Void> adminDeleteNotification(@Path("id") int id);
 }

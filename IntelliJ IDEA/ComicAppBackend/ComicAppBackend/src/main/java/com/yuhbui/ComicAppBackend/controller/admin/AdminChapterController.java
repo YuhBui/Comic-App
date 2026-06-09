@@ -25,6 +25,38 @@ public class AdminChapterController {
     @PersistenceContext
     private EntityManager entityManager;
 
+    // =========================================================================
+    // HÀM BỔ TRỢ: TỰ ĐỘNG GỬI THÔNG BÁO TỚI USER YÊU THÍCH (FOLLOW) TRUYỆN
+    // =========================================================================
+    private void sendNotificationToFollowers(Integer comicId, String title, String message) {
+        try {
+            // 1. Lấy danh sách UserID đang follow bộ truyện này
+            String sqlFollowers = "SELECT UserID FROM Follows WHERE ComicID = :comicId";
+            @SuppressWarnings("unchecked")
+            List<Number> followerIds = entityManager.createNativeQuery(sqlFollowers)
+                    .setParameter("comicId", comicId)
+                    .getResultList();
+
+            // 2. Nếu có người follow, tiến hành nạp thông báo tuần tự vào bảng Notifications
+            if (followerIds != null && !followerIds.isEmpty()) {
+                String sqlInsertNotif = "INSERT INTO Notifications (UserID, Title, Message, ComicID, IsRead, CreatedAt) " +
+                        "VALUES (:userId, :title, :message, :comicId, FALSE, NOW())";
+
+                for (Number userId : followerIds) {
+                    entityManager.createNativeQuery(sqlInsertNotif)
+                            .setParameter("userId", userId.intValue())
+                            .setParameter("title", title)
+                            .setParameter("message", message)
+                            .setParameter("comicId", comicId)
+                            .executeUpdate();
+                }
+            }
+        } catch (Exception e) {
+            // Ghi nhận log nếu lỗi hệ thống xảy ra nhưng không làm gián đoạn luồng chính của Chapter
+            System.err.println("Lỗi gửi thông báo tự động: " + e.getMessage());
+        }
+    }
+
     // 1. LẤY DANH SÁCH CHƯƠNG THEO COMIC ID
     @GetMapping("/comic/{comicId}")
     public ResponseEntity<List<Map<String, Object>>> getChaptersByComic(@PathVariable Integer comicId) {
@@ -42,7 +74,7 @@ public class AdminChapterController {
         return ResponseEntity.ok(response);
     }
 
-    // 2. THÊM CHƯƠNG MỚI
+    // 2. THÊM CHƯƠNG MỚI (ĐÃ TÍCH HỢP THÔNG BÁO)
     @PostMapping("/comic/{comicId}")
     @Transactional
     public ResponseEntity<?> createChapter(@PathVariable Integer comicId, @RequestParam Double chapterNumber, @RequestParam String title) {
@@ -52,19 +84,56 @@ public class AdminChapterController {
                 .setParameter("num", chapterNumber)
                 .setParameter("title", title)
                 .executeUpdate();
+
+        // Lấy tên truyện phục vụ nội dung thông báo sinh động hơn
+        String comicTitle = "Truyện";
+        try {
+            comicTitle = (String) entityManager.createNativeQuery("SELECT Title FROM Comics WHERE ComicID = :comicId")
+                    .setParameter("comicId", comicId).getSingleResult();
+        } catch (Exception e) { /* Bỏ qua nếu truyện chưa có tiêu đề */ }
+
+        // Kích hoạt gửi thông báo tới độc giả yêu thích truyện
+        sendNotificationToFollowers(comicId,
+                "Truyện theo dõi có chương mới!",
+                "Bộ truyện '" + comicTitle + "' bạn thích vừa ra mắt Chương " + chapterNumber + (title != null && !title.isEmpty() ? ": " + title : "") + ". Đọc ngay thôi!"
+        );
+
         return ResponseEntity.ok(Map.of("success", true));
     }
 
-    // 3. SỬA THÔNG TIN CHƯƠNG
+    // 3. SỬA THÔNG TIN CHƯƠNG (ĐÃ TÍCH HỢP THÔNG BÁO)
     @PutMapping("/{chapterId}")
     @Transactional
     public ResponseEntity<?> updateChapter(@PathVariable Integer chapterId, @RequestParam Double chapterNumber, @RequestParam String title) {
+        // Truy vấn tìm ComicID của chương hiện tại trước khi update nội dung mới
+        Integer comicId = null;
+        try {
+            comicId = ((Number) entityManager.createNativeQuery("SELECT ComicID FROM Chapters WHERE ChapterID = :chapterId")
+                    .setParameter("chapterId", chapterId).getSingleResult()).intValue();
+        } catch (Exception e) { /* Bỏ qua */ }
+
+        // Thực hiện cập nhật chương truyện
         String sql = "UPDATE Chapters SET ChapterNumber = :num, Title = :title WHERE ChapterID = :chapterId";
         entityManager.createNativeQuery(sql)
                 .setParameter("num", chapterNumber)
                 .setParameter("title", title)
                 .setParameter("chapterId", chapterId)
                 .executeUpdate();
+
+        // Nếu xác định được truyện gốc, thực hiện gửi thông báo chỉnh sửa
+        if (comicId != null) {
+            String comicTitle = "Truyện";
+            try {
+                comicTitle = (String) entityManager.createNativeQuery("SELECT Title FROM Comics WHERE ComicID = :comicId")
+                        .setParameter("comicId", comicId).getSingleResult();
+            } catch (Exception e) { /* Bỏ qua */ }
+
+            sendNotificationToFollowers(comicId,
+                    "Chương truyện đã được chỉnh sửa",
+                    "Chương " + chapterNumber + " của bộ truyện '" + comicTitle + "' vừa được Admin cập nhật lại nội dung mới."
+            );
+        }
+
         return ResponseEntity.ok(Map.of("success", true));
     }
 
@@ -135,7 +204,7 @@ public class AdminChapterController {
         return ResponseEntity.ok(Map.of("success", true));
     }
 
-    // 8. API TẠO CHƯƠNG MỚI VÀ TRANH TRUYỆN CÙNG LÚC (SỬA TRIỆT ĐỂ LỖI HIỂN THỊ 1 ẢNH)
+    // 8. API TẠO CHƯƠNG MỚI VÀ TRANH TRUYỆN CÙNG LÚC (ĐÃ TÍCH HỢP THÔNG BÁO)
     @PostMapping(value = "/comic/{comicId}/with-images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Transactional
     public ResponseEntity<?> createChapterWithImages(
@@ -176,6 +245,19 @@ public class AdminChapterController {
                         .setParameter("page", pageNumber)
                         .executeUpdate();
             }
+
+            // Tiến hành kích hoạt gửi thông báo tự động sau khi lưu chương kèm ảnh hoàn tất
+            String comicTitle = "Truyện";
+            try {
+                comicTitle = (String) entityManager.createNativeQuery("SELECT Title FROM Comics WHERE ComicID = :comicId")
+                        .setParameter("comicId", comicId).getSingleResult();
+            } catch (Exception e) { /* Bỏ qua */ }
+
+            sendNotificationToFollowers(comicId,
+                    "Truyện theo dõi có chương mới!",
+                    "Bộ truyện '" + comicTitle + "' bạn thích vừa ra mắt Chương " + chapterNumber + (title != null && !title.isEmpty() ? ": " + title : "") + ". Khám phá ngay!"
+            );
+
             return ResponseEntity.ok(Map.of("success", true, "message", "Đã tạo chương và nạp toàn bộ ảnh thành công!"));
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body("Lỗi hệ thống khi tạo chương: " + e.getMessage());
@@ -214,7 +296,7 @@ public class AdminChapterController {
         }
     }
 
-    // 11. BỔ SUNG THÊM: API LẤY DANH SÁCH BÌNH LUẬN CỦA RIÊNG CHƯƠNG ĐÓ CHO ADMIN
+    // 11. API LẤY DANH SÁCH BÌNH LUẬN CỦA RIÊNG CHƯƠNG ĐÓ CHO ADMIN
     @GetMapping("/{chapterId}/comments")
     public ResponseEntity<List<Map<String, Object>>> getChapterCommentsForAdmin(@PathVariable Integer chapterId) {
         String sql = "SELECT c.CommentID, u.DisplayName, u.AvatarUrl, c.Content, " +

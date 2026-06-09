@@ -270,7 +270,14 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
             @Override
             public void onResponse(Call<ComicDetailResponse> call, Response<ComicDetailResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    currentComic = response.body().getComic();
+
+                    // KHAI BÁO DÒNG NÀY ĐỂ KHẮC PHỤC LỖI "Cannot resolve symbol"
+                    ComicDetailResponse detailResponse = response.body();
+
+                    // Lấy thực thể truyện gốc gán vào currentComic
+                    currentComic = detailResponse.getComic();
+
+                    // Đổ dữ liệu lên các TextView giao diện Admin
                     tvTitle.setText(currentComic.getTitle());
                     tvAuthor.setText("Tác giả: " + currentComic.getAuthor());
                     tvStatus.setText("Tình trạng: " + currentComic.getStatus());
@@ -278,11 +285,15 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
 
                     tvViews.setText("👁️ " + currentComic.getViewCount());
                     tvRating.setText("⭐ " + currentComic.getRating() + "/5");
-                    tvFavorites.setText("❤️ " + currentComic.getFollowCount());
-                    tvRelease.setText("Phát hành: " + (currentComic.getCreatedAt() != null ? currentComic.getCreatedAt() : "Đang cập nhật"));
 
-                    if (response.body().getGenres() != null && !response.body().getGenres().isEmpty()) {
-                        tvGenre.setText("Thể loại: " + response.body().getGenres());
+                    // ĐÃ SỬA: Lấy favoriteCount từ vỏ bọc detailResponse thay vì currentComic
+                    tvFavorites.setText("❤️ " + detailResponse.getFavoriteCount());
+
+                    tvRelease.setText("Phát hành: " + (currentComic.getCreatedAt() != null ? formatToDateOnly(currentComic.getCreatedAt()) : "Đang cập nhật"));
+
+                    // ĐÃ SỬA: Kiểm tra genres từ detailResponse để tránh lỗi compile
+                    if (detailResponse.getGenres() != null && !detailResponse.getGenres().isEmpty()) {
+                        tvGenre.setText("Thể loại: " + detailResponse.getGenres());
                     } else {
                         tvGenre.setText("Thể loại: Đang cập nhật");
                     }
@@ -297,6 +308,22 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
             }
             @Override public void onFailure(Call<ComicDetailResponse> call, Throwable t) {}
         });
+    }
+
+    private String formatToDateOnly(String rawDateTime) {
+        if (rawDateTime == null || rawDateTime.trim().isEmpty()) {
+            return "Đang cập nhật";
+        }
+        try {
+            String datePart = rawDateTime.contains("T") ? rawDateTime.split("T")[0] : rawDateTime.split(" ")[0];
+            String[] parts = datePart.split("-");
+            if (parts.length == 3) {
+                return parts[2] + "/" + parts[1] + "/" + parts[0];
+            }
+            return datePart;
+        } catch (Exception e) {
+            return rawDateTime;
+        }
     }
 
     private void loadChaptersData() {

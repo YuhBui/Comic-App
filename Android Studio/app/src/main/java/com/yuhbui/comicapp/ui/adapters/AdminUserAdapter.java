@@ -93,4 +93,20 @@ public class AdminUserAdapter extends RecyclerView.Adapter<AdminUserAdapter.User
             btnDelete = itemView.findViewById(R.id.btnItemUserDelete);
         }
     }
+
+    private String formatToDateOnly(String rawDateTime) {
+        if (rawDateTime == null || rawDateTime.trim().isEmpty()) {
+            return "Chưa cập nhật";
+        }
+        try {
+            String datePart = rawDateTime.contains("T") ? rawDateTime.split("T")[0] : rawDateTime.split(" ")[0];
+            String[] parts = datePart.split("-");
+            if (parts.length == 3) {
+                return parts[2] + "/" + parts[1] + "/" + parts[0];
+            }
+            return datePart;
+        } catch (Exception e) {
+            return rawDateTime;
+        }
+    }
 }

@@ -4,11 +4,11 @@
         android:id="@+id/menu_admin_dashboard"
         android:title="Thống kê" />
     <item
-        android:id="@+id/menu_admin_manage_comics"
-        android:title="Quản lý truyện tranh" />
-    <item
         android:id="@+id/menu_admin_manage_users"
         android:title="Quản lý người dùng" />
+    <item
+        android:id="@+id/menu_admin_manage_comics"
+        android:title="Quản lý truyện tranh" />
     <item
         android:id="@+id/menu_admin_manage_notifications"
         android:title="Quản lý thông báo" />

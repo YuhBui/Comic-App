@@ -29,4 +29,7 @@ public interface FollowRepository extends JpaRepository<Follow, FollowId> {
         "ORDER BY c.Title ASC",
         nativeQuery = true)
     List<Object[]> findFavoriteComicsWithStatsByUserId(@Param("userId") Integer userId);
+
+    @Query("SELECT f.id.userId FROM Follow f WHERE f.id.comicId = :comicId")
+    List<Integer> findUserIdsByComicId(@Param("comicId") Integer comicId);
 }

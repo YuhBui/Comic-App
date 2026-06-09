@@ -58,13 +58,47 @@ public class ComicController {
 
         ComicDetailResponseDTO dto = new ComicDetailResponseDTO();
         dto.setComic(comic);
-
         dto.setFavoriteCount(followRepository.countByComicId(comicId));
 
         if (userId != null) {
             dto.setFavorite(followRepository.existsByUserIdAndComicId(userId, comicId));
         } else {
             dto.setFavorite(false);
+        }
+
+        // ==========================================
+        // BỔ SUNG LẤY SỐ LƯỢNG BÌNH LUẬN (COMMENT)
+        // ==========================================
+        try {
+            String cmtSql = "SELECT COUNT(*) FROM Comments WHERE ComicID = :comicId";
+            long cmtCount = ((Number) entityManager.createNativeQuery(cmtSql)
+                    .setParameter("comicId", comicId)
+                    .getSingleResult()).longValue();
+            dto.setCommentCount((int) cmtCount);
+        } catch (Exception e) {
+            dto.setCommentCount(0);
+        }
+
+        // ======================================================================
+        // BỔ SUNG LẤY CHƯƠNG MỚI NHẤT & THỜI GIAN CẬP NHẬT CHƯƠNG MỚI NHẤT
+        // ======================================================================
+        try {
+            String chSql = "SELECT ChapterNumber, CreatedAt FROM Chapters WHERE ComicID = :comicId ORDER BY ChapterNumber DESC LIMIT 1";
+            @SuppressWarnings("unchecked")
+            List<Object[]> chData = entityManager.createNativeQuery(chSql)
+                    .setParameter("comicId", comicId)
+                    .getResultList();
+            if (!chData.isEmpty()) {
+                Object[] chRow = chData.get(0);
+                dto.setLatestChapterNumber("Chương " + chRow[0].toString()); // Thêm tiền tố Chương để hiển thị
+                dto.setTimeUpdated(chRow[1] != null ? chRow[1].toString() : "Đang cập nhật");
+            } else {
+                dto.setLatestChapterNumber("Chưa có chương");
+                dto.setTimeUpdated("Chưa cập nhật");
+            }
+        } catch (Exception e) {
+            dto.setLatestChapterNumber("Đang cập nhật");
+            dto.setTimeUpdated("Đang cập nhật");
         }
 
         try {

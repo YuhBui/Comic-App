@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/layoutNotifItem"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="14dp"
+    android:layout_marginBottom="2dp"
+    android:background="#FFFFFF">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:id="@+id/tvNotifTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Tiêu đề thông báo"
+            android:textColor="#212121"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_alignParentStart="true"
+            android:layout_toStartOf="@+id/viewUnreadDot" />
+
+        <View
+            android:id="@+id/viewUnreadDot"
+            android:layout_width="10dp"
+            android:layout_height="10dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:background="@android:drawable/presence_online"
+            android:backgroundTint="#F44336"
+            android:visibility="gone" />
+    </RelativeLayout>
+
+    <TextView
+        android:id="@+id/tvNotifMessage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:text="Nội dung chi tiết của thông báo được hiển thị ở đây..."
+        android:textColor="#666666"
+        android:textSize="14sp" />
+
+    <TextView
+        android:id="@+id/tvNotifTime"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:text="09/06/2026"
+        android:textColor="#999999"
+        android:textSize="11sp"
+        android:gravity="end" />
+</LinearLayout>

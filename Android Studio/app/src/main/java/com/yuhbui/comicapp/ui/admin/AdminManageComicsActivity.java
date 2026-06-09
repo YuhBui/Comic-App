@@ -6,8 +6,11 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.*;
+
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -20,7 +23,9 @@ import com.yuhbui.comicapp.R;
 import com.yuhbui.comicapp.data.api.ApiClient;
 import com.yuhbui.comicapp.data.model.Category;
 import com.yuhbui.comicapp.data.model.Comic;
+import com.yuhbui.comicapp.data.model.Notification;
 import com.yuhbui.comicapp.ui.adapters.AdminComicAdapter;
+import com.yuhbui.comicapp.ui.adapters.AdminNotificationAdapter;
 import com.yuhbui.comicapp.ui.adapters.CategoryFilterAdapter;
 
 import java.util.ArrayList;
@@ -264,6 +269,75 @@ public class AdminManageComicsActivity extends AppCompatActivity implements Admi
             }
             layoutPageNumbersContainer.addView(tvPage);
         }
+    }
+
+    // Logic tích hợp xử lý Sửa và Xóa trong Activity quản lý của Admin
+    private void openNotificationManager() {
+        // Đoạn code mẫu thực hiện gán danh sách xử lý sự kiện
+        AdminNotificationAdapter adminAdapter = new AdminNotificationAdapter();
+
+        // Giả lập lấy danh sách thông báo hiện tại từ Api
+        ApiClient.getApiService().getAllNotificationsForAdmin().enqueue(new Callback<List<Notification>>() {
+            @Override
+            public void onResponse(Call<List<Notification>> call, Response<List<Notification>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    adminAdapter.setData(response.body(), new AdminNotificationAdapter.OnAdminNotifActionListener() {
+
+                        // CHỨC NĂNG SỬA THÔNG BÁO
+                        @Override
+                        public void onEdit(Notification notification) {
+                            View dialogView = LayoutInflater.from(AdminManageComicsActivity.this).inflate(R.layout.dialog_report, null); // Tái sử dụng dialog có EditText
+                            EditText edtNewContent = dialogView.findViewById(R.id.edtReportReason);
+                            edtNewContent.setHint("Nhập nội dung chỉnh sửa...");
+                            edtNewContent.setText(notification.getMessage());
+
+                            new AlertDialog.Builder(AdminManageComicsActivity.this)
+                                    .setTitle("Sửa nội dung thông báo")
+                                    .setView(dialogView)
+                                    .setPositiveButton("Cập nhật", (dialog, which) -> {
+                                        String msg = edtNewContent.getText().toString().trim();
+                                        if(!msg.isEmpty()) {
+                                            notification.setMessage(msg);
+                                            ApiClient.getApiService().adminUpdateNotification(notification.getNotificationId(), notification)
+                                                    .enqueue(new Callback<Void>() {
+                                                        @Override
+                                                        public void onResponse(Call<Void> call, Response<Void> response) {
+                                                            Toast.makeText(AdminManageComicsActivity.this, "Đã sửa thành công!", Toast.LENGTH_SHORT).show();
+                                                        }
+                                                        @Override public void onFailure(Call<Void> call, Throwable t) {}
+                                                    });
+                                        }
+                                    })
+                                    .setNegativeButton("Hủy", null)
+                                    .show();
+                        }
+
+                        // CHỨC NĂNG XÓA THÔNG BÁO
+                        @Override
+                        public void onDelete(Notification notification, int position) {
+                            new AlertDialog.Builder(AdminManageComicsActivity.this)
+                                    .setTitle("Xác nhận xóa")
+                                    .setMessage("Bạn có chắc chắn muốn xóa vĩnh viễn thông báo này không?")
+                                    .setPositiveButton("Xóa", (dialog, which) -> {
+                                        ApiClient.getApiService().adminDeleteNotification(notification.getNotificationId())
+                                                .enqueue(new Callback<Void>() {
+                                                    @Override
+                                                    public void onResponse(Call<Void> call, Response<Void> response) {
+                                                        Toast.makeText(AdminManageComicsActivity.this, "Đã xóa thành công!", Toast.LENGTH_SHORT).show();
+                                                        // Làm tươi lại danh sách cục bộ trên giao diện
+                                                        openNotificationManager();
+                                                    }
+                                                    @Override public void onFailure(Call<Void> call, Throwable t) {}
+                                                });
+                                    })
+                                    .setNegativeButton("Hủy", null)
+                                    .show();
+                        }
+                    });
+                }
+            }
+            @Override public void onFailure(Call<List<Notification>> call, Throwable t) {}
+        });
     }
 
     private int dpToPx(int dp) {

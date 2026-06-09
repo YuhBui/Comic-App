@@ -60,7 +60,6 @@ public class MainActivity extends AppCompatActivity {
     private int totalPages = 1;
     private static final int PAGE_SIZE = 10;
 
-    // SỬA ĐỔI: Chuyển đổi từ biến ID đơn lẻ sang Danh sách mảng lưu đa chọn ID thể loại giống Admin
     private CategoryFilterAdapter catFilterAdapter;
     private List<Integer> selectedCategoryIds = new ArrayList<>();
     private List<Category> serverCategoriesList = new ArrayList<>();
@@ -75,11 +74,13 @@ public class MainActivity extends AppCompatActivity {
     private android.widget.ImageView headerMenu, headerSearch, headerNotification, headerAvatar;
     private EditText edtHeaderSearch;
     private TextView headerLogo;
+
+    private TextView tvNotificationBadge;
+
     private android.widget.ListPopupWindow suggestionPopup;
     private android.widget.ArrayAdapter<String> suggestionAdapter;
     private java.util.List<String> suggestionList = new java.util.ArrayList<>();
 
-    // ========== BIẾN PHỤC VỤ TÌM KIẾM CHUYÊN BIỆT HÀNG DỌC ==========
     private androidx.core.widget.NestedScrollView scrollMainContainer;
     private LinearLayout layoutSearchContainer;
     private RecyclerView recyclerViewSearchResults;
@@ -90,7 +91,6 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Mặc định ban đầu khi vừa khởi động ứng dụng, tự động kích hoạt bộ lọc "Tất cả" (ID = 0)
         selectedCategoryIds.add(0);
 
         initViews();
@@ -163,10 +163,42 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    // Mỗi khi user quay trở lại app từ trang khác, tự động làm tươi số lượng thông báo chưa đọc
     @Override
     protected void onResume() {
         super.onResume();
         loadHeaderAvatar();
+        loadUnreadNotificationCount();
+    }
+
+    private void loadUnreadNotificationCount() {
+        int userId = SharedPrefsManager.getUserId(this);
+        if (userId == -1) {
+            if (tvNotificationBadge != null) tvNotificationBadge.setVisibility(View.GONE);
+            return;
+        }
+
+        ApiClient.getApiService().getUnreadNotificationCount(userId).enqueue(new Callback<Long>() {
+            @Override
+            public void onResponse(Call<Long> call, Response<Long> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    long unreadCount = response.body();
+                    if (unreadCount > 0) {
+                        tvNotificationBadge.setText(String.valueOf(unreadCount));
+                        tvNotificationBadge.setVisibility(View.VISIBLE); // Có thông báo mới -> Hiện vòng tròn đỏ
+                    } else {
+                        tvNotificationBadge.setVisibility(View.GONE); // Đã đọc hết -> Ẩn đi gọn gàng
+                    }
+                } else {
+                    if (tvNotificationBadge != null) tvNotificationBadge.setVisibility(View.GONE);
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Long> call, Throwable t) {
+                if (tvNotificationBadge != null) tvNotificationBadge.setVisibility(View.GONE);
+            }
+        });
     }
 
     private void initViews() {
@@ -177,6 +209,8 @@ public class MainActivity extends AppCompatActivity {
         edtHeaderSearch    = layoutHeader.findViewById(R.id.edtHeaderSearch);
         headerNotification = layoutHeader.findViewById(R.id.headerNotification);
         headerAvatar       = layoutHeader.findViewById(R.id.headerAvatar);
+
+        tvNotificationBadge = layoutHeader.findViewById(R.id.tvNotificationBadge);
 
         vpRecommended      = findViewById(R.id.vpRecommended);
         btnSliderPrev      = findViewById(R.id.btnSliderPrev);
@@ -206,8 +240,13 @@ public class MainActivity extends AppCompatActivity {
 
     private void setupHeader() {
         headerMenu.setOnClickListener(v -> showHeaderPopupMenu(v));
-        headerNotification.setOnClickListener(v -> Toast.makeText(this, "Thông báo", Toast.LENGTH_SHORT).show());
         headerAvatar.setOnClickListener(v -> showAvatarMenu(v));
+
+        // Khi click biểu tượng quả chuông thông báo, chuyển tiếp đến trang danh sách thông báo người dùng
+        headerNotification.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, NotificationListActivity.class);
+            startActivity(intent);
+        });
 
         headerSearch.setOnClickListener(v -> {
             if (edtHeaderSearch.getVisibility() == View.GONE) {
@@ -381,8 +420,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // ========== PHẦN 2: TRUYỆN MỚI CẬP NHẬT - ĐÃ SỬA ĐỒNG BỘ PHÂN TRANG ĐA CHỌN ==========
-
     private void setupNewUpdatesSection() {
         newUpdatesAdapter = new ComicAdapter();
         recyclerViewComics.setLayoutManager(new GridLayoutManager(this, 2));
@@ -391,7 +428,6 @@ public class MainActivity extends AppCompatActivity {
 
         btnFilterIcon.setOnClickListener(v -> showCategoryFilterDialog());
 
-        // Thay đổi sự kiện nút lùi/tiến trang gọi chung vào hàm xử lý đồng bộ loadComicsByCategories
         btnPrevPage.setOnClickListener(v -> {
             if (currentPage > 0) {
                 currentPage--;
@@ -406,7 +442,6 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    // ĐÃ SỬA TOÀN DIỆN: Đón nhận Callback mảng số danh sách đa chọn từ CategoryFilterAdapter
     private void showCategoryFilterDialog() {
         BottomSheetDialog dialog = new BottomSheetDialog(this);
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_category_filter, null);
@@ -417,14 +452,12 @@ public class MainActivity extends AppCompatActivity {
 
         catFilterAdapter = new CategoryFilterAdapter(selectedIds -> {
             selectedCategoryIds = selectedIds;
-            currentPage = 0; // Đổi bộ lọc reset số trang về 0
+            currentPage = 0;
 
-            // Nếu rỗng hoặc chứa nút ảo "Tất cả" (ID = 0) -> Ẩn thông báo lọc dòng chữ
             if (selectedCategoryIds == null || selectedCategoryIds.isEmpty() || selectedCategoryIds.contains(0)) {
                 tvActiveFilter.setVisibility(View.GONE);
                 tvActiveFilter.setText("");
             } else {
-                // Duyệt vòng lặp nối chuỗi các thể loại đang chọn cách nhau bởi dấu phẩy
                 List<String> activeNames = new ArrayList<>();
                 for (Integer id : selectedCategoryIds) {
                     for (Category cat : serverCategoriesList) {
@@ -437,13 +470,12 @@ public class MainActivity extends AppCompatActivity {
                 tvActiveFilter.setText("Đang lọc: " + String.join(", ", activeNames));
                 tvActiveFilter.setVisibility(View.VISIBLE);
             }
-            loadComicsByCategories(currentPage); // Tải lại truyện theo trang đầu tiên của bộ lọc mới
+            loadComicsByCategories(currentPage);
         });
 
         rvPopup.setLayoutManager(new GridLayoutManager(this, 3));
         rvPopup.setAdapter(catFilterAdapter);
 
-        // Nạp danh sách từ bộ nhớ đệm hoặc từ Server đổ vào PopUp lưới 3 cột kèm nút ảo "Tất cả"
         List<Category> fullDisplayList = new ArrayList<>();
         Category allCatVirtual = new Category();
         allCatVirtual.setCategoryId(0);
@@ -484,15 +516,12 @@ public class MainActivity extends AppCompatActivity {
         dialog.show();
     }
 
-    // ĐÃ THÊM MỚI: Hàm vạn năng gộp tải dữ liệu truyện phân trang theo bộ lọc đa chọn AND của User
     private void loadComicsByCategories(int page) {
-        // Nếu bộ lọc chứa số 0 (Tất cả) hoặc trống -> Chạy hàm tải danh sách truyện mới mặc định ban đầu
         if (selectedCategoryIds == null || selectedCategoryIds.isEmpty() || selectedCategoryIds.contains(0)) {
             loadNewUpdatesComics(page);
             return;
         }
 
-        // Gọi kết nối API lọc đa danh mục AND kèm phân trang lũy tiến subList từ Server
         ApiClient.getApiService().filterComicsByCategories(selectedCategoryIds, page).enqueue(new Callback<List<Comic>>() {
             @Override
             public void onResponse(Call<List<Comic>> call, Response<List<Comic>> response) {
@@ -500,7 +529,6 @@ public class MainActivity extends AppCompatActivity {
                     List<Comic> comics = response.body();
                     newUpdatesAdapter.setComics(comics);
 
-                    // Thuật toán đếm tính toán số trang phân bố lũy tiến y hệt như hàm loadNewUpdatesComics
                     if (comics.size() == PAGE_SIZE) {
                         totalPages = Math.max(totalPages, page + 2);
                     } else {
@@ -550,7 +578,7 @@ public class MainActivity extends AppCompatActivity {
                 tvPage.setTextColor(Color.parseColor("#333333"));
                 tvPage.setOnClickListener(v -> {
                     MainActivity.this.currentPage = pageIndex;
-                    loadComicsByCategories(pageIndex); // Chuyển trang đồng bộ
+                    loadComicsByCategories(pageIndex);
                 });
             }
             layoutPageNumbers.addView(tvPage);
@@ -561,8 +589,6 @@ public class MainActivity extends AppCompatActivity {
         btnPrevPage.setAlpha(currentPage > 0 ? 1.0f : 0.4f);
         btnNextPage.setAlpha(currentPage < totalPages - 1 ? 1.0f : 0.4f);
     }
-
-    // ========== PHẦN 3: BẢNG XẾP HẠNG ==========
 
     private void setupRankingSection() {
         rankingAdapter = new RankingAdapter();
@@ -583,7 +609,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void loadAllData() {
         loadRecommendedComics();
-        loadComicsByCategories(currentPage); // Sử dụng hàm đồng bộ đa chọn làm hàm nạp trang chủ mặc định
+        loadComicsByCategories(currentPage);
         loadRankingData("day");
     }
 

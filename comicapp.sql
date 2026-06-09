@@ -99,11 +99,13 @@ CREATE TABLE ReadingHistory (
 CREATE TABLE Notifications (
     NotificationID INT AUTO_INCREMENT PRIMARY KEY,
     UserID INT NOT NULL,
+    ComicID INT NULL,
     Title VARCHAR(255) NOT NULL,
     Message TEXT NOT NULL,
     IsRead BOOLEAN DEFAULT FALSE,
     CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (UserID) REFERENCES Users(UserID) ON DELETE CASCADE
+    FOREIGN KEY (UserID) REFERENCES Users(UserID) ON DELETE CASCADE,
+    FOREIGN KEY (ComicID) REFERENCES Comics(ComicID) ON DELETE SET NULL
 );
 
 -- 11. Bảng Bình luận (Đã cập nhật các cột đếm số lượng)

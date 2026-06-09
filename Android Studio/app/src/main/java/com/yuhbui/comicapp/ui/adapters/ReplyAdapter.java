@@ -1,5 +1,6 @@
 package com.yuhbui.comicapp.ui.adapters;
 
+import android.text.Html; // Thêm để xử lý định dạng màu cho chữ @tag
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,6 +11,8 @@ import com.yuhbui.comicapp.R;
 import com.yuhbui.comicapp.data.model.Comment;
 import java.util.ArrayList;
 import java.util.List;
+
+import retrofit2.Call;
 
 public class ReplyAdapter extends RecyclerView.Adapter<ReplyAdapter.ReplyViewHolder> {
     private List<Comment> replies = new ArrayList<>();
@@ -26,7 +29,6 @@ public class ReplyAdapter extends RecyclerView.Adapter<ReplyAdapter.ReplyViewHol
         return new ReplyViewHolder(view);
     }
 
-    // --- INTERFACE BẮT SỰ KIỆN CLICK PHẢN HỒI BÌNH LUẬN CON ---
     public interface OnReplyToReplyClickListener {
         void onReplyToReplyClick(Comment childComment);
     }
@@ -40,16 +42,34 @@ public class ReplyAdapter extends RecyclerView.Adapter<ReplyAdapter.ReplyViewHol
     @Override
     public void onBindViewHolder(@NonNull ReplyViewHolder holder, int position) {
         Comment reply = replies.get(position);
-        holder.tvUserReply.setText("Thành viên #" + reply.getUserId());
-        holder.tvReplyContent.setText(reply.getContent());
 
-        // Hiển thị số lượt Like/Dislike hiện tại của bình luận con
+        // ĐÃ SỬA: Hiển thị Tên người dùng thực tế nếu có thay vì ép ID thô cứng
+        if (reply.getUserDisplayName() != null && !reply.getUserDisplayName().isEmpty()) {
+            holder.tvUserReply.setText(reply.getUserDisplayName());
+        } else {
+            holder.tvUserReply.setText("Thành viên #" + reply.getUserId());
+        }
+
+        // ĐÃ SỬA: Tô màu xanh dương nổi bật cho thẻ tag @tên_user của bình luận cháu
+        String content = reply.getContent();
+        if (content != null && content.trim().startsWith("@")) {
+            int firstSpaceIndex = content.indexOf(" ");
+            if (firstSpaceIndex != -1) {
+                String tagPart = content.substring(0, firstSpaceIndex);
+                String mainText = content.substring(firstSpaceIndex);
+                holder.tvReplyContent.setText(Html.fromHtml("<b><font color='#1E88E5'>" + tagPart + "</font></b>" + mainText, Html.FROM_HTML_MODE_COMPACT));
+            } else {
+                holder.tvReplyContent.setText(content);
+            }
+        } else {
+            holder.tvReplyContent.setText(content);
+        }
+
         holder.btnLike.setText("👍 Thích (" + reply.getLikeCount() + ")");
         holder.btnDislike.setText("👎 Ghét (" + reply.getDislikeCount() + ")");
 
         int currentUserId = com.yuhbui.comicapp.utils.SharedPrefsManager.getUserId(holder.itemView.getContext());
 
-        // 1. Xử lý sự kiện bấm LIKE bình luận con
         holder.btnLike.setOnClickListener(v -> {
             if (currentUserId == -1) {
                 android.widget.Toast.makeText(holder.itemView.getContext(), "Vui lòng đăng nhập!", android.widget.Toast.LENGTH_SHORT).show();
@@ -58,7 +78,6 @@ public class ReplyAdapter extends RecyclerView.Adapter<ReplyAdapter.ReplyViewHol
             executeInteraction(holder, reply.getCommentId(), currentUserId, 1);
         });
 
-        // 2. Xử lý sự kiện bấm DISLIKE bình luận con
         holder.btnDislike.setOnClickListener(v -> {
             if (currentUserId == -1) {
                 android.widget.Toast.makeText(holder.itemView.getContext(), "Vui lòng đăng nhập!", android.widget.Toast.LENGTH_SHORT).show();
@@ -67,14 +86,12 @@ public class ReplyAdapter extends RecyclerView.Adapter<ReplyAdapter.ReplyViewHol
             executeInteraction(holder, reply.getCommentId(), currentUserId, -1);
         });
 
-        // 3. Xử lý sự kiện bấm PHẢN HỒI bình luận con
         holder.btnReplyToReply.setOnClickListener(v -> {
             if (replyListener != null) {
                 replyListener.onReplyToReplyClick(reply);
             }
         });
 
-        // 4. Xử lý sự kiện bấm BÁO CÁO bình luận con
         holder.btnReport.setOnClickListener(v -> {
             if (currentUserId == -1) {
                 android.widget.Toast.makeText(holder.itemView.getContext(), "Vui lòng đăng nhập để báo cáo!", android.widget.Toast.LENGTH_SHORT).show();
@@ -84,7 +101,6 @@ public class ReplyAdapter extends RecyclerView.Adapter<ReplyAdapter.ReplyViewHol
         });
     }
 
-    // Hàm gọi API Like/Dislike
     private void executeInteraction(ReplyViewHolder holder, int commentId, int userId, int type) {
         com.yuhbui.comicapp.data.api.ApiClient.getApiService().interactWithComment(commentId, userId, type)
                 .enqueue(new retrofit2.Callback<Comment>() {
@@ -96,12 +112,10 @@ public class ReplyAdapter extends RecyclerView.Adapter<ReplyAdapter.ReplyViewHol
                             holder.btnDislike.setText("👎 Ghét (" + updatedReply.getDislikeCount() + ")");
                         }
                     }
-                    @Override
-                    public void onFailure(retrofit2.Call<Comment> call, Throwable t) {}
+                    @Override public void onFailure(Call<Comment> call, Throwable t) {}
                 });
     }
 
-    // Hàm hiển thị Dialog nhập lý do báo cáo
     private void showReportDialog(ReplyViewHolder holder, int commentId, int userId) {
         android.view.View dialogView = android.view.LayoutInflater.from(holder.itemView.getContext()).inflate(R.layout.dialog_report, null);
         android.widget.EditText edtReason = dialogView.findViewById(R.id.edtReportReason);
@@ -119,7 +133,6 @@ public class ReplyAdapter extends RecyclerView.Adapter<ReplyAdapter.ReplyViewHol
                 .show();
     }
 
-    // Hàm gọi API gửi Báo cáo
     private void sendReport(int commentId, int userId, String reason, android.content.Context context) {
         com.yuhbui.comicapp.data.api.ApiClient.getApiService().reportComment(commentId, userId, reason)
                 .enqueue(new retrofit2.Callback<String>() {
@@ -139,11 +152,10 @@ public class ReplyAdapter extends RecyclerView.Adapter<ReplyAdapter.ReplyViewHol
     @Override
     public int getItemCount() { return replies.size(); }
 
-    // LỚP VIEW HOLDER CẬP NHẬT ĐẦY ĐỦ ÁNH XẠ
     static class ReplyViewHolder extends RecyclerView.ViewHolder {
         TextView tvUserReply, tvReplyContent;
         TextView btnLike, btnDislike, btnReport;
-        TextView btnReplyToReply; // Thêm biến nút Phản hồi con
+        TextView btnReplyToReply;
 
         public ReplyViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -152,7 +164,7 @@ public class ReplyAdapter extends RecyclerView.Adapter<ReplyAdapter.ReplyViewHol
             btnLike = itemView.findViewById(R.id.btnLikeReply);
             btnDislike = itemView.findViewById(R.id.btnDislikeReply);
             btnReport = itemView.findViewById(R.id.btnReportReply);
-            btnReplyToReply = itemView.findViewById(R.id.btnReplyToReply); // Thực hiện ánh xạ View
+            btnReplyToReply = itemView.findViewById(R.id.btnReplyToReply);
         }
     }
 }

@@ -15,10 +15,17 @@ public class ComicDetailResponse {
     @SerializedName("favorite")
     private boolean isFavorite;
 
-    // Tạo Getter/Setter cho cả 4 trường này nhé!
+    @SerializedName("latestChapterNumber")
+    private String latestChapterNumber;
+
+    @SerializedName("timeUpdated")
+    private String timeUpdated;
+
     public Comic getComic() { return comic; }
     public String getGenres() { return genres; }
     public int getFavoriteCount() { return favoriteCount; }
     public boolean isFavorite() { return isFavorite; }
     public void setFavorite(boolean favorite) { isFavorite = favorite; }
+    public String getLatestChapterNumber() { return latestChapterNumber; }
+    public String getTimeUpdated() { return timeUpdated; }
 }

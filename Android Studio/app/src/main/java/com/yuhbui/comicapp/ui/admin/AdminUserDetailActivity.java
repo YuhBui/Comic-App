@@ -105,7 +105,7 @@ public class AdminUserDetailActivity extends AppCompatActivity {
                     spinnerRole.setSelection("Admin".equalsIgnoreCase(currentUser.getRole()) ? 1 : 0);
 
                     // Hiển thị ngày tạo tài khoản lên UI
-                    tvCreatedAt.setText("📅 Ngày tạo tài khoản: " + (currentUser.getCreatedAt() != null ? currentUser.getCreatedAt() : "Chưa cập nhật"));
+                    tvCreatedAt.setText("📅 Ngày tạo tài khoản: " + (currentUser.getCreatedAt() != null ? formatToDateOnly(currentUser.getCreatedAt()) : "Chưa cập nhật"));
 
                     if ("Banned".equalsIgnoreCase(currentUser.getStatus())) {
                         btnBan.setText("✅ UNBAN");
@@ -126,6 +126,23 @@ public class AdminUserDetailActivity extends AppCompatActivity {
             }
             @Override public void onFailure(Call<User> call, Throwable t) {}
         });
+    }
+
+    private String formatToDateOnly(String rawDateTime) {
+        if (rawDateTime == null || rawDateTime.trim().isEmpty()) {
+            return "Chưa cập nhật";
+        }
+        try {
+            // Tách lấy cụm ngày yyyy-MM-dd trước khoảng trắng hoặc chữ T
+            String datePart = rawDateTime.contains("T") ? rawDateTime.split("T")[0] : rawDateTime.split(" ")[0];
+            String[] parts = datePart.split("-");
+            if (parts.length == 3) {
+                return parts[2] + "/" + parts[1] + "/" + parts[0]; // Trả về dd/MM/yyyy
+            }
+            return datePart;
+        } catch (Exception e) {
+            return rawDateTime;
+        }
     }
 
     private void executeSaveChangesForm() {

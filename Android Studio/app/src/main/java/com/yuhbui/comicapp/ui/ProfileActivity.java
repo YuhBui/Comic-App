@@ -12,6 +12,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -63,6 +64,7 @@ public class ProfileActivity extends AppCompatActivity {
         initViews();
         initImagePicker();
         fetchUserProfile();
+        setupHeader();
 
         btnCancel.setOnClickListener(v -> resetFields());
         btnSave.setOnClickListener(v -> saveChanges());
@@ -174,6 +176,22 @@ public class ProfileActivity extends AppCompatActivity {
 
         btnSave.setEnabled(false);
         btnCancel.setEnabled(false);
+    }
+
+    private void setupHeader() {
+        View headerView = findViewById(R.id.layoutHeaderAdmin);
+        if (headerView != null) {
+            ImageView headerMenu = headerView.findViewById(R.id.headerMenu);
+            TextView headerLogo = headerView.findViewById(R.id.headerLogo);
+
+            headerView.findViewById(R.id.headerAvatar).setVisibility(View.GONE);
+            headerView.findViewById(R.id.headerSearch).setVisibility(View.GONE);
+            headerView.findViewById(R.id.headerNotification).setVisibility(View.GONE);
+
+            headerLogo.setText("HỒ SƠ CÁ NHÂN");
+            headerMenu.setImageResource(android.R.drawable.ic_menu_revert);
+            headerMenu.setOnClickListener(v -> finish()); // Biến icon header menu trái thành nút Back
+        }
     }
 
     private void saveChanges() {

@@ -3,7 +3,6 @@ package com.yuhbui.comicapp.ui.adapters;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.graphics.Color;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,6 +19,7 @@ import com.yuhbui.comicapp.data.api.ApiClient;
 import com.yuhbui.comicapp.data.model.Comment;
 import com.yuhbui.comicapp.utils.SharedPrefsManager;
 import java.util.ArrayList;
+import java.util.Collections; // Bổ sung để sắp xếp dữ liệu
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,7 +32,6 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
     private List<Comment> commentList = new ArrayList<>();
     private OnCommentClickListener replyListener;
 
-    // Bộ nhớ đệm giữ data và số lượng trang hiển thị phản hồi con tránh lỗi tái sử dụng ô khi cuộn
     private final Map<Integer, List<Comment>> repliesCache = new HashMap<>();
     private final Map<Integer, Integer> displayedCountCache = new HashMap<>();
 
@@ -87,12 +86,10 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
         holder.btnDislike.setText("👎 Ghét (" + comment.getDislikeCount() + ")");
         holder.btnReply.setText("💬 Phản hồi (" + comment.getReplyCount() + ")");
 
-        // Cài đặt danh sách phản hồi con thụt lề dọc
         holder.rvReplies.setLayoutManager(new LinearLayoutManager(context));
         ReplyAdapter replyAdapter = new ReplyAdapter();
         holder.rvReplies.setAdapter(replyAdapter);
 
-        // Khởi tạo cache nếu chưa tồn tại
         if (!repliesCache.containsKey(commentId)) {
             repliesCache.put(commentId, new ArrayList<>());
             displayedCountCache.put(commentId, 0);
@@ -102,7 +99,6 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
         int currentDisplayedCount = displayedCountCache.get(commentId);
         int totalRepliesCount = comment.getReplyCount();
 
-        // Khôi phục trạng thái từ bộ nhớ đệm khi ViewHolder bị cuộn lặp
         if (currentDisplayedCount > 0 && !cachedReplies.isEmpty()) {
             holder.rvReplies.setVisibility(View.VISIBLE);
             int endBound = Math.min(currentDisplayedCount, cachedReplies.size());
@@ -118,6 +114,8 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
         } else {
             holder.rvReplies.setVisibility(View.GONE);
             replyAdapter.setReplies(new ArrayList<>());
+
+            // ĐÃ SỬA: Bình luận cha không có phản hồi thì ẩn hoàn toàn vùng text phản hồi
             if (totalRepliesCount > 0) {
                 holder.tvLoadMoreReplies.setVisibility(View.VISIBLE);
                 holder.tvLoadMoreReplies.setText("—— Xem phản hồi (" + totalRepliesCount + ") ——");
@@ -126,11 +124,17 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
             }
         }
 
+        // ĐÃ SỬA: Bắt sự kiện phản hồi của bình luận con (Cháu) -> Truyền thêm tên để chèn `@tên_user`
         replyAdapter.setOnReplyToReplyClickListener(childComment -> {
             if (replyListener != null) {
                 Comment ghostComment = new Comment();
-                ghostComment.setCommentId(comment.getCommentId());
+                ghostComment.setCommentId(comment.getCommentId()); // Gốc luồng vẫn ăn theo cha lớn nhất
                 ghostComment.setUserId(childComment.getUserId());
+
+                String validName = (childComment.getUserDisplayName() != null && !childComment.getUserDisplayName().isEmpty())
+                        ? childComment.getUserDisplayName() : "Thành viên #" + childComment.getUserId();
+                ghostComment.setUserDisplayName(validName); // Gán tên hiển thị đích danh
+
                 replyListener.onReplyClick(ghostComment);
             }
         });
@@ -202,7 +206,32 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
                             @Override
                             public void onResponse(Call<List<Comment>> call, Response<List<Comment>> response) {
                                 if (response.isSuccessful() && response.body() != null) {
-                                    repliesCache.put(commentId, response.body());
+                                    List<Comment> serverReplies = response.body();
+
+                                    // 1. SẮP XẾP: Luôn hiển thị từ CŨ đến MỚI (Tăng dần theo commentId/Thời gian)
+                                    Collections.sort(serverReplies, (c1, c2) -> Integer.compare(c1.getCommentId(), c2.getCommentId()));
+
+                                    // 2. THUẬT TOÁN GẮN TAG: Quét tìm comment cháu để bổ sung chuỗi @tên_user
+                                    Map<Integer, Comment> lookupMap = new HashMap<>();
+                                    for (Comment r : serverReplies) {
+                                        lookupMap.put(r.getCommentId(), r);
+                                    }
+                                    for (Comment r : serverReplies) {
+                                        // Nếu parentCommentId không trùng với ID gốc, nghĩa là r là câu trả lời cho 1 comment con khác (Cháu)
+                                        if (r.getParentCommentId() != null && r.getParentCommentId() != commentId) {
+                                            Comment immediateParent = lookupMap.get(r.getParentCommentId());
+                                            if (immediateParent != null) {
+                                                String parentName = (immediateParent.getUserDisplayName() != null && !immediateParent.getUserDisplayName().isEmpty())
+                                                        ? immediateParent.getUserDisplayName() : "Thành viên #" + immediateParent.getUserId();
+
+                                                if (r.getContent() != null && !r.getContent().trim().startsWith("@")) {
+                                                    r.setContent("@" + parentName + " " + r.getContent());
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    repliesCache.put(commentId, serverReplies);
                                     paginateReplies(commentId, holder, replyAdapter, totalRepliesCount);
                                 }
                             }
