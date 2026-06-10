@@ -1,19 +1,27 @@
 package com.yuhbui.comicapp.ui.admin;
 
 import android.content.Intent;
+import android.graphics.Color; // THÊM: Để đổi màu chữ Header
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.webkit.MimeTypeMap;
 import android.widget.*;
 import androidx.annotation.Nullable;
+import androidx.activity.OnBackPressedCallback; // THÊM: Để bắt sự kiện nút Back hệ thống
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.GravityCompat;              // THÊM: Điều hướng DrawerLayout trượt trái
+import androidx.drawerlayout.widget.DrawerLayout;    // THÊM: Biến DrawerLayout root
+
 import com.bumptech.glide.Glide;
 import com.yuhbui.comicapp.R;
 import com.yuhbui.comicapp.data.api.ApiClient;
 import com.yuhbui.comicapp.data.model.Category;
 import com.yuhbui.comicapp.data.model.Comic;
+import com.yuhbui.comicapp.utils.HeaderUtils;          // THÊM: Tiện ích Header dùng chung
+import com.yuhbui.comicapp.utils.MenuUtils;            // THÊM: Tiện ích Menu Admin dùng chung
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
@@ -32,6 +40,8 @@ public class AdminEditComicActivity extends AppCompatActivity {
 
     private static final int PICK_IMAGE_REQUEST = 101;
 
+    private DrawerLayout drawerLayout; // THÊM: Thành phần quản lý Menu trượt trái đè màn hình
+
     private TextView tvFormTitle, tvComicCategoriesSelect;
     private EditText edtComicTitle, edtComicAuthor, edtComicDescription;
     private ImageView imgComicCoverSelect;
@@ -49,12 +59,22 @@ public class AdminEditComicActivity extends AppCompatActivity {
     private List<Integer> selectedCategoryIds = new ArrayList<>();
     private boolean[] checkedItems;
 
+    // Các thành phần của Header
+    private View layoutHeader;
+    private TextView headerLogo;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_admin_edit_comic);
 
-        // Ánh xạ View từ XML
+        // 1. Ánh xạ DrawerLayout Root mới
+        drawerLayout = findViewById(R.id.drawerLayout);
+
+        // 2. Thiết lập cấu hình tùy biến thanh Header Admin & Menu trượt tập trung
+        setupAdminHeaderView();
+
+        // 3. Ánh xạ các View nhập liệu mẫu form từ XML
         tvFormTitle = findViewById(R.id.tvFormTitle);
         edtComicTitle = findViewById(R.id.edtComicTitle);
         edtComicAuthor = findViewById(R.id.edtComicAuthor);
@@ -64,7 +84,7 @@ public class AdminEditComicActivity extends AppCompatActivity {
         btnCancelComicForm = findViewById(R.id.btnCancelComicForm);
         btnSaveComicForm = findViewById(R.id.btnSaveComicForm);
         tvComicCategoriesSelect = findViewById(R.id.tvComicCategoriesSelect);
-        rgStatus = findViewById(R.id.rgStatus); // Ánh xạ RadioGroup trạng thái
+        rgStatus = findViewById(R.id.rgStatus);
 
         // Tải danh mục thể loại nền từ hệ thống Server
         loadCategoriesFromServer();
@@ -106,6 +126,62 @@ public class AdminEditComicActivity extends AppCompatActivity {
 
         // Nút lưu thông tin dữ liệu truyện
         btnSaveComicForm.setOnClickListener(v -> executeSavingProcess());
+
+        // 4. CẤU HÌNH: Khóa nút quay lại (Back cứng) - Ưu tiên đóng Menu trượt nếu đang mở
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (drawerLayout != null && drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                    drawerLayout.closeDrawer(GravityCompat.START);
+                } else {
+                    setEnabled(false);
+                    getOnBackPressedDispatcher().onBackPressed();
+                    setEnabled(true);
+                }
+            }
+        });
+    }
+
+    // Làm mới avatar Admin mỗi khi quay lại từ các trang quản lý khác hoặc trang cá nhân
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (layoutHeader != null && layoutHeader.findViewById(R.id.headerAvatar) != null) {
+            HeaderUtils.loadHeaderAvatar(this, layoutHeader.findViewById(R.id.headerAvatar));
+        }
+    }
+
+    /**
+     * Hàm cấu hình thanh Header Admin chuyên sâu đặc thù, ẩn các nút chức năng dư thừa
+     */
+    private void setupAdminHeaderView() {
+        layoutHeader = findViewById(R.id.layoutHeaderEditComic); // Đảm bảo ID này trùng với ID include trong file XML
+        headerLogo = layoutHeader.findViewById(R.id.headerLogo);
+
+        // Khởi tạo các tính năng lõi của Header
+        HeaderUtils.initHeader(this, layoutHeader, drawerLayout);
+
+        // Kích hoạt tính năng kéo/mở menu điều hướng Admin tập trung
+        MenuUtils.setupAdminSideMenu(this, drawerLayout, layoutHeader.findViewById(R.id.headerMenu));
+
+        // ĐÁP ỨNG YÊU CẦU: Ẩn triệt để hai nút không thuộc phận sự của Admin
+        if (layoutHeader.findViewById(R.id.headerSearch) != null) {
+            layoutHeader.findViewById(R.id.headerSearch).setVisibility(View.GONE);
+        }
+        if (layoutHeader.findViewById(R.id.headerNotification) != null) {
+            layoutHeader.findViewById(R.id.headerNotification).setVisibility(View.GONE);
+        }
+
+        // Đồng bộ phong cách chữ tiêu đề đỏ cam nhận diện không gian làm việc của Admin
+        if (headerLogo != null) {
+            headerLogo.setText("COMIC APP");
+            headerLogo.setTextColor(Color.parseColor("#E74C3C"));
+            headerLogo.setOnClickListener(v -> {
+                Intent intent = new Intent(this, AdminDashboardActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                startActivity(intent);
+            });
+        }
     }
 
     @Override
@@ -113,12 +189,11 @@ public class AdminEditComicActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == PICK_IMAGE_REQUEST && resultCode == RESULT_OK && data != null && data.getData() != null) {
             selectedImageUri = data.getData();
-            imgComicCoverSelect.setImageURI(selectedImageUri); // Đổ ảnh xem trước
+            imgComicCoverSelect.setImageURI(selectedImageUri);
         }
     }
 
     private void loadCategoriesFromServer() {
-        // Lấy chuỗi danh sách tên thể loại cũ được truyền từ màn hình Chi tiết sang
         String currentGenresString = getIntent().getStringExtra("CURRENT_GENRES_STRING");
 
         ApiClient.getApiService().getAllCategories().enqueue(new Callback<List<Category>>() {
@@ -131,7 +206,6 @@ public class AdminEditComicActivity extends AppCompatActivity {
 
                     StringBuilder displayText = new StringBuilder();
 
-                    // ĐÃ SỬA: Quét kiểm tra đối chiếu khôi phục trạng thái tích chọn danh mục cũ
                     for (int i = 0; i < allCategories.size(); i++) {
                         Category category = allCategories.get(i);
                         if (currentGenresString != null && currentGenresString.contains(category.getName())) {
@@ -143,7 +217,6 @@ public class AdminEditComicActivity extends AppCompatActivity {
                         }
                     }
 
-                    // Đổ text hiển thị danh sách thể loại đã tích chọn sẵn lên màn hình
                     if (selectedCategoryIds.isEmpty()) {
                         tvComicCategoriesSelect.setText("Bấm vào đây để chọn thể loại...");
                     } else {
@@ -203,13 +276,13 @@ public class AdminEditComicActivity extends AppCompatActivity {
                 .setPositiveButton("Tạo", (dialog, which) -> {
                     String name = edtNewCat.getText().toString().trim();
                     if (!name.isEmpty()) {
-                        Category c = new Category(name); // Không còn bị lỗi gạch đỏ nữa
+                        Category c = new Category(name);
                         ApiClient.getApiService().createCategory(c).enqueue(new Callback<Category>() {
                             @Override
                             public void onResponse(Call<Category> call, Response<Category> response) {
                                 if (response.isSuccessful()) {
                                     Toast.makeText(AdminEditComicActivity.this, "Đã tạo thể loại mới thành công!", Toast.LENGTH_SHORT).show();
-                                    loadCategoriesFromServer(); // Làm mới danh mục nền
+                                    loadCategoriesFromServer();
                                 } else {
                                     Toast.makeText(AdminEditComicActivity.this, "Server từ chối tạo thể loại!", Toast.LENGTH_SHORT).show();
                                 }
@@ -247,7 +320,7 @@ public class AdminEditComicActivity extends AppCompatActivity {
                 public void onResponse(Call<Map<String, String>> call, Response<Map<String, String>> response) {
                     if (response.isSuccessful() && response.body() != null) {
                         uploadedCoverUrl = response.body().get("coverUrl");
-                        saveComicTextInfo(title); // Gửi tiếp phần thông tin văn bản truyện
+                        saveComicTextInfo(title);
                     } else {
                         Toast.makeText(AdminEditComicActivity.this, "Server từ chối nhận file ảnh! Mã lỗi: " + response.code(), Toast.LENGTH_SHORT).show();
                     }
@@ -258,7 +331,6 @@ public class AdminEditComicActivity extends AppCompatActivity {
                 }
             });
         } else {
-            // Không chọn ảnh mới -> Lưu luôn thông tin text (Giữ nguyên link ảnh cũ)
             saveComicTextInfo(title);
         }
     }
@@ -270,7 +342,6 @@ public class AdminEditComicActivity extends AppCompatActivity {
         comic.setDescription(edtComicDescription.getText().toString().trim());
         comic.setCoverImageUrl(uploadedCoverUrl);
 
-        // Đã sửa: Bóc tách lấy text từ RadioButton trạng thái được chọn
         String status = "Ongoing";
         if (rgStatus.getCheckedRadioButtonId() == R.id.rbCompleted) {
             status = "Completed";
@@ -278,7 +349,6 @@ public class AdminEditComicActivity extends AppCompatActivity {
         comic.setStatus(status);
 
         if (editComicId == -1) {
-            // TIẾN TRÌNH THÊM MỚI TRUYỆN TRANH
             ApiClient.getApiService().adminCreateComic(comic, selectedCategoryIds).enqueue(new Callback<Comic>() {
                 @Override
                 public void onResponse(Call<Comic> call, Response<Comic> response) {
@@ -295,7 +365,6 @@ public class AdminEditComicActivity extends AppCompatActivity {
                 }
             });
         } else {
-            // TIẾN TRÌNH CẬP NHẬT (EDIT) TRUYỆN TRANH
             ApiClient.getApiService().adminUpdateComic(editComicId, comic, selectedCategoryIds).enqueue(new Callback<Comic>() {
                 @Override
                 public void onResponse(Call<Comic> call, Response<Comic> response) {

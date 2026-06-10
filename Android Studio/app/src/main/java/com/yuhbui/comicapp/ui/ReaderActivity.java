@@ -1,5 +1,6 @@
 package com.yuhbui.comicapp.ui;
 
+import android.content.Intent;                            // THÊM: Intent để chuyển hướng qua lại trang chủ
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -12,6 +13,8 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.GravityCompat;                  // THÊM: Thư viện điều hướng Drawer
+import androidx.drawerlayout.widget.DrawerLayout;        // THÊM: Thư viện DrawerLayout
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.yuhbui.comicapp.R;
@@ -21,6 +24,10 @@ import com.yuhbui.comicapp.data.model.ChapterImage;
 import com.yuhbui.comicapp.data.model.Comment;
 import com.yuhbui.comicapp.ui.adapters.CommentAdapter;
 import com.yuhbui.comicapp.ui.adapters.ImageAdapter;
+import com.yuhbui.comicapp.utils.HeaderUtils;              // THÊM: Nhúng lớp tiện ích Header dùng chung
+import com.yuhbui.comicapp.utils.MenuUtils;                // THÊM: Nhúng lớp tiện ích Menu dùng chung
+import com.yuhbui.comicapp.utils.SharedPrefsManager;
+
 import java.util.ArrayList;
 import java.util.List;
 import retrofit2.Call;
@@ -28,6 +35,8 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class ReaderActivity extends AppCompatActivity {
+
+    private DrawerLayout drawerLayout; // THÊM: Biến DrawerLayout bao ngoài cùng
 
     private RecyclerView recyclerViewImages;
     private ImageAdapter imageAdapter;
@@ -51,7 +60,6 @@ public class ReaderActivity extends AppCompatActivity {
 
     // --- KHAI BÁO CÁC THÀNH PHẦN CỦA HEADER DÙNG CHUNG ---
     private View layoutHeader;
-    private ImageView headerMenu, headerSearch, headerNotification, headerAvatar;
     private TextView headerLogo;
 
     @Override
@@ -59,25 +67,41 @@ public class ReaderActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_reader);
 
-        // 0. ÁNH XẠ CỤM HEADER CHUNG VÀ ĐĂNG KÝ SỰ KIỆN CLICK
+        // 0. ÁNH XẠ DRAWERLAYOUT VÀ CỤM HEADER CHUNG (Bảo đảm id root trong activity_reader.xml là @id/drawerLayout)
+        drawerLayout = findViewById(R.id.drawerLayout);
         layoutHeader = findViewById(R.id.layoutHeaderReader);
-        headerMenu = layoutHeader.findViewById(R.id.headerMenu);
         headerLogo = layoutHeader.findViewById(R.id.headerLogo);
-        headerSearch = layoutHeader.findViewById(R.id.headerSearch);
-        headerNotification = layoutHeader.findViewById(R.id.headerNotification);
-        headerAvatar = layoutHeader.findViewById(R.id.headerAvatar);
 
-        headerMenu.setOnClickListener(v -> showHeaderPopupMenu(v));
-        headerLogo.setOnClickListener(v -> Toast.makeText(this, "[Reader] Quay lại trang chính", Toast.LENGTH_SHORT).show());
-        headerSearch.setOnClickListener(v -> Toast.makeText(this, "[Reader] Mở tìm kiếm", Toast.LENGTH_SHORT).show());
-        headerNotification.setOnClickListener(v -> Toast.makeText(this, "[Reader] Mở thông báo", Toast.LENGTH_SHORT).show());
-        headerAvatar.setOnClickListener(v -> Toast.makeText(this, "[Reader] Mở hồ sơ cá nhân", Toast.LENGTH_SHORT).show());
+        // TỐI ƯU: Khởi tạo tất cả tính năng của Header (Bao gồm ô tìm kiếm chung toàn cục)
+        HeaderUtils.initHeader(this, layoutHeader, drawerLayout);
+
+        // TỐI ƯU: Thiết lập sự kiện click điều hướng cho Menu trượt đè tối nền bên trái
+        MenuUtils.setupSideMenu(this, drawerLayout, layoutHeader.findViewById(R.id.headerMenu));
+
+        // Nhấn vào Logo chữ "COMIC APP" trên trang đọc sẽ cho out về trang chủ nhanh
+        headerLogo.setOnClickListener(v -> {
+            startActivity(new Intent(this, MainActivity.class));
+            finish();
+        });
+
+        // CẤU HÌNH: Khóa nút Back hệ thống - Nếu Menu trượt đang mở thì bấm nút back sẽ thu menu lại trước
+        getOnBackPressedDispatcher().addCallback(this, new androidx.activity.OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (drawerLayout != null && drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                    drawerLayout.closeDrawer(GravityCompat.START);
+                } else {
+                    setEnabled(false);
+                    getOnBackPressedDispatcher().onBackPressed();
+                    setEnabled(true);
+                }
+            }
+        });
 
         // 1. Ánh xạ phần đọc ảnh truyện
         recyclerViewImages = findViewById(R.id.recyclerViewImages);
         recyclerViewImages.setLayoutManager(new LinearLayoutManager(this));
 
-        // ĐÃ SỬA: Đặt thành false để RecyclerView tự động co giãn chiều cao khi ảnh truyện được tải về bất đồng bộ
         recyclerViewImages.setHasFixedSize(false);
         recyclerViewImages.setItemViewCacheSize(30);
         recyclerViewImages.setNestedScrollingEnabled(false);
@@ -104,7 +128,7 @@ public class ReaderActivity extends AppCompatActivity {
         currentComicId = getIntent().getIntExtra("COMIC_ID", -1);
 
         if (currentChapterId != -1) {
-            loadChapterContent(currentChapterId); // Gom việc tải ảnh và bình luận vào hàm chung
+            loadChapterContent(currentChapterId);
         }
 
         // Tải danh sách tất cả các chương phục vụ cho thanh điều hướng dropdown
@@ -147,13 +171,23 @@ public class ReaderActivity extends AppCompatActivity {
         btnSendComment.setOnClickListener(v -> sendCommentToServer());
     }
 
+    // THÊM: Đồng bộ và làm mới Avatar, số thông báo chưa đọc bất cứ khi nào user quay lại Activity này
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (layoutHeader != null) {
+            HeaderUtils.loadHeaderAvatar(this, layoutHeader.findViewById(R.id.headerAvatar));
+            HeaderUtils.loadUnreadNotificationCount(this, layoutHeader.findViewById(R.id.tvNotificationBadge));
+        }
+    }
+
     // Hàm phụ trách tải toàn bộ nội dung của chương tại chỗ mà không cần mở lại Activity
     private void loadChapterContent(int chapterId) {
         loadImages(chapterId);    // Tải ảnh truyện ở trên
         loadChapterComments(chapterId); // Tải bình luận ở dưới
 
         // Tự động lưu lịch sử đọc
-        int userId = com.yuhbui.comicapp.utils.SharedPrefsManager.getUserId(this);
+        int userId = SharedPrefsManager.getUserId(this);
         if (userId != -1 && currentComicId != -1) {
             saveHistoryToServer(userId, currentComicId, chapterId);
         }
@@ -258,7 +292,6 @@ public class ReaderActivity extends AppCompatActivity {
     }
 
     private void loadImages(int chapterId) {
-        // ĐÃ SỬA: Giải phóng và xóa danh sách trang ảnh cũ ngay lập tức khi đổi chương để tránh lag hình
         if (imageAdapter != null) {
             imageAdapter.setImages(new ArrayList<>());
             imageAdapter.notifyDataSetChanged();
@@ -269,7 +302,6 @@ public class ReaderActivity extends AppCompatActivity {
             public void onResponse(Call<List<ChapterImage>> call, Response<List<ChapterImage>> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     imageAdapter.setImages(response.body());
-                    // ĐÃ SỬA: Ép giao diện vẽ lại toàn bộ mảng tranh truyện lên màn hình ngay khi nạp xong
                     imageAdapter.notifyDataSetChanged();
                 }
             }
@@ -293,7 +325,7 @@ public class ReaderActivity extends AppCompatActivity {
 
     private void sendCommentToServer() {
         String content = edtCommentInput.getText().toString().trim();
-        int userId = com.yuhbui.comicapp.utils.SharedPrefsManager.getUserId(this);
+        int userId = SharedPrefsManager.getUserId(this);
 
         if (content.isEmpty()) return;
         if (userId == -1) {
@@ -338,36 +370,5 @@ public class ReaderActivity extends AppCompatActivity {
             @Override public void onResponse(Call<com.yuhbui.comicapp.data.model.ReadingHistory> call, Response<com.yuhbui.comicapp.data.model.ReadingHistory> response) {}
             @Override public void onFailure(Call<com.yuhbui.comicapp.data.model.ReadingHistory> call, Throwable t) {}
         });
-    }
-
-    private void showHeaderPopupMenu(View anchorView) {
-        androidx.appcompat.widget.PopupMenu popupMenu = new androidx.appcompat.widget.PopupMenu(this, anchorView);
-        popupMenu.getMenuInflater().inflate(R.menu.menu_header_options, popupMenu.getMenu());
-        popupMenu.setOnMenuItemClickListener(item -> {
-            int id = item.getItemId();
-
-            if (id == R.id.menu_home) {
-                Toast.makeText(this, "Chuyển hướng sang Trang chủ", Toast.LENGTH_SHORT).show();
-                return true;
-            } else if (id == R.id.menu_history) {
-                Toast.makeText(this, "Mở Lịch sử đọc", Toast.LENGTH_SHORT).show();
-                return true;
-            } else if (id == R.id.menu_follow) {
-                Toast.makeText(this, "Mở Truyện yêu thích", Toast.LENGTH_SHORT).show();
-                return true;
-            } else if (id == R.id.menu_downloads) {
-                Toast.makeText(this, "Mở Truyện tải xuống", Toast.LENGTH_SHORT).show();
-                return true;
-            } else if (id == R.id.menu_profile) {
-                Toast.makeText(this, "Mở Hồ sơ cá nhân", Toast.LENGTH_SHORT).show();
-                return true;
-            } else if (id == R.id.menu_logout) {
-                Toast.makeText(this, "Đang đăng xuất tài khoản...", Toast.LENGTH_SHORT).show();
-                return true;
-            }
-
-            return false;
-        });
-        popupMenu.show();
     }
 }

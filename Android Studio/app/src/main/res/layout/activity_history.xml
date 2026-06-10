@@ -1,103 +1,113 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.drawerlayout.widget.DrawerLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/drawerLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="#F5F5F5"
     android:fitsSystemWindows="true">
 
-    <include
-        android:id="@+id/layoutHeaderHistory"
-        layout="@layout/layout_header" />
-
-    <androidx.core.widget.NestedScrollView
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:fillViewport="true">
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:background="#F5F5F5">
 
-        <LinearLayout
+        <include
+            android:id="@+id/layoutHeaderHistory"
+            layout="@layout/layout_header" />
+
+        <androidx.core.widget.NestedScrollView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:background="#FFFFFF"
-            android:paddingBottom="16dp">
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:fillViewport="true">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:padding="16dp">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="📖 LỊCH SỬ ĐỌC TRUYỆN"
-                    android:textStyle="bold"
-                    android:textColor="#000000"
-                    android:textSize="16sp" />
-
-                <ImageView
-                    android:id="@+id/imgPageFilter"
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:padding="6dp"
-                    android:src="@drawable/ic_filter"
-                    android:background="?android:attr/selectableItemBackground"
-                    android:contentDescription="Bộ lọc thể loại" />
-            </LinearLayout>
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/recyclerViewHistory"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:paddingStart="8dp"
-                android:paddingEnd="8dp"
-                android:nestedScrollingEnabled="false"
-                android:scrollbars="vertical"/>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center"
-                android:layout_marginTop="20dp"
-                android:layout_marginBottom="8dp">
-
-                <Button
-                    android:id="@+id/btnPrevPageHistory"
-                    android:layout_width="40dp"
-                    android:layout_height="36dp"
-                    android:text="&lt;"
-                    android:textColor="#FFFFFF"
-                    android:textStyle="bold"
-                    android:textSize="14sp"
-                    android:background="@drawable/bg_nav_btn"
-                    android:padding="0dp"/>
+                android:orientation="vertical"
+                android:background="#FFFFFF"
+                android:paddingBottom="16dp">
 
                 <LinearLayout
-                    android:id="@+id/layoutPageNumbersHistory"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:layout_marginStart="6dp"
-                    android:layout_marginEnd="6dp"
-                    android:gravity="center_vertical"/>
+                    android:gravity="center_vertical"
+                    android:padding="16dp">
 
-                <Button
-                    android:id="@+id/btnNextPageHistory"
-                    android:layout_width="40dp"
-                    android:layout_height="36dp"
-                    android:text="&gt;"
-                    android:textColor="#FFFFFF"
-                    android:textStyle="bold"
-                    android:textSize="14sp"
-                    android:background="@drawable/bg_nav_btn"
-                    android:padding="0dp"/>
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="📖 LỊCH SỬ ĐỌC TRUYỆN"
+                        android:textStyle="bold"
+                        android:textColor="#000000"
+                        android:textSize="16sp" />
+
+                    <ImageView
+                        android:id="@+id/imgPageFilter"
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:padding="6dp"
+                        android:src="@drawable/ic_filter"
+                        android:background="?android:attr/selectableItemBackground"
+                        android:contentDescription="Bộ lọc thể loại" />
+                </LinearLayout>
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recyclerViewHistory"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp"
+                    android:nestedScrollingEnabled="false"
+                    android:scrollbars="vertical"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center"
+                    android:layout_marginTop="20dp"
+                    android:layout_marginBottom="8dp">
+
+                    <Button
+                        android:id="@+id/btnPrevPageHistory"
+                        android:layout_width="40dp"
+                        android:layout_height="36dp"
+                        android:text="&lt;"
+                        android:textColor="#FFFFFF"
+                        android:textStyle="bold"
+                        android:textSize="14sp"
+                        android:background="@drawable/bg_nav_btn"
+                        android:padding="0dp"/>
+
+                    <LinearLayout
+                        android:id="@+id/layoutPageNumbersHistory"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginStart="6dp"
+                        android:layout_marginEnd="6dp"
+                        android:gravity="center_vertical"/>
+
+                    <Button
+                        android:id="@+id/btnNextPageHistory"
+                        android:layout_width="40dp"
+                        android:layout_height="36dp"
+                        android:text="&gt;"
+                        android:textColor="#FFFFFF"
+                        android:textStyle="bold"
+                        android:textSize="14sp"
+                        android:background="@drawable/bg_nav_btn"
+                        android:padding="0dp"/>
+                </LinearLayout>
+
             </LinearLayout>
+        </androidx.core.widget.NestedScrollView>
+    </LinearLayout>
 
-        </LinearLayout>
-    </androidx.core.widget.NestedScrollView>
-</LinearLayout>
+    <include layout="@layout/layout_side_menu" />
+
+</androidx.drawerlayout.widget.DrawerLayout>

@@ -6,12 +6,16 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.yuhbui.comicapp.R;
 import com.yuhbui.comicapp.ui.adapters.NotificationAdapter;
 import com.yuhbui.comicapp.data.api.ApiClient;
 import com.yuhbui.comicapp.data.model.Notification;
+import com.yuhbui.comicapp.utils.HeaderUtils;
+import com.yuhbui.comicapp.utils.MenuUtils;
 import com.yuhbui.comicapp.utils.SharedPrefsManager;
 import java.util.List;
 import retrofit2.Call;
@@ -20,18 +24,60 @@ import retrofit2.Response;
 
 public class NotificationListActivity extends AppCompatActivity {
 
+    private DrawerLayout drawerLayout;
+
     private RecyclerView rvNotif;
     private TextView tvNoData;
     private NotificationAdapter adapter;
     private int userId;
+
+    // Các thành phần của Header
+    private View layoutHeader;
+    private TextView headerLogo;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_notification_list);
 
-        setupHeader();
+        // Ánh xạ DrawerLayout từ XML
+        drawerLayout = findViewById(R.id.drawerLayout);
 
+        // CẤU HÌNH HEADER VÀ MENU TRƯỢT ĐỒNG BỘ
+        layoutHeader = findViewById(R.id.layoutHeader);
+        headerLogo = findViewById(R.id.headerLogo); // Ánh xạ trực tiếp từ layout để đảm bảo an toàn
+
+        // Kích hoạt toàn bộ tính năng Header (gồm cả Tìm kiếm chuyển hướng toàn cục) và Menu trượt trái
+        HeaderUtils.initHeader(this, layoutHeader, drawerLayout);
+        MenuUtils.setupSideMenu(this, drawerLayout, findViewById(R.id.headerMenu));
+
+        // CHỈNH SỬA TẠI ĐÂY: Giữ lại tiêu đề ứng dụng gốc và thiết lập click chuyển hướng về Trang chủ
+        if (headerLogo != null) {
+            headerLogo.setText("COMIC APP"); // Đặt lại tên app ban đầu
+            headerLogo.setOnClickListener(v -> {
+                Intent intent = new Intent(NotificationListActivity.this, MainActivity.class);
+                // Dùng cờ Clear Top và Single Top để mở lại trang chủ cũ mượt mà, không tạo thêm nhiều trang mới chồng lên nhau
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                startActivity(intent);
+                finish(); // Đóng màn hình thông báo lại
+            });
+        }
+
+        // Cấu hình sự kiện nút Back hệ thống (Ưu tiên đóng menu trượt)
+        getOnBackPressedDispatcher().addCallback(this, new androidx.activity.OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (drawerLayout != null && drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                    drawerLayout.closeDrawer(GravityCompat.START);
+                } else {
+                    setEnabled(false);
+                    getOnBackPressedDispatcher().onBackPressed();
+                    setEnabled(true);
+                }
+            }
+        });
+
+        // Giao diện hiển thị danh sách
         rvNotif = findViewById(R.id.recyclerViewNotifications);
         tvNoData = findViewById(R.id.tvNoNotifications);
         rvNotif.setLayoutManager(new LinearLayoutManager(this));
@@ -40,6 +86,15 @@ public class NotificationListActivity extends AppCompatActivity {
 
         userId = SharedPrefsManager.getUserId(this);
         loadNotifications();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (layoutHeader != null) {
+            HeaderUtils.loadHeaderAvatar(this, layoutHeader.findViewById(R.id.headerAvatar));
+            HeaderUtils.loadUnreadNotificationCount(this, layoutHeader.findViewById(R.id.tvNotificationBadge));
+        }
     }
 
     private void loadNotifications() {
@@ -53,17 +108,15 @@ public class NotificationListActivity extends AppCompatActivity {
                     rvNotif.setVisibility(View.VISIBLE);
 
                     adapter.setData(response.body(), notif -> {
-                        // Xử lý khi click vào dòng thông báo
                         if (!notif.isRead()) {
                             ApiClient.getApiService().markNotificationAsRead(notif.getNotificationId()).enqueue(new Callback<Void>() {
                                 @Override public void onResponse(Call<Void> call, Response<Void> response) {
-                                    loadNotifications(); // Reload làm tươi lại giao diện mất chấm đỏ
+                                    loadNotifications();
                                 }
                                 @Override public void onFailure(Call<Void> call, Throwable t) {}
                             });
                         }
 
-                        // Nếu thông báo có liên kết truyện (Ví dụ: truyện ra mắt chap mới), chuyển hướng nhanh đến truyện đó
                         if (notif.getComicId() != null && notif.getComicId() > 0) {
                             Intent intent = new Intent(NotificationListActivity.this, ComicDetailActivity.class);
                             intent.putExtra("COMIC_ID", notif.getComicId());
@@ -77,25 +130,5 @@ public class NotificationListActivity extends AppCompatActivity {
             }
             @Override public void onFailure(Call<List<Notification>> call, Throwable t) {}
         });
-    }
-
-    private void setupHeader() {
-        View headerView = findViewById(R.id.layoutHeaderAdmin); // ID layout bọc của file layout_header.xml
-        if (headerView != null) {
-            ImageView headerMenu = headerView.findViewById(R.id.headerMenu);
-            TextView headerLogo = headerView.findViewById(R.id.headerLogo);
-
-            // Ẩn các tính năng Tìm kiếm, Avatar, Quả chuông không dùng tới ở trang con này đi
-            headerView.findViewById(R.id.headerAvatar).setVisibility(View.GONE);
-            headerView.findViewById(R.id.headerSearch).setVisibility(View.GONE);
-            headerView.findViewById(R.id.headerNotification).setVisibility(View.GONE);
-
-            // Đổi tiêu đề trung tâm
-            headerLogo.setText("THÔNG BÁO CỦA TÔI");
-
-            // Ép icon Menu bên trái đổi vai trò biến thành nút Quay lại (Back Button)
-            headerMenu.setImageResource(android.R.drawable.ic_menu_revert); // Sử dụng icon quay lại mặc định hệ thống
-            headerMenu.setOnClickListener(v -> finish()); // Nhấn vào sẽ thoát giao diện hiện tại
-        }
     }
 }

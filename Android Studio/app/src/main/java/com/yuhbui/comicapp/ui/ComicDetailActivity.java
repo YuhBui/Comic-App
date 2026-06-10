@@ -7,10 +7,13 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.RatingBar;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.GravityCompat;              // THÊM: Thư viện điều hướng Drawer
+import androidx.drawerlayout.widget.DrawerLayout;    // THÊM: Thư viện DrawerLayout
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -22,9 +25,11 @@ import com.yuhbui.comicapp.data.model.Chapter;
 import com.yuhbui.comicapp.data.model.Comic;
 import com.yuhbui.comicapp.data.model.ComicDetailResponse;
 import com.yuhbui.comicapp.data.model.Comment;
-import com.yuhbui.comicapp.data.model.User; // Đã có sẵn model User phục vụ kiểm tra trạng thái
+import com.yuhbui.comicapp.data.model.User;
 import com.yuhbui.comicapp.ui.adapters.ChapterAdapter;
 import com.yuhbui.comicapp.ui.adapters.CommentAdapter;
+import com.yuhbui.comicapp.utils.HeaderUtils;          // THÊM: Nhúng lớp tiện ích Header dùng chung
+import com.yuhbui.comicapp.utils.MenuUtils;            // THÊM: Nhúng lớp tiện ích Menu dùng chung
 import com.yuhbui.comicapp.utils.SharedPrefsManager;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,6 +38,8 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class ComicDetailActivity extends AppCompatActivity {
+
+    private DrawerLayout drawerLayout; // THÊM: Khai báo biến quản lý DrawerLayout màn hình chi tiết
 
     private int currentComicId;
     private String currentComicTitle;
@@ -47,7 +54,7 @@ public class ComicDetailActivity extends AppCompatActivity {
     private TextView btnToggleFavorite;
 
     private boolean isCurrentlyFavorite = false;
-    private boolean isUserBanned = false; // BỔ SUNG: Cờ kiểm tra trạng thái cấm chat của tài khoản
+    private boolean isUserBanned = false;
 
     // Thành phần xử lý danh sách chương truyện (MVVM)
     private ComicDetailViewModel viewModel;
@@ -64,7 +71,6 @@ public class ComicDetailActivity extends AppCompatActivity {
 
     // --- KHAI BÁO CÁC THÀNH PHẦN CỦA HEADER DÙNG CHUNG ---
     private View layoutHeader;
-    private ImageView headerMenu, headerSearch, headerNotification, headerAvatar;
     private TextView headerLogo;
 
     @Override
@@ -72,7 +78,7 @@ public class ComicDetailActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_comic_detail);
 
-        // 1. Ánh xạ toàn bộ các View từ XML
+        // 1. Ánh xạ toàn bộ các View từ XML chi tiết truyện
         tvTitle = findViewById(R.id.tvComicTitle);
         imgComicCover = findViewById(R.id.imgComicCover);
         tvAuthor = findViewById(R.id.tvComicAuthor);
@@ -92,43 +98,46 @@ public class ComicDetailActivity extends AppCompatActivity {
         edtCommentInput = findViewById(R.id.edtCommentInput);
         btnSendComment = findViewById(R.id.btnSendComment);
 
-        // --- ÁNH XẠ VÀ THIẾT LẬP HEADER CHUNG ---
+        // --- 2. ÁNH XẠ VÀ CẤU HÌNH ĐỒNG BỘ LAYOUT HEADER & MENU TRƯỢT MỚI ---
+        drawerLayout = findViewById(R.id.drawerLayout); // Hãy chắc chắn đã bọc root XML bằng DrawerLayout
         layoutHeader = findViewById(R.id.layoutHeader);
-        headerMenu = layoutHeader.findViewById(R.id.headerMenu);
         headerLogo = layoutHeader.findViewById(R.id.headerLogo);
-        headerSearch = layoutHeader.findViewById(R.id.headerSearch);
-        headerNotification = layoutHeader.findViewById(R.id.headerNotification);
-        headerAvatar = layoutHeader.findViewById(R.id.headerAvatar);
 
-        // Đăng ký sự kiện Click xử lý chức năng cho Header trên màn hình Chi tiết
-        headerMenu.setOnClickListener(v -> showHeaderPopupMenu(v));
+        // Khởi tạo các tính năng lõi (Menu, Chuông, Avatar, Ô nhập Tìm kiếm toàn cục nhảy về trang chủ)
+        HeaderUtils.initHeader(this, layoutHeader, drawerLayout);
+
+        // Thiết lập chức năng điều hướng cho các mục bấm bên trong thanh Side Menu trượt
+        MenuUtils.setupSideMenu(this, drawerLayout, layoutHeader.findViewById(R.id.headerMenu));
 
         headerLogo.setOnClickListener(v -> {
             finish();
         });
 
-        headerSearch.setOnClickListener(v -> {
-            Intent intent = new Intent(ComicDetailActivity.this, MainActivity.class);
-            intent.putExtra("OPEN_SEARCH", true);
-            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            startActivity(intent);
-            finish();
+        // Ưu tiên đóng Menu trượt nếu người dùng nhấn nút Back hệ thống
+        getOnBackPressedDispatcher().addCallback(this, new androidx.activity.OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (drawerLayout != null && drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                    drawerLayout.closeDrawer(GravityCompat.START);
+                } else {
+                    setEnabled(false);
+                    getOnBackPressedDispatcher().onBackPressed();
+                    setEnabled(true);
+                }
+            }
         });
 
-        headerNotification.setOnClickListener(v -> Toast.makeText(this, "Mở thông báo", Toast.LENGTH_SHORT).show());
-        headerAvatar.setOnClickListener(v -> Toast.makeText(this, "Mở thông tin tài khoản người dùng", Toast.LENGTH_SHORT).show());
-
-        // 2. Cài đặt cấu trúc hiển thị danh sách Chương truyện
+        // 3. Cài đặt cấu trúc hiển thị danh sách Chương truyện
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         adapter = new ChapterAdapter();
         recyclerView.setAdapter(adapter);
 
-        // 3. Cài đặt cấu trúc hiển thị danh sách Bình luận
+        // 4. Cài đặt cấu trúc hiển thị danh sách Bình luận
         recyclerViewComments.setLayoutManager(new LinearLayoutManager(this));
         commentAdapter = new CommentAdapter();
         recyclerViewComments.setAdapter(commentAdapter);
 
-        // 3.1 Lắng nghe sự kiện người dùng bấm vào nút "Phản hồi"
+        // 4.1 Lắng nghe sự kiện người dùng bấm vào nút "Phản hồi"
         commentAdapter.setOnCommentClickListener(new CommentAdapter.OnCommentClickListener() {
             @Override
             public void onReplyClick(Comment parentComment) {
@@ -139,14 +148,12 @@ public class ComicDetailActivity extends AppCompatActivity {
 
                 targetParentCommentId = parentComment.getCommentId();
 
-                // Kiểm tra xem đây có phải phản hồi lồng cấp được gửi từ danh sách reply hay không
                 if (parentComment.getUserDisplayName() != null) {
                     String tagText = "@" + parentComment.getUserDisplayName() + " ";
                     edtCommentInput.setText(tagText);
                     edtCommentInput.setSelection(tagText.length());
                     edtCommentInput.setHint("Đang trả lời...");
                 } else {
-                    // Phản hồi trực tiếp bình luận gốc lớn nhất
                     edtCommentInput.setText("");
                     edtCommentInput.setHint("Viết phản hồi...");
                 }
@@ -154,7 +161,7 @@ public class ComicDetailActivity extends AppCompatActivity {
             }
         });
 
-        // 4. "Hứng" dữ liệu thông tin truyện sơ bộ từ Intent gửi sang
+        // 5. "Hứng" dữ liệu thông tin truyện sơ bộ từ Intent gửi sang
         if (getIntent() != null) {
             currentComicId = getIntent().getIntExtra("COMIC_ID", -1);
             currentComicTitle = getIntent().getStringExtra("COMIC_TITLE");
@@ -163,12 +170,11 @@ public class ComicDetailActivity extends AppCompatActivity {
 
         int currentUserId = SharedPrefsManager.getUserId(this);
 
-        // BỔ SUNG: Gọi hàm kiểm tra trạng thái tài khoản Banned từ server ngay khi vào trang
         if (currentUserId != -1) {
             checkCurrentUserBanStatus(currentUserId);
         }
 
-        // 5. Kết nối luồng dữ liệu MVVM để cập nhật Chương truyện
+        // 6. Kết nối luồng dữ liệu MVVM để cập nhật Chương truyện
         viewModel = new ViewModelProvider(this).get(ComicDetailViewModel.class);
         viewModel.getChapters().observe(this, new Observer<List<Chapter>>() {
             @Override
@@ -181,14 +187,14 @@ public class ComicDetailActivity extends AppCompatActivity {
             }
         });
 
-        // 6. Ra lệnh tải dữ liệu tổng thể từ máy chủ nếu mã ID hợp lệ
+        // 7. Ra lệnh tải dữ liệu tổng thể từ máy chủ nếu mã ID hợp lệ
         if (currentComicId != -1) {
             loadComicFullDetails(currentComicId, currentUserId != -1 ? currentUserId : null);
             viewModel.loadChapters(currentComicId);
             loadComments(currentComicId);
         }
 
-        // 6.1 Bắt sự kiện click nút YÊU THÍCH (FOLLOW)
+        // 7.1 Bắt sự kiện click nút YÊU THÍCH (FOLLOW)
         btnToggleFavorite.setOnClickListener(v -> {
             if (currentUserId == -1) {
                 Toast.makeText(this, "Vui lòng đăng nhập để thêm vào danh sách yêu thích!", Toast.LENGTH_SHORT).show();
@@ -208,7 +214,7 @@ public class ComicDetailActivity extends AppCompatActivity {
             });
         });
 
-        // 7. Bắt sự kiện tương tác thay đổi số SAO ĐÁNH GIÁ (RatingBar)
+        // 8. Bắt sự kiện tương tác thay đổi số SAO ĐÁNH GIÁ (RatingBar)
         ratingBarUser.setOnRatingBarChangeListener(new RatingBar.OnRatingBarChangeListener() {
             @Override
             public void onRatingChanged(RatingBar ratingBar, float rating, boolean fromUser) {
@@ -223,7 +229,7 @@ public class ComicDetailActivity extends AppCompatActivity {
             }
         });
 
-        // 8. Bắt sự kiện bấm nút BẮT ĐẦU ĐỌC TRUYỆN
+        // 9. Bắt sự kiện bấm nút BẮT ĐẦU ĐỌC TRUYỆN
         btnStartReading.setOnClickListener(v -> {
             if (globalChapterList != null && !globalChapterList.isEmpty()) {
                 Chapter firstChapter = globalChapterList.get(globalChapterList.size() - 1);
@@ -237,9 +243,8 @@ public class ComicDetailActivity extends AppCompatActivity {
             }
         });
 
-        // 9. Bắt sự kiện bấm nút GỬI bình luận
+        // 10. Bắt sự kiện bấm nút GỬI bình luận
         btnSendComment.setOnClickListener(v -> {
-            // ĐÃ SỬA: Chặn cứng hành vi bấm gửi nếu tài khoản nằm trong danh sách đen
             if (isUserBanned) {
                 Toast.makeText(this, "Bạn hiện đang bị cấm chat!", Toast.LENGTH_SHORT).show();
                 return;
@@ -248,7 +253,16 @@ public class ComicDetailActivity extends AppCompatActivity {
         });
     }
 
-    // BỔ SUNG: Kiểm tra thời gian thực trạng thái Ban của User từ Database để khóa UI thích ứng
+    // THÊM: Đồng bộ và làm tươi Avatar, Số thông báo mới mỗi khi người dùng quay lại hoặc vào màn hình này
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (layoutHeader != null) {
+            HeaderUtils.loadHeaderAvatar(this, layoutHeader.findViewById(R.id.headerAvatar));
+            HeaderUtils.loadUnreadNotificationCount(this, layoutHeader.findViewById(R.id.tvNotificationBadge));
+        }
+    }
+
     private void checkCurrentUserBanStatus(int userId) {
         ApiClient.getApiService().getUserProfile(userId).enqueue(new Callback<User>() {
             @Override
@@ -258,19 +272,16 @@ public class ComicDetailActivity extends AppCompatActivity {
                     if ("Banned".equalsIgnoreCase(user.getStatus())) {
                         isUserBanned = true;
 
-                        // ĐÃ SỬA: Khóa cứng hộp text chat, đổi Hint cảnh báo và vô hiệu hóa nút gửi
                         edtCommentInput.setEnabled(false);
                         btnSendComment.setEnabled(false);
                         edtCommentInput.setHint("Bạn hiện đang bị cấm chat");
 
-                        // Đăng ký thêm sự kiện click trực tiếp vào ô để nhắc nhở người dùng bằng Toast
                         edtCommentInput.setOnClickListener(v ->
                                 Toast.makeText(ComicDetailActivity.this, "Tài khoản của bạn hiện đang bị cấm chat!", Toast.LENGTH_SHORT).show()
                         );
                     }
                 }
             }
-
             @Override
             public void onFailure(Call<User> call, Throwable t) {}
         });
@@ -300,16 +311,13 @@ public class ComicDetailActivity extends AppCompatActivity {
                     tvDescription.setText(comic.getDescription());
                     tvGenre.setText("Thể loại: " + data.getGenres());
 
-                    // 1. Hiển thị số lượt yêu thích thực tế từ data gốc
                     tvFavorites.setText("❤️ " + String.valueOf(data.getFavoriteCount()));
                     tvRatingAverage.setText("⭐ " + comic.getRating() + "/5");
 
-                    // 2. ĐÃ CẬP NHẬT: Ghép trạng thái đi kèm thông tin Chương mới nhất
                     String statusStr = (comic.getStatus() != null ? comic.getStatus() : "Đang tiến hành");
                     String latestChapStr = (data.getLatestChapterNumber() != null ? data.getLatestChapterNumber() : "Chưa có");
                     tvStatus.setText("Tình trạng: " + statusStr + " (" + latestChapStr + ")");
 
-                    // ĐÃ SỬA: Thay thế vùng hiển thị năm phát hành thành Thời gian cập nhật chương mới (chỉ lấy Ngày/Tháng/Năm)
                     if (data.getTimeUpdated() != null && !data.getTimeUpdated().isEmpty()) {
                         tvRelease.setText("Cập nhật: " + formatToDateOnly(data.getTimeUpdated()));
                     } else {
@@ -325,7 +333,6 @@ public class ComicDetailActivity extends AppCompatActivity {
                             .into(imgComicCover);
                 }
             }
-
             @Override
             public void onFailure(Call<ComicDetailResponse> call, Throwable t) {
                 Log.e("YUH_TEST", "Lỗi tải chi tiết truyện: " + t.getMessage());
@@ -358,7 +365,6 @@ public class ComicDetailActivity extends AppCompatActivity {
                     loadComicFullDetails(comicId, userId);
                 }
             }
-
             @Override
             public void onFailure(Call<String> call, Throwable t) {
                 Toast.makeText(ComicDetailActivity.this, "Đã ghi nhận đánh giá!", Toast.LENGTH_SHORT).show();
@@ -376,7 +382,6 @@ public class ComicDetailActivity extends AppCompatActivity {
                     commentAdapter.notifyDataSetChanged();
                 }
             }
-
             @Override
             public void onFailure(Call<List<Comment>> call, Throwable t) {
                 Toast.makeText(ComicDetailActivity.this, "Không thể tải bình luận", Toast.LENGTH_SHORT).show();
@@ -419,42 +424,10 @@ public class ComicDetailActivity extends AppCompatActivity {
                     loadComments(currentComicId);
                 }
             }
-
             @Override
             public void onFailure(Call<Comment> call, Throwable t) {
                 Toast.makeText(ComicDetailActivity.this, "Lỗi kết nối mạng!", Toast.LENGTH_SHORT).show();
             }
         });
-    }
-
-    private void showHeaderPopupMenu(View anchorView) {
-        androidx.appcompat.widget.PopupMenu popupMenu = new androidx.appcompat.widget.PopupMenu(this, anchorView);
-        popupMenu.getMenuInflater().inflate(R.menu.menu_header_options, popupMenu.getMenu());
-        popupMenu.setOnMenuItemClickListener(item -> {
-            int id = item.getItemId();
-
-            if (id == R.id.menu_home) {
-                Toast.makeText(this, "Chuyển hướng sang Trang chủ", Toast.LENGTH_SHORT).show();
-                return true;
-            } else if (id == R.id.menu_history) {
-                Toast.makeText(this, "Mở Lịch sử đọc", Toast.LENGTH_SHORT).show();
-                return true;
-            } else if (id == R.id.menu_follow) {
-                Toast.makeText(this, "Mở Truyện yêu thích", Toast.LENGTH_SHORT).show();
-                return true;
-            } else if (id == R.id.menu_downloads) {
-                Toast.makeText(this, "Mở Truyện tải xuống", Toast.LENGTH_SHORT).show();
-                return true;
-            } else if (id == R.id.menu_profile) {
-                Toast.makeText(this, "Mở Hồ sơ cá nhân", Toast.LENGTH_SHORT).show();
-                return true;
-            } else if (id == R.id.menu_logout) {
-                Toast.makeText(this, "Đang đăng xuất tài khoản...", Toast.LENGTH_SHORT).show();
-                return true;
-            }
-
-            return false;
-        });
-        popupMenu.show();
     }
 }

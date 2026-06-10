@@ -8,12 +8,19 @@ import android.view.View;
 import android.webkit.MimeTypeMap;
 import android.widget.*;
 import androidx.annotation.Nullable;
+import androidx.activity.OnBackPressedCallback; // THÊM: Quản lý nút Back hệ thống
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.GravityCompat;              // THÊM: Hỗ trợ đóng mở DrawerLayout
+import androidx.drawerlayout.widget.DrawerLayout;    // THÊM: Khai báo thành phần DrawerLayout Root
+
 import com.bumptech.glide.Glide;
 import com.yuhbui.comicapp.R;
 import com.yuhbui.comicapp.data.api.ApiClient;
 import com.yuhbui.comicapp.data.model.User;
+import com.yuhbui.comicapp.utils.HeaderUtils;          // THÊM: Tiện ích Header dùng chung
+import com.yuhbui.comicapp.utils.MenuUtils;            // THÊM: Tiện ích Menu Admin dùng chung
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
@@ -28,8 +35,12 @@ import retrofit2.Response;
 
 public class AdminAddUserActivity extends AppCompatActivity {
 
+    private static final int PICK_IMAGE_REQUEST = 501;
+
+    private DrawerLayout drawerLayout; // THÊM: Khai báo thành phần DrawerLayout quản lý menu trượt đè lên
+
     private ImageView imgAvatar;
-    private Button btnChooseAvatar; // BỔ SUNG: Nút chọn ảnh biệt lập dưới avatar
+    private Button btnChooseAvatar;
     private EditText edtName, edtEmail, edtPassword, edtConfirmPassword;
     private Spinner spinnerRole;
     private Button btnSubmit;
@@ -40,19 +51,40 @@ public class AdminAddUserActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_admin_add_user);
 
-        // Khởi tạo thanh Header Admin
+        // 1. Ánh xạ DrawerLayout Root mới từ file XML
+        drawerLayout = findViewById(R.id.drawerLayout);
+
+        // 2. Khởi tạo thanh Header Admin và Menu trượt dùng chung
         View layoutHeader = findViewById(R.id.layoutHeaderAddUser);
         TextView headerLogo = layoutHeader.findViewById(R.id.headerLogo);
         ImageView headerMenu = layoutHeader.findViewById(R.id.headerMenu);
-        layoutHeader.findViewById(R.id.headerSearch).setVisibility(View.GONE);
-        layoutHeader.findViewById(R.id.headerNotification).setVisibility(View.GONE);
-        headerLogo.setText("THÊM THÀNH VIÊN MỚI");
-        headerLogo.setTextColor(Color.parseColor("#E74C3C"));
-        headerMenu.setOnClickListener(v -> finish());
 
-        // Ánh xạ View điều khiển
+        // Chạy khởi tạo chức năng Header lõi & liên kết DrawerLayout
+        HeaderUtils.initHeader(this, layoutHeader, drawerLayout);
+        MenuUtils.setupAdminSideMenu(this, drawerLayout, headerMenu);
+
+        // Ẩn triệt để hai nút Tìm kiếm và Thông báo không thuộc phận sự của Admin
+        if (layoutHeader.findViewById(R.id.headerSearch) != null) {
+            layoutHeader.findViewById(R.id.headerSearch).setVisibility(View.GONE);
+        }
+        if (layoutHeader.findViewById(R.id.headerNotification) != null) {
+            layoutHeader.findViewById(R.id.headerNotification).setVisibility(View.GONE);
+        }
+
+        // ĐỒNG BỘ: Luôn hiện tên App cố định màu đỏ cam và nhấn vào tự động quay về Dashboard
+        if (headerLogo != null) {
+            headerLogo.setText("COMIC APP");
+            headerLogo.setTextColor(Color.parseColor("#E74C3C"));
+            headerLogo.setOnClickListener(v -> {
+                Intent intent = new Intent(this, AdminDashboardActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                startActivity(intent);
+            });
+        }
+
+        // 3. Ánh xạ các View điều khiển form nhập liệu
         imgAvatar = findViewById(R.id.imgAddUserSelectAvatar);
-        btnChooseAvatar = findViewById(R.id.btnChooseAvatarAdd); // BỔ SUNG
+        btnChooseAvatar = findViewById(R.id.btnChooseAvatarAdd);
         edtName = findViewById(R.id.edtAddUserName);
         edtEmail = findViewById(R.id.edtAddUserEmail);
         edtPassword = findViewById(R.id.edtAddUserPassword);
@@ -62,7 +94,7 @@ public class AdminAddUserActivity extends AppCompatActivity {
 
         spinnerRole.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, Arrays.asList("User", "Admin")));
 
-        // ĐÃ SỬA: Nhấn vào Avatar chỉ kích hoạt chế độ xem phóng to toàn màn hình
+        // Nhấn vào Avatar để mở dialog xem phóng to ảnh chất lượng cao
         imgAvatar.setOnClickListener(v -> {
             if (selectedAvatarUri != null) {
                 showFullAvatarDialog(selectedAvatarUri.toString());
@@ -71,17 +103,40 @@ public class AdminAddUserActivity extends AppCompatActivity {
             }
         });
 
-        // ĐÃ SỬA: Bấm vào nút "Chọn ảnh đại diện" dưới avatar mới mở thư viện chọn tệp Gallery
+        // Bấm vào nút dưới avatar để mở thư viện Gallery chọn ảnh bìa
         btnChooseAvatar.setOnClickListener(v -> {
             Intent intent = new Intent(Intent.ACTION_PICK);
             intent.setType("image/*");
-            startActivityForResult(intent, 501);
+            startActivityForResult(intent, PICK_IMAGE_REQUEST);
         });
 
         btnSubmit.setOnClickListener(v -> executeCreateUserForm());
+
+        // 4. CẤU HÌNH: Khóa nút Back cứng hệ thống - Ưu tiên đóng Menu trượt nếu nó đang mở
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (drawerLayout != null && drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                    drawerLayout.closeDrawer(GravityCompat.START);
+                } else {
+                    setEnabled(false);
+                    getOnBackPressedDispatcher().onBackPressed();
+                    setEnabled(true);
+                }
+            }
+        });
     }
 
-    // BỔ SUNG: Hàm khởi tạo Dialog chứa ImageView phóng lớn hiển thị Avatar chất lượng cao
+    // Làm mới, hiển thị ảnh đại diện Admin góc trên bên phải mỗi khi quay lại trang này
+    @Override
+    protected void onResume() {
+        super.onResume();
+        View layoutHeader = findViewById(R.id.layoutHeaderAddUser);
+        if (layoutHeader != null && layoutHeader.findViewById(R.id.headerAvatar) != null) {
+            HeaderUtils.loadHeaderAvatar(this, layoutHeader.findViewById(R.id.headerAvatar));
+        }
+    }
+
     private void showFullAvatarDialog(String imageUrlOrUri) {
         ImageView imagePopup = new ImageView(this);
         imagePopup.setAdjustViewBounds(true);
@@ -107,13 +162,11 @@ public class AdminAddUserActivity extends AppCompatActivity {
             return;
         }
 
-        // KIỂM TRA ĐỐI CHIẾU KHỚP MẬT KHẨU CẤP 2 NHẬP LẠI
         if (!pass.equals(confirmPass)) {
             Toast.makeText(this, "Mật khẩu xác minh nhập lại không trùng khớp!", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // ĐÃ SỬA: Đóng gói toàn bộ bằng createFormData để loại bỏ hoàn toàn dấu ngoặc kép bọc chuỗi và lỗi timestamp
         MultipartBody.Part partName = MultipartBody.Part.createFormData("displayName", name);
         MultipartBody.Part partEmail = MultipartBody.Part.createFormData("email", email);
         MultipartBody.Part partPass = MultipartBody.Part.createFormData("password", pass);
@@ -131,7 +184,6 @@ public class AdminAddUserActivity extends AppCompatActivity {
         btnSubmit.setEnabled(false);
         Toast.makeText(this, "Đang xử lý khởi tạo thành viên...", Toast.LENGTH_SHORT).show();
 
-        // Truyền loạt biến Part sạch lỗi vào hàm gọi mạng
         ApiClient.getApiService().adminCreateUser(partName, partEmail, partPass, partRole, avatarPart)
                 .enqueue(new Callback<User>() {
                     @Override
@@ -161,9 +213,8 @@ public class AdminAddUserActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == 501 && resultCode == RESULT_OK && data != null && data.getData() != null) {
+        if (requestCode == PICK_IMAGE_REQUEST && resultCode == RESULT_OK && data != null && data.getData() != null) {
             selectedAvatarUri = data.getData();
-            // Đổ ảnh xem trước bo tròn bằng Glide để đồng bộ trải nghiệm
             Glide.with(this).load(selectedAvatarUri).circleCrop().into(imgAvatar);
         }
     }

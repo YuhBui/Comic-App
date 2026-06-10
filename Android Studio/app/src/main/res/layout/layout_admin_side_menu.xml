@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/layoutAdminSideMenu"
+    android:layout_width="260dp"
+    android:layout_height="match_parent"
+    android:layout_gravity="start"
+    android:background="#2C3E50" android:clickable="true"
+    android:focusable="true"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:elevation="8dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="HỆ THỐNG QUẢN TRỊ"
+        android:textColor="#E74C3C"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:paddingBottom="24dp"
+        android:paddingTop="16dp"/>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#34495E"
+        android:layout_marginBottom="16dp"/>
+
+    <TextView
+        android:id="@+id/menuAdminDashboard"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:gravity="center_vertical"
+        android:text="📊  Bảng thống kê"
+        android:textColor="#ECF0F1"
+        android:textSize="15sp"
+        android:background="?attr/selectableItemBackground"
+        android:paddingStart="8dp"/>
+
+    <TextView
+        android:id="@+id/menuAdminUsers"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:gravity="center_vertical"
+        android:text="👥  Quản lý người dùng"
+        android:textColor="#ECF0F1"
+        android:textSize="15sp"
+        android:background="?attr/selectableItemBackground"
+        android:paddingStart="8dp"/>
+
+    <TextView
+        android:id="@+id/menuAdminComics"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:gravity="center_vertical"
+        android:text="📚  Quản lý truyện"
+        android:textColor="#ECF0F1"
+        android:textSize="15sp"
+        android:background="?attr/selectableItemBackground"
+        android:paddingStart="8dp"/>
+
+    <TextView
+        android:id="@+id/menuAdminNotifications"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:gravity="center_vertical"
+        android:text="🔔  Quản lý thông báo"
+        android:textColor="#ECF0F1"
+        android:textSize="15sp"
+        android:background="?attr/selectableItemBackground"
+        android:paddingStart="8dp"/>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#34495E"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="16dp"/>
+
+    <TextView
+        android:id="@+id/menuAdminLogout"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:gravity="center_vertical"
+        android:text="🚪  Đăng xuất hệ thống"
+        android:textColor="#E74C3C"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        android:background="?attr/selectableItemBackground"
+        android:paddingStart="8dp"/>
+
+</LinearLayout>

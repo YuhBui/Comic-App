@@ -1,223 +1,245 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.drawerlayout.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/drawerLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="#F5F5F5"
     android:fitsSystemWindows="true">
 
-    <include android:id="@+id/layoutHeaderAdminDetail" layout="@layout/layout_header" />
-
-    <androidx.core.widget.NestedScrollView
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:fillViewport="true">
+        android:background="#F5F5F5"
+        android:orientation="vertical">
 
-        <LinearLayout
+        <include
+            android:id="@+id/layoutHeaderAdminDetail"
+            layout="@layout/layout_header" />
+
+        <androidx.core.widget.NestedScrollView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp">
+            android:layout_height="match_parent"
+            android:fillViewport="true">
 
-            <!-- KHỐI THÔNG TIN BỐ CỤC ĐỒNG BỘ GIỐNG BÊN USER -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="#FFFFFF"
-                android:orientation="horizontal"
-                android:padding="12dp">
+                android:orientation="vertical"
+                android:padding="16dp">
 
-                <ImageView
-                    android:id="@+id/imgAdminDetailCover"
-                    android:layout_width="110dp"
-                    android:layout_height="160dp"
-                    android:scaleType="centerCrop"
-                    android:background="#EEEEEE" />
-
+                <!-- KHỐI THÔNG TIN BỐ CỤC ĐỒNG BỘ GIỐNG BÊN USER -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:layout_marginStart="12dp">
+                    android:background="#FFFFFF"
+                    android:orientation="horizontal"
+                    android:padding="12dp">
 
-                    <TextView
-                        android:id="@+id/tvAdminDetailTitle"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:textSize="18sp"
-                        android:textStyle="bold"
-                        android:textColor="#000000"
-                        android:text="Tên Bộ Truyện Tranh"/>
-
-                    <TextView
-                        android:id="@+id/tvAdminDetailAuthor"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Tác giả: Đang tải..."
-                        android:layout_marginTop="4dp"
-                        android:textColor="#555555"
-                        android:textSize="13sp"/>
-
-                    <TextView
-                        android:id="@+id/tvAdminDetailGenre"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Thể loại: Đang tải..."
-                        android:layout_marginTop="4dp"
-                        android:textColor="#555555"
-                        android:textSize="13sp"/>
-
-                    <TextView
-                        android:id="@+id/tvAdminDetailRelease"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Phát hành: --"
-                        android:layout_marginTop="4dp"
-                        android:textColor="#555555"
-                        android:textSize="13sp"/>
-
-                    <TextView
-                        android:id="@+id/tvAdminDetailStatus"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Tình trạng: --"
-                        android:layout_marginTop="4dp"
-                        android:textColor="#4CAF50"
-                        android:textStyle="bold"
-                        android:textSize="13sp"/>
+                    <ImageView
+                        android:id="@+id/imgAdminDetailCover"
+                        android:layout_width="110dp"
+                        android:layout_height="160dp"
+                        android:background="#EEEEEE"
+                        android:scaleType="centerCrop" />
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:layout_marginTop="6dp">
+                        android:layout_marginStart="12dp"
+                        android:orientation="vertical">
+
                         <TextView
-                            android:id="@+id/tvAdminDetailViews"
-                            android:layout_width="wrap_content"
+                            android:id="@+id/tvAdminDetailTitle"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="👁️ 0"
-                            android:textSize="12sp"
-                            android:textColor="#666666"
-                            android:layout_marginEnd="12dp"/>
+                            android:text="Tên Bộ Truyện Tranh"
+                            android:textColor="#000000"
+                            android:textSize="18sp"
+                            android:textStyle="bold" />
+
                         <TextView
-                            android:id="@+id/tvAdminDetailFavorites"
-                            android:layout_width="wrap_content"
+                            android:id="@+id/tvAdminDetailAuthor"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="❤️ 0"
-                            android:textSize="12sp"
-                            android:textColor="#E91E63"
-                            android:layout_marginEnd="12dp"/>
+                            android:layout_marginTop="4dp"
+                            android:text="Tác giả: Đang tải..."
+                            android:textColor="#555555"
+                            android:textSize="13sp" />
+
                         <TextView
-                            android:id="@+id/tvAdminDetailRating"
-                            android:layout_width="wrap_content"
+                            android:id="@+id/tvAdminDetailGenre"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="⭐ 0.0"
-                            android:textSize="12sp"
-                            android:textColor="#FF9800"
-                            android:textStyle="bold"/>
+                            android:layout_marginTop="4dp"
+                            android:text="Thể loại: Đang tải..."
+                            android:textColor="#555555"
+                            android:textSize="13sp" />
+
+                        <TextView
+                            android:id="@+id/tvAdminDetailRelease"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="Phát hành: --"
+                            android:textColor="#555555"
+                            android:textSize="13sp" />
+
+                        <TextView
+                            android:id="@+id/tvAdminDetailStatus"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="Tình trạng: --"
+                            android:textColor="#4CAF50"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:id="@+id/tvAdminDetailViews"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginEnd="12dp"
+                                android:text="👁️ 0"
+                                android:textColor="#666666"
+                                android:textSize="12sp" />
+
+                            <TextView
+                                android:id="@+id/tvAdminDetailFavorites"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginEnd="12dp"
+                                android:text="❤️ 0"
+                                android:textColor="#E91E63"
+                                android:textSize="12sp" />
+
+                            <TextView
+                                android:id="@+id/tvAdminDetailRating"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="⭐ 0.0"
+                                android:textColor="#FF9800"
+                                android:textSize="12sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
                     </LinearLayout>
                 </LinearLayout>
-            </LinearLayout>
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginTop="8dp">
-                <Button
-                    android:id="@+id/btnAdminEditComicDetail"
-                    android:layout_width="0dp"
-                    android:layout_height="44dp"
-                    android:layout_weight="1"
-                    android:text="CHỈNH SỬA"
-                    android:backgroundTint="#4CAF50"/>
-                <Button
-                    android:id="@+id/btnAdminDeleteComicDetail"
-                    android:layout_width="0dp"
-                    android:layout_height="44dp"
-                    android:layout_weight="1"
-                    android:layout_marginStart="8dp"
-                    android:text="XÓA TRUYỆN"
-                    android:backgroundTint="#E74C3C"/>
-            </LinearLayout>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:orientation="horizontal">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Tóm tắt nội dung truyện"
-                android:textStyle="bold"
-                android:layout_marginTop="12dp"
-                android:textColor="#000000"/>
-            <TextView
-                android:id="@+id/tvAdminDetailDesc"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:textColor="#333333"/>
+                    <Button
+                        android:id="@+id/btnAdminEditComicDetail"
+                        android:layout_width="0dp"
+                        android:layout_height="44dp"
+                        android:layout_weight="1"
+                        android:backgroundTint="#4CAF50"
+                        android:text="CHỈNH SỬA" />
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginTop="20dp"
-                android:gravity="center_vertical">
+                    <Button
+                        android:id="@+id/btnAdminDeleteComicDetail"
+                        android:layout_width="0dp"
+                        android:layout_height="44dp"
+                        android:layout_marginStart="8dp"
+                        android:layout_weight="1"
+                        android:backgroundTint="#E74C3C"
+                        android:text="XÓA TRUYỆN" />
+                </LinearLayout>
+
                 <TextView
-                    android:layout_width="0dp"
-                    android:layout_weight="1"
-                    android:layout_height="wrap_content"
-                    android:text="DANH SÁCH CHƯƠNG TRUYỆN"
-                    android:textStyle="bold"
-                    android:textColor="#000000"/>
-                <Button
-                    android:id="@+id/btnAdminAddChapter"
                     android:layout_width="wrap_content"
-                    android:layout_height="36dp"
-                    android:text="+ Thêm Chương"
-                    android:textSize="11sp"
-                    android:backgroundTint="#2196F3"/>
-            </LinearLayout>
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rvAdminDetailChapters"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:nestedScrollingEnabled="false" />
-
-            <!-- KHỐI QUẢN LÝ BÌNH LUẬN TRUYỆN -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="💬 QUẢN LÝ BÌNH LUẬN"
-                android:layout_marginTop="24dp"
-                android:textStyle="bold"
-                android:textColor="#000000"/>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginTop="8dp">
-                <EditText
-                    android:id="@+id/edtAdminCommentInput"
-                    android:layout_width="0dp"
-                    android:layout_weight="1"
                     android:layout_height="wrap_content"
-                    android:hint="Viết bình luận Admin..."
-                    android:textSize="14sp"/>
-                <Button
-                    android:id="@+id/btnAdminSendComment"
-                    android:layout_width="wrap_content"
-                    android:layout_height="40dp"
-                    android:text="Gửi"/>
-            </LinearLayout>
+                    android:layout_marginTop="12dp"
+                    android:text="Tóm tắt nội dung truyện"
+                    android:textColor="#000000"
+                    android:textStyle="bold" />
 
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rvAdminDetailComments"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:nestedScrollingEnabled="false"/>
-        </LinearLayout>
-    </androidx.core.widget.NestedScrollView>
-</LinearLayout>
+                <TextView
+                    android:id="@+id/tvAdminDetailDesc"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:textColor="#333333" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="DANH SÁCH CHƯƠNG TRUYỆN"
+                        android:textColor="#000000"
+                        android:textStyle="bold" />
+
+                    <Button
+                        android:id="@+id/btnAdminAddChapter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="36dp"
+                        android:backgroundTint="#2196F3"
+                        android:text="+ Thêm Chương"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvAdminDetailChapters"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:nestedScrollingEnabled="false" />
+
+                <!-- KHỐI QUẢN LÝ BÌNH LUẬN TRUYỆN -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="24dp"
+                    android:text="💬 QUẢN LÝ BÌNH LUẬN"
+                    android:textColor="#000000"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:orientation="horizontal">
+
+                    <EditText
+                        android:id="@+id/edtAdminCommentInput"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:hint="Viết bình luận Admin..."
+                        android:textSize="14sp" />
+
+                    <Button
+                        android:id="@+id/btnAdminSendComment"
+                        android:layout_width="wrap_content"
+                        android:layout_height="40dp"
+                        android:text="Gửi" />
+                </LinearLayout>
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvAdminDetailComments"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:nestedScrollingEnabled="false" />
+            </LinearLayout>
+        </androidx.core.widget.NestedScrollView>
+    </LinearLayout>
+
+    <include layout="@layout/layout_admin_side_menu" />
+
+</androidx.drawerlayout.widget.DrawerLayout>

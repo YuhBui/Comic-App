@@ -16,6 +16,8 @@ import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.core.view.GravityCompat;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -40,6 +42,9 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class MainActivity extends AppCompatActivity {
+
+    // ========== CONTAINER MENU TRƯỢT SƯỜN ==========
+    private DrawerLayout drawerLayout;
 
     // ========== PHẦN 1: TRUYỆN ĐỀ CỬ - Banner Slider ==========
     private ViewPager2 vpRecommended;
@@ -106,7 +111,12 @@ public class MainActivity extends AppCompatActivity {
         getOnBackPressedDispatcher().addCallback(this, new androidx.activity.OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
-                if (layoutSearchContainer != null && layoutSearchContainer.getVisibility() == View.VISIBLE) {
+                // Ưu tiên 1: Đóng menu trượt sườn trái nếu đang mở
+                if (drawerLayout != null && drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                    drawerLayout.closeDrawer(GravityCompat.START);
+                }
+                // Ưu tiên 2: Đóng vùng tìm kiếm nếu đang hiển thị kết quả tìm kiếm
+                else if (layoutSearchContainer != null && layoutSearchContainer.getVisibility() == View.VISIBLE) {
                     closeSearch();
                 } else {
                     setEnabled(false);
@@ -125,9 +135,25 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void handleSearchIntent(Intent intent) {
-        if (intent != null && intent.getBooleanExtra("OPEN_SEARCH", false)) {
-            if (edtHeaderSearch.getVisibility() == View.GONE) {
-                headerSearch.performClick();
+        if (intent != null) {
+            // Kiểm tra xem có từ khóa tìm kiếm toàn cục gửi từ trang khác về không
+            if (intent.hasExtra("GLOBAL_SEARCH_KEYWORD")) {
+                String keyword = intent.getStringExtra("GLOBAL_SEARCH_KEYWORD");
+
+                // 1. Hiển thị ô tìm kiếm trên Header của MainActivity và điền từ khóa vào
+                headerLogo.setVisibility(View.GONE);
+                edtHeaderSearch.setVisibility(View.VISIBLE);
+                edtHeaderSearch.setText(keyword);
+                headerSearch.setImageResource(android.R.drawable.ic_menu_close_clear_cancel);
+
+                // 2. Chạy hàm tìm kiếm và hiển thị layout kết quả đè lên trang chủ
+                performSearch(keyword);
+            }
+            // Logic cũ xử lý cờ OPEN_SEARCH nếu có
+            else if (intent.getBooleanExtra("OPEN_SEARCH", false)) {
+                if (edtHeaderSearch.getVisibility() == View.GONE) {
+                    headerSearch.performClick();
+                }
             }
         }
     }
@@ -163,7 +189,6 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    // Mỗi khi user quay trở lại app từ trang khác, tự động làm tươi số lượng thông báo chưa đọc
     @Override
     protected void onResume() {
         super.onResume();
@@ -185,9 +210,9 @@ public class MainActivity extends AppCompatActivity {
                     long unreadCount = response.body();
                     if (unreadCount > 0) {
                         tvNotificationBadge.setText(String.valueOf(unreadCount));
-                        tvNotificationBadge.setVisibility(View.VISIBLE); // Có thông báo mới -> Hiện vòng tròn đỏ
+                        tvNotificationBadge.setVisibility(View.VISIBLE);
                     } else {
-                        tvNotificationBadge.setVisibility(View.GONE); // Đã đọc hết -> Ẩn đi gọn gàng
+                        tvNotificationBadge.setVisibility(View.GONE);
                     }
                 } else {
                     if (tvNotificationBadge != null) tvNotificationBadge.setVisibility(View.GONE);
@@ -202,6 +227,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initViews() {
+        drawerLayout = findViewById(R.id.drawerLayout);
         layoutHeader       = findViewById(R.id.layoutHeader);
         headerMenu         = layoutHeader.findViewById(R.id.headerMenu);
         headerLogo         = layoutHeader.findViewById(R.id.headerLogo);
@@ -239,10 +265,43 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setupHeader() {
-        headerMenu.setOnClickListener(v -> showHeaderPopupMenu(v));
+        // Sự kiện khi nhấn nút Menu trên thanh tiêu đề header -> Mở/Đóng Menu Trượt Sườn Trái
+        headerMenu.setOnClickListener(v -> {
+            if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                drawerLayout.closeDrawer(GravityCompat.START);
+            } else {
+                drawerLayout.openDrawer(GravityCompat.START);
+            }
+        });
+
+        // Đăng ký sự kiện Click cho các danh mục chức năng trong `layout_side_menu.xml`
+        findViewById(R.id.menuHome).setOnClickListener(v -> {
+            drawerLayout.closeDrawer(GravityCompat.START);
+            // Hiện tại đang đứng ở MainActivity nên chỉ cần đóng menu sườn
+        });
+
+        findViewById(R.id.menuHistory).setOnClickListener(v -> {
+            drawerLayout.closeDrawer(GravityCompat.START);
+            startActivity(new Intent(MainActivity.this, HistoryActivity.class));
+        });
+
+        findViewById(R.id.menuFollow).setOnClickListener(v -> {
+            drawerLayout.closeDrawer(GravityCompat.START);
+            startActivity(new Intent(MainActivity.this, FollowActivity.class));
+        });
+
+        findViewById(R.id.menuProfile).setOnClickListener(v -> {
+            drawerLayout.closeDrawer(GravityCompat.START);
+            startActivity(new Intent(MainActivity.this, ProfileActivity.class));
+        });
+
+        findViewById(R.id.menuLogout).setOnClickListener(v -> {
+            drawerLayout.closeDrawer(GravityCompat.START);
+            performLogout();
+        });
+
         headerAvatar.setOnClickListener(v -> showAvatarMenu(v));
 
-        // Khi click biểu tượng quả chuông thông báo, chuyển tiếp đến trang danh sách thông báo người dùng
         headerNotification.setOnClickListener(v -> {
             Intent intent = new Intent(MainActivity.this, NotificationListActivity.class);
             startActivity(intent);

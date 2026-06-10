@@ -1,94 +1,109 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.drawerlayout.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/drawerLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="#FFFFFF"
     android:fitsSystemWindows="true">
 
-    <include android:id="@+id/layoutHeaderChapterDetail" layout="@layout/layout_header" />
-
-    <androidx.core.widget.NestedScrollView
-        android:id="@+id/nestedScrollViewChapterDetail"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:fillViewport="true">
+        android:background="#F5F5F5"
+        android:orientation="vertical">
 
-        <LinearLayout
+        <include
+            android:id="@+id/layoutHeaderChapterDetail"
+            layout="@layout/layout_header" />
+
+        <androidx.core.widget.NestedScrollView
+            android:id="@+id/nestedScrollViewChapterDetail"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp">
+            android:layout_height="match_parent"
+            android:fillViewport="true">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:layout_marginBottom="8dp">
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="🖼️ QUẢN LÝ TRANG TRUYỆN"
+                        android:textColor="#2196F3"
+                        android:textStyle="bold" />
+
+                    <Button
+                        android:id="@+id/btnAdminUploadPage"
+                        android:layout_width="wrap_content"
+                        android:layout_height="36dp"
+                        android:backgroundTint="#4CAF50"
+                        android:text="+ Thêm Trang"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvAdminChapterPages"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="24dp"
+                    android:nestedScrollingEnabled="false" />
+
                 <TextView
-                    android:layout_width="0dp"
-                    android:layout_weight="1"
-                    android:layout_height="wrap_content"
-                    android:text="🖼️ QUẢN LÝ TRANG TRUYỆN"
-                    android:textStyle="bold"
-                    android:textColor="#2196F3"/>
-                <Button
-                    android:id="@+id/btnAdminUploadPage"
                     android:layout_width="wrap_content"
-                    android:layout_height="36dp"
-                    android:text="+ Thêm Trang"
-                    android:textSize="11sp"
-                    android:backgroundTint="#4CAF50"/>
-            </LinearLayout>
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rvAdminChapterPages"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:nestedScrollingEnabled="false"
-                android:layout_marginBottom="24dp"/>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="💬 BÌNH LUẬN TRONG CHƯƠNG"
-                android:textStyle="bold"
-                android:textColor="#000000"
-                android:textSize="15sp"/>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginTop="8dp"
-                android:background="@android:drawable/edit_text"
-                android:padding="4dp"
-                android:gravity="center_vertical">
-                <EditText
-                    android:id="@+id/edtAdminChapterCommentInput"
-                    android:layout_width="0dp"
-                    android:layout_weight="1"
                     android:layout_height="wrap_content"
-                    android:hint="Viết phản hồi về chương này..."
-                    android:background="@null"
-                    android:padding="8dp"
-                    android:textSize="14sp"/>
-                <Button
-                    android:id="@+id/btnAdminChapterSendComment"
-                    android:layout_width="wrap_content"
-                    android:layout_height="36dp"
-                    android:text="Gửi"
-                    android:textSize="11sp"/>
-            </LinearLayout>
+                    android:text="💬 BÌNH LUẬN TRONG CHƯƠNG"
+                    android:textColor="#000000"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
 
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rvAdminChapterComments"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:nestedScrollingEnabled="false"/>
-        </LinearLayout>
-    </androidx.core.widget.NestedScrollView>
-</LinearLayout>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:background="@android:drawable/edit_text"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="4dp">
+
+                    <EditText
+                        android:id="@+id/edtAdminChapterCommentInput"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:background="@null"
+                        android:hint="Viết phản hồi về chương này..."
+                        android:padding="8dp"
+                        android:textSize="14sp" />
+
+                    <Button
+                        android:id="@+id/btnAdminChapterSendComment"
+                        android:layout_width="wrap_content"
+                        android:layout_height="36dp"
+                        android:text="Gửi"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvAdminChapterComments"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:nestedScrollingEnabled="false" />
+            </LinearLayout>
+        </androidx.core.widget.NestedScrollView>
+    </LinearLayout>
+
+    <include layout="@layout/layout_admin_side_menu" />
+
+</androidx.drawerlayout.widget.DrawerLayout>

@@ -12,6 +12,8 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.yuhbui.comicapp.R;
@@ -20,6 +22,8 @@ import com.yuhbui.comicapp.data.model.Category;
 import com.yuhbui.comicapp.data.model.Comic;
 import com.yuhbui.comicapp.ui.adapters.CategoryFilterAdapter;
 import com.yuhbui.comicapp.ui.adapters.ComicAdapter;
+import com.yuhbui.comicapp.utils.HeaderUtils;          // THÊM: Nhúng lớp tiện ích Header dùng chung
+import com.yuhbui.comicapp.utils.MenuUtils;
 import com.yuhbui.comicapp.utils.SharedPrefsManager;
 
 import java.util.ArrayList;
@@ -30,18 +34,19 @@ import retrofit2.Response;
 
 public class HistoryActivity extends AppCompatActivity {
 
+    private DrawerLayout drawerLayout;
+
     private RecyclerView recyclerViewHistory;
     private ComicAdapter historyAdapter;
     private Button btnPrevPageHistory, btnNextPageHistory;
     private LinearLayout layoutPageNumbersHistory;
     private int currentPage = 0;
     private int totalPages = 1;
-    private static final int PAGE_SIZE = 10; // 2 cột x 5 hàng = 10 truyện mỗi trang
+    private static final int PAGE_SIZE = 10;
     private int currentUserId = -1;
 
-    // Các thành phần của Header
+    // Các thành phần của Header và bộ lọc
     private View layoutHeader;
-    private ImageView headerMenu, headerSearch, headerNotification, headerAvatar;
     private TextView headerLogo;
     private ImageView imgHistoryFilter;
     private CategoryFilterAdapter filterAdapter;
@@ -52,36 +57,49 @@ public class HistoryActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_history);
 
-        // 1. Ánh xạ Header và đăng ký sự kiện thanh điều hướng chung
+        // 1. Ánh xạ DrawerLayout và Header layout
+        drawerLayout = findViewById(R.id.drawerLayout);
         layoutHeader = findViewById(R.id.layoutHeaderHistory);
-        headerMenu = layoutHeader.findViewById(R.id.headerMenu);
-        headerLogo = layoutHeader.findViewById(R.id.headerLogo);
-        headerSearch = layoutHeader.findViewById(R.id.headerSearch);
-        headerNotification = layoutHeader.findViewById(R.id.headerNotification);
-        headerAvatar = layoutHeader.findViewById(R.id.headerAvatar);
+        headerLogo   = layoutHeader.findViewById(R.id.headerLogo);
 
-        headerMenu.setOnClickListener(v -> showHeaderPopupMenu(v));
+        // 2. TỐI ƯU: Khởi tạo các tính năng cốt lõi của Header (Menu, Chuông, Avatar, Badge) bằng 1 dòng duy nhất
+        HeaderUtils.initHeader(this, layoutHeader, drawerLayout);
+
+        // 3. Khởi tạo chức năng điều hướng cho các nút bấm bên trong Menu trượt
+        MenuUtils.setupSideMenu(this, drawerLayout, layoutHeader.findViewById(R.id.headerMenu));
+
         headerLogo.setOnClickListener(v -> {
             startActivity(new Intent(this, MainActivity.class));
             finish();
         });
 
-        // 2. Ánh xạ các thành phần Phân trang
+        // 4. Cấu hình xử lý khi nhấn nút Back hệ thống (Ưu tiên đóng menu trượt)
+        getOnBackPressedDispatcher().addCallback(this, new androidx.activity.OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (drawerLayout != null && drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                    drawerLayout.closeDrawer(GravityCompat.START);
+                } else {
+                    setEnabled(false);
+                    getOnBackPressedDispatcher().onBackPressed();
+                    setEnabled(true);
+                }
+            }
+        });
+
+        // 5. Ánh xạ các thành phần Phân trang và Danh sách truyện
         btnPrevPageHistory = findViewById(R.id.btnPrevPageHistory);
         btnNextPageHistory = findViewById(R.id.btnNextPageHistory);
         layoutPageNumbersHistory = findViewById(R.id.layoutPageNumbersHistory);
 
-        // 3. Cấu hình RecyclerView hiển thị danh sách dạng GRID 2 CỘT giống Trang chủ
         recyclerViewHistory = findViewById(R.id.recyclerViewHistory);
         recyclerViewHistory.setLayoutManager(new GridLayoutManager(this, 2));
         historyAdapter = new ComicAdapter();
         recyclerViewHistory.setAdapter(historyAdapter);
         recyclerViewHistory.setNestedScrollingEnabled(false);
 
-        // Lấy UserId từ SharedPrefs
         currentUserId = SharedPrefsManager.getUserId(this);
 
-        // Cấu hình sự kiện click nút chuyển trang trái / phải
         btnPrevPageHistory.setOnClickListener(v -> {
             if (currentPage > 0) {
                 currentPage--;
@@ -103,15 +121,25 @@ public class HistoryActivity extends AppCompatActivity {
         }
 
         imgHistoryFilter = findViewById(R.id.imgPageFilter);
-        selectedCategoryIds.add(0); // Mặc định gán chọn nút "Tất cả"
+        selectedCategoryIds.add(0);
 
         filterAdapter = new CategoryFilterAdapter(selectedIds -> {
             selectedCategoryIds = selectedIds;
-            currentPage = 0; // Hủy trang về trang đầu khi thay đổi bộ lọc
+            currentPage = 0;
             if (currentUserId != -1) loadReadingHistory(currentUserId, currentPage);
         });
 
         imgHistoryFilter.setOnClickListener(v -> showCategoryFilterDialog());
+    }
+
+    // THÊM: Đồng bộ và làm tươi Avatar, Số thông báo mới mỗi khi người dùng quay lại trang này
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (layoutHeader != null) {
+            HeaderUtils.loadHeaderAvatar(this, layoutHeader.findViewById(R.id.headerAvatar));
+            HeaderUtils.loadUnreadNotificationCount(this, layoutHeader.findViewById(R.id.tvNotificationBadge));
+        }
     }
 
     private void showCategoryFilterDialog() {
@@ -125,7 +153,6 @@ public class HistoryActivity extends AppCompatActivity {
         rvPopup.setLayoutManager(new GridLayoutManager(this, 3));
         rvPopup.setAdapter(filterAdapter);
 
-        // Tải danh mục nạp vào adapter
         ApiClient.getApiService().getAllCategories().enqueue(new Callback<List<Category>>() {
             @Override
             public void onResponse(Call<List<Category>> call, Response<List<Category>> response) {
@@ -168,7 +195,6 @@ public class HistoryActivity extends AppCompatActivity {
                     } else {
                         historyAdapter.setComics(readComicsList);
 
-                        // Tính toán tổng số trang giống bên MainActivity
                         if (readComicsList.size() == PAGE_SIZE) {
                             totalPages = Math.max(totalPages, page + 2);
                         } else {
@@ -239,43 +265,5 @@ public class HistoryActivity extends AppCompatActivity {
     private int dpToPx(int dp) {
         float density = getResources().getDisplayMetrics().density;
         return Math.round(dp * density);
-    }
-
-    private void performLogout() {
-        Toast.makeText(this, "Đang đăng xuất...", Toast.LENGTH_SHORT).show();
-        SharedPrefsManager.logout(this);
-        Intent intent = new Intent(this, LoginActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        startActivity(intent);
-        finish();
-    }
-
-    private void showHeaderPopupMenu(View anchorView) {
-        androidx.appcompat.widget.PopupMenu popupMenu =
-                new androidx.appcompat.widget.PopupMenu(this, anchorView);
-        popupMenu.getMenuInflater().inflate(R.menu.menu_header_options, popupMenu.getMenu());
-        popupMenu.setOnMenuItemClickListener(item -> {
-            int id = item.getItemId();
-            if (id == R.id.menu_home) {
-                startActivity(new Intent(this, MainActivity.class));
-                return true;
-            } else if (id == R.id.menu_history) {
-                return true;
-            } else if (id == R.id.menu_follow) {
-                startActivity(new Intent(this, FollowActivity.class));
-                return true;
-            } else if (id == R.id.menu_downloads) {
-                Toast.makeText(this, "Truyện tải xuống", Toast.LENGTH_SHORT).show();
-                return true;
-            } else if (id == R.id.menu_profile) {
-                startActivity(new Intent(HistoryActivity.this, ProfileActivity.class));
-                return true;
-            } else if (id == R.id.menu_logout) {
-                performLogout();
-                return true;
-            }
-            return false;
-        });
-        popupMenu.show();
     }
 }

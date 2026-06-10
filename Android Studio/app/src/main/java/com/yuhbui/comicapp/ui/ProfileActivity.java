@@ -1,22 +1,26 @@
 package com.yuhbui.comicapp.ui;
 
-import android.database.Cursor;
+import android.content.Intent; // THÊM
+import android.graphics.Color;  // THÊM
 import android.net.Uri;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
 import android.webkit.MimeTypeMap;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.FrameLayout; // THÊM: Để chứa Menu trượt động
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.activity.OnBackPressedCallback;     // THÊM
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.GravityCompat;              // THÊM
+import androidx.drawerlayout.widget.DrawerLayout;    // THÊM
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.signature.ObjectKey;
@@ -24,6 +28,8 @@ import com.yuhbui.comicapp.R;
 import com.yuhbui.comicapp.data.api.ApiClient;
 import com.yuhbui.comicapp.data.model.RegisterRequest;
 import com.yuhbui.comicapp.data.model.User;
+import com.yuhbui.comicapp.utils.HeaderUtils;          // THÊM
+import com.yuhbui.comicapp.utils.MenuUtils;            // THÊM
 import com.yuhbui.comicapp.utils.SharedPrefsManager;
 
 import java.io.File;
@@ -41,6 +47,8 @@ import retrofit2.Response;
 
 public class ProfileActivity extends AppCompatActivity {
 
+    private DrawerLayout drawerLayout; // THÊM: Quản lý đóng mở menu trượt đè nền tối
+
     private EditText edtName, edtEmail, edtPassword, edtConfirmPassword;
     private Button btnSave, btnCancel;
     private ImageView imgProfileAvatar;
@@ -54,6 +62,10 @@ public class ProfileActivity extends AppCompatActivity {
     private Uri selectedImageUri = null;
     private int userId;
 
+    // Các thành phần của Header dùng chung
+    private View layoutHeader;
+    private TextView headerLogo;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -61,13 +73,39 @@ public class ProfileActivity extends AppCompatActivity {
 
         userId = SharedPrefsManager.getUserId(this);
 
+        // Ánh xạ DrawerLayout root ngoài cùng
+        drawerLayout = findViewById(R.id.drawerLayout);
+
         initViews();
         initImagePicker();
-        fetchUserProfile();
-        setupHeader();
+        fetchUserProfile(); // Logic Header & Menu trượt sẽ được tự động kích hoạt bên trong hàm này khi có dữ liệu Role
 
         btnCancel.setOnClickListener(v -> resetFields());
         btnSave.setOnClickListener(v -> saveChanges());
+
+        // Bắt sự kiện nút Quay lại của hệ thống: Ưu tiên đóng Menu trượt nếu đang mở
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (drawerLayout != null && drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                    drawerLayout.closeDrawer(GravityCompat.START);
+                } else {
+                    setEnabled(false);
+                    getOnBackPressedDispatcher().onBackPressed();
+                    setEnabled(true);
+                }
+            }
+        });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Tự động làm mới Avatar góc phải và số lượng thông báo khi quay lại giao diện
+        if (layoutHeader != null) {
+            HeaderUtils.loadHeaderAvatar(this, layoutHeader.findViewById(R.id.headerAvatar));
+            HeaderUtils.loadUnreadNotificationCount(this, layoutHeader.findViewById(R.id.tvNotificationBadge));
+        }
     }
 
     private void initViews() {
@@ -133,10 +171,12 @@ public class ProfileActivity extends AppCompatActivity {
                     initialEmail = user.getEmail();
                     currentAvatarUrl = user.getAvatarUrl();
 
+                    // THÊM: Kích hoạt xử lý cấu hình đa phân quyền Header & Menu trượt dựa trên Role thật
+                    setupDynamicHeaderAndMenu(user);
+
                     if (currentAvatarUrl != null && !currentAvatarUrl.isEmpty()) {
                         Glide.with(ProfileActivity.this)
                                 .load(currentAvatarUrl)
-                                // Sử dụng Signature với thời gian thực để ép Glide tải ảnh mới
                                 .signature(new ObjectKey(String.valueOf(System.currentTimeMillis())))
                                 .circleCrop()
                                 .placeholder(android.R.drawable.sym_def_app_icon)
@@ -153,6 +193,61 @@ public class ProfileActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * SỬA ĐỔI TOÀN DIỆN: Hàm phân quyền cấu hình Header và nạp Menu trượt động tại runtime
+     */
+    private void setupDynamicHeaderAndMenu(User user) {
+        FrameLayout drawerMenuContainer = findViewById(R.id.drawerMenuContainer);
+        layoutHeader = findViewById(R.id.layoutHeaderProfile);
+        if (drawerMenuContainer == null || layoutHeader == null) return;
+
+        drawerMenuContainer.removeAllViews(); // Dọn dẹp container trước khi nạp
+        headerLogo = layoutHeader.findViewById(R.id.headerLogo);
+        ImageView headerMenu = layoutHeader.findViewById(R.id.headerMenu);
+
+        // Kiểm tra điều kiện Role của hệ thống (Hãy đối chiếu với Entity User của bạn: e.g. "ADMIN" hoặc "Admin")
+        boolean isAdmin = user.getRole() != null && "ADMIN".equalsIgnoreCase(user.getRole());
+
+        // 1. Kích hoạt tính năng cốt lõi của thanh Header (Avatar nhỏ, Bell thông báo, Global Search)
+        HeaderUtils.initHeader(this, layoutHeader, drawerLayout);
+
+        if (isAdmin) {
+            // NẠP MENU ADMIN: Đẩy giao diện menu quản trị vào Container trượt
+            getLayoutInflater().inflate(R.layout.layout_admin_side_menu, drawerMenuContainer, true);
+            MenuUtils.setupAdminSideMenu(this, drawerLayout, headerMenu);
+
+            // Cấu hình phong cách Header Admin: Chữ đỏ cam, ẩn ô kính lúp và chuông báo
+            headerLogo.setText("COMIC APP");
+            headerLogo.setTextColor(Color.parseColor("#E74C3C"));
+            layoutHeader.findViewById(R.id.headerSearch).setVisibility(View.GONE);
+            layoutHeader.findViewById(R.id.headerNotification).setVisibility(View.GONE);
+
+            // Thiết lập click vào tên App nhảy về Dashboard Admin
+            headerLogo.setOnClickListener(v -> {
+                Intent intent = new Intent(this, com.yuhbui.comicapp.ui.admin.AdminDashboardActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                startActivity(intent);
+            });
+        } else {
+            // NẠP MENU USER: Đẩy giao diện các tính năng của người đọc thông thường vào Container
+            getLayoutInflater().inflate(R.layout.layout_side_menu, drawerMenuContainer, true);
+            MenuUtils.setupSideMenu(this, drawerLayout, headerMenu);
+
+            // Cấu hình phong cách Header User: Hiện đầy đủ Tìm kiếm chung, Chuông báo đỏ
+            headerLogo.setText("COMIC APP");
+            headerLogo.setTextColor(Color.parseColor("#333333"));
+            layoutHeader.findViewById(R.id.headerSearch).setVisibility(View.VISIBLE);
+            layoutHeader.findViewById(R.id.headerNotification).setVisibility(View.VISIBLE);
+
+            // Thiết lập click vào tên App nhảy về Trang chủ truyện của người dùng
+            headerLogo.setOnClickListener(v -> {
+                Intent intent = new Intent(this, MainActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                startActivity(intent);
+            });
+        }
+    }
+
     private void resetFields() {
         edtName.setText(initialName);
         edtEmail.setText(initialEmail);
@@ -161,11 +256,9 @@ public class ProfileActivity extends AppCompatActivity {
         isAvatarChanged = false;
         selectedImageUri = null;
 
-        // Nếu nhấn hủy hoặc vừa lưu xong, nạp lại ảnh avatar từ DB
         if (currentAvatarUrl != null && !currentAvatarUrl.isEmpty()) {
             Glide.with(this)
                     .load(currentAvatarUrl)
-                    // Sử dụng Signature với thời gian thực để ép Glide tải ảnh mới
                     .signature(new ObjectKey(String.valueOf(System.currentTimeMillis())))
                     .circleCrop()
                     .placeholder(android.R.drawable.sym_def_app_icon)
@@ -176,22 +269,6 @@ public class ProfileActivity extends AppCompatActivity {
 
         btnSave.setEnabled(false);
         btnCancel.setEnabled(false);
-    }
-
-    private void setupHeader() {
-        View headerView = findViewById(R.id.layoutHeaderAdmin);
-        if (headerView != null) {
-            ImageView headerMenu = headerView.findViewById(R.id.headerMenu);
-            TextView headerLogo = headerView.findViewById(R.id.headerLogo);
-
-            headerView.findViewById(R.id.headerAvatar).setVisibility(View.GONE);
-            headerView.findViewById(R.id.headerSearch).setVisibility(View.GONE);
-            headerView.findViewById(R.id.headerNotification).setVisibility(View.GONE);
-
-            headerLogo.setText("HỒ SƠ CÁ NHÂN");
-            headerMenu.setImageResource(android.R.drawable.ic_menu_revert);
-            headerMenu.setOnClickListener(v -> finish()); // Biến icon header menu trái thành nút Back
-        }
     }
 
     private void saveChanges() {
@@ -221,7 +298,6 @@ public class ProfileActivity extends AppCompatActivity {
     }
 
     private void uploadAvatarFileThenText(String name, String email, String password, String confirmPassword) {
-        // Gọi hàm tạo file tạm mới
         File file = getFileFromUri(selectedImageUri);
 
         if (file == null || !file.exists()) {
@@ -231,14 +307,12 @@ public class ProfileActivity extends AppCompatActivity {
             return;
         }
 
-        // Tạo RequestBody từ file tạm
         RequestBody requestFile = RequestBody.create(MediaType.parse(getContentResolver().getType(selectedImageUri)), file);
         MultipartBody.Part body = MultipartBody.Part.createFormData("file", file.getName(), requestFile);
 
         ApiClient.getApiService().uploadAvatar(userId, body).enqueue(new Callback<java.util.Map<String, String>>() {
             @Override
             public void onResponse(Call<java.util.Map<String, String>> call, Response<java.util.Map<String, String>> response) {
-                // Xóa file tạm ngay sau khi đã upload xong để giải phóng bộ nhớ cache
                 if (file.exists()) {
                     file.delete();
                 }
@@ -247,7 +321,11 @@ public class ProfileActivity extends AppCompatActivity {
                     String newAvatarUrl = response.body().get("avatarUrl");
                     currentAvatarUrl = newAvatarUrl;
 
-                    // Bước tiếp theo: Lưu thông tin chữ xuống database
+                    // Cập nhật ngay lập tức ảnh đại diện thu nhỏ trên thanh Header sau khi upload thành công
+                    if (layoutHeader != null && layoutHeader.findViewById(R.id.headerAvatar) != null) {
+                        HeaderUtils.loadHeaderAvatar(ProfileActivity.this, layoutHeader.findViewById(R.id.headerAvatar));
+                    }
+
                     sendProfileTextData(name, email, password, confirmPassword, newAvatarUrl);
                 } else {
                     progressBar.setVisibility(View.GONE);
@@ -256,16 +334,12 @@ public class ProfileActivity extends AppCompatActivity {
                 }
             }
 
-            @Override
-            public void onFailure(Call<java.util.Map<String, String>> call, Throwable t) {
-                // Đảm bảo file tạm cũng được xóa nếu xảy ra lỗi kết nối
-                if (file.exists()) {
-                    file.delete();
-                }
-
+            // Hàm tương thích phiên bản retrofit cũ / mới nếu đổi tên phương thức
+            @Override public void onFailure(Call<java.util.Map<String, String>> call, Throwable t) {
+                if (file.exists()) file.delete();
                 progressBar.setVisibility(View.GONE);
                 btnSave.setEnabled(true);
-                Toast.makeText(ProfileActivity.this, "Lỗi kết nối upload file: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(ProfileActivity.this, "Lỗi mạng: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -303,14 +377,11 @@ public class ProfileActivity extends AppCompatActivity {
 
     private File getFileFromUri(Uri uri) {
         try {
-            // Lấy định dạng mở rộng của file (jpg, png,...) từ ContentResolver
             String extension = MimeTypeMap.getSingleton().getExtensionFromMimeType(getContentResolver().getType(uri));
             if (extension == null) extension = "jpg";
 
-            // Tạo một file tạm trong thư mục cache của ứng dụng
             File tempFile = new File(getCacheDir(), "avatar_upload_" + System.currentTimeMillis() + "." + extension);
 
-            // Tiến hành copy dữ liệu stream từ Uri sang file tạm
             try (InputStream inputStream = getContentResolver().openInputStream(uri);
                  OutputStream outputStream = new FileOutputStream(tempFile)) {
 

@@ -14,8 +14,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.activity.OnBackPressedCallback; // THÊM: Để bắt sự kiện nút Back hệ thống
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.GravityCompat;              // THÊM: Điều hướng DrawerLayout trượt trái
+import androidx.drawerlayout.widget.DrawerLayout;    // THÊM: Biến DrawerLayout root
 import androidx.core.widget.NestedScrollView;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -25,6 +28,8 @@ import com.yuhbui.comicapp.data.api.ApiClient;
 import com.yuhbui.comicapp.data.model.Comment;
 import com.yuhbui.comicapp.ui.adapters.AdminChapterImageAdapter;
 import com.yuhbui.comicapp.ui.adapters.AdminCommentAdapter;
+import com.yuhbui.comicapp.utils.HeaderUtils;          // THÊM: Tiện ích Header dùng chung
+import com.yuhbui.comicapp.utils.MenuUtils;            // THÊM: Tiện ích Menu Admin dùng chung
 import com.yuhbui.comicapp.utils.SharedPrefsManager;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -42,6 +47,8 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class AdminChapterDetailActivity extends AppCompatActivity implements AdminCommentAdapter.OnCommentAdminActionListener {
+
+    private DrawerLayout drawerLayout; // THÊM: Thành phần quản lý Menu trượt trái đè màn hình
 
     private int chapterId;
     private RecyclerView rvPages;
@@ -62,16 +69,12 @@ public class AdminChapterDetailActivity extends AppCompatActivity implements Adm
         setContentView(R.layout.activity_admin_chapter_detail);
 
         chapterId = getIntent().getIntExtra("CHAPTER_ID", -1);
-        String chTitle = getIntent().getStringExtra("CHAPTER_TITLE");
 
-        View layoutHeader = findViewById(R.id.layoutHeaderChapterDetail);
-        TextView headerLogo = layoutHeader.findViewById(R.id.headerLogo);
-        ImageView headerMenu = layoutHeader.findViewById(R.id.headerMenu);
-        layoutHeader.findViewById(R.id.headerSearch).setVisibility(View.GONE);
-        layoutHeader.findViewById(R.id.headerNotification).setVisibility(View.GONE);
-        headerLogo.setText(chTitle != null ? chTitle.toUpperCase() : "QUẢN LÝ TRANG TRUYỆN");
-        headerLogo.setTextColor(Color.parseColor("#E74C3C"));
-        headerMenu.setOnClickListener(v -> finish());
+        // 1. Ánh xạ DrawerLayout Root mới
+        drawerLayout = findViewById(R.id.drawerLayout);
+
+        // 2. Thiết lập cấu hình tùy biến thanh Header Admin & Menu trượt tập trung
+        setupAdminHeaderView();
 
         // Ánh xạ thành phần trang truyện
         rvPages = findViewById(R.id.rvAdminChapterPages);
@@ -151,6 +154,20 @@ public class AdminChapterDetailActivity extends AppCompatActivity implements Adm
 
         // Đăng ký sự kiện click gửi bình luận chương truyện của Admin
         btnSendComment.setOnClickListener(v -> sendChapterCommentToServer());
+
+        // 3. CẤU HÌNH: Khóa nút quay lại (Back cứng) - Ưu tiên đóng Menu trượt nếu đang mở
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (drawerLayout != null && drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                    drawerLayout.closeDrawer(GravityCompat.START);
+                } else {
+                    setEnabled(false);
+                    getOnBackPressedDispatcher().onBackPressed();
+                    setEnabled(true);
+                }
+            }
+        });
     }
 
     @Override
@@ -158,6 +175,44 @@ public class AdminChapterDetailActivity extends AppCompatActivity implements Adm
         super.onResume();
         loadChapterPages();
         loadChapterComments();
+        // Làm mới avatar Admin mỗi khi quay lại từ các trang quản lý khác hoặc trang cá nhân
+        View layoutHeader = findViewById(R.id.layoutHeaderChapterDetail);
+        if (layoutHeader != null && layoutHeader.findViewById(R.id.headerAvatar) != null) {
+            HeaderUtils.loadHeaderAvatar(this, layoutHeader.findViewById(R.id.headerAvatar));
+        }
+    }
+
+    /**
+     * Hàm cấu hình thanh Header Admin chuyên sâu đặc thù, ẩn các nút chức năng dư thừa
+     */
+    private void setupAdminHeaderView() {
+        View layoutHeader = findViewById(R.id.layoutHeaderChapterDetail);
+        TextView headerLogo = layoutHeader.findViewById(R.id.headerLogo);
+
+        // Khởi tạo các tính năng lõi của Header dùng chung
+        HeaderUtils.initHeader(this, layoutHeader, drawerLayout);
+
+        // Kích hoạt tính năng kéo/mở menu điều hướng Admin tập trung từ MenuUtils
+        MenuUtils.setupAdminSideMenu(this, drawerLayout, layoutHeader.findViewById(R.id.headerMenu));
+
+        // ĐÁP ỨNG YÊU CẦU: Ẩn hoàn toàn hai nút Tìm kiếm và Thông báo đối với Admin
+        if (layoutHeader.findViewById(R.id.headerSearch) != null) {
+            layoutHeader.findViewById(R.id.headerSearch).setVisibility(View.GONE);
+        }
+        if (layoutHeader.findViewById(R.id.headerNotification) != null) {
+            layoutHeader.findViewById(R.id.headerNotification).setVisibility(View.GONE);
+        }
+
+        // ĐÁP ỨNG YÊU CẦU: Đồng bộ tên thương hiệu App màu đỏ cam và click nhảy về Dashboard
+        if (headerLogo != null) {
+            headerLogo.setText("COMIC APP");
+            headerLogo.setTextColor(Color.parseColor("#E74C3C"));
+            headerLogo.setOnClickListener(v -> {
+                Intent intent = new Intent(this, AdminDashboardActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                startActivity(intent);
+            });
+        }
     }
 
     private void loadChapterPages() {

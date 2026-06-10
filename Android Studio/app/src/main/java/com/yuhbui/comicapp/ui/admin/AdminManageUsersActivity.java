@@ -8,8 +8,11 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
 import android.widget.*;
+import androidx.activity.OnBackPressedCallback;       // THÊM: Quản lý nút Back hệ thống
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.GravityCompat;              // THÊM: Thư viện điều hướng DrawerLayout trượt trái
+import androidx.drawerlayout.widget.DrawerLayout;    // THÊM: Thành phần DrawerLayout root
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.google.gson.Gson;
@@ -18,6 +21,8 @@ import com.yuhbui.comicapp.R;
 import com.yuhbui.comicapp.data.api.ApiClient;
 import com.yuhbui.comicapp.data.model.User;
 import com.yuhbui.comicapp.ui.adapters.AdminUserAdapter;
+import com.yuhbui.comicapp.utils.HeaderUtils;          // THÊM: Khởi tạo tiện ích Header
+import com.yuhbui.comicapp.utils.MenuUtils;            // THÊM: Gọi Menu trượt Admin dùng chung
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -27,6 +32,8 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class AdminManageUsersActivity extends AppCompatActivity {
+
+    private DrawerLayout drawerLayout; // THÊM: Khai báo thành phần DrawerLayout quản lý Menu trượt
 
     private EditText edtSearch;
     private Spinner spinnerRole;
@@ -43,28 +50,60 @@ public class AdminManageUsersActivity extends AppCompatActivity {
 
     private int currentPage = 0;
     private int totalPages = 0;
-    private final int pageSize = 10; // Đọc cấu hình phân trang 10 phần tử/trang
+    private final int pageSize = 10;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_admin_manage_users);
 
+        // Ánh xạ DrawerLayout mới
+        drawerLayout = findViewById(R.id.drawerLayout);
+
+        // 1. SỬA ĐỔI: Khởi tạo Header và đăng ký Menu trượt Admin dùng chung
         View layoutHeader = findViewById(R.id.layoutHeaderManageUsers);
         TextView headerLogo = layoutHeader.findViewById(R.id.headerLogo);
         ImageView headerMenu = layoutHeader.findViewById(R.id.headerMenu);
-        layoutHeader.findViewById(R.id.headerSearch).setVisibility(View.GONE);
-        layoutHeader.findViewById(R.id.headerNotification).setVisibility(View.GONE);
-        headerLogo.setText("QUẢN LÝ THÀNH VIÊN");
-        headerLogo.setTextColor(Color.parseColor("#E74C3C"));
-        headerMenu.setOnClickListener(v -> finish());
 
+        // Khởi tạo các tiện ích lõi dùng chung
+        HeaderUtils.initHeader(this, layoutHeader, drawerLayout);
+        MenuUtils.setupAdminSideMenu(this, drawerLayout, headerMenu);
+
+        // YÊU CẦU: Khóa ẩn triệt để hai nút Tìm kiếm và Thông báo đối với không gian Admin
+        if (layoutHeader.findViewById(R.id.headerSearch) != null) {
+            layoutHeader.findViewById(R.id.headerSearch).setVisibility(View.GONE);
+        }
+        if (layoutHeader.findViewById(R.id.headerNotification) != null) {
+            layoutHeader.findViewById(R.id.headerNotification).setVisibility(View.GONE);
+        }
+
+        headerLogo.setText("COMIC APP");
+        headerLogo.setOnClickListener(v -> {
+            Intent intent = new Intent(this, AdminDashboardActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            startActivity(intent);
+        });
+
+        // 2. THÊM: Quản lý nút Quay lại (Back cứng) - Ưu tiên đóng Menu trượt nếu đang mở
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (drawerLayout != null && drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                    drawerLayout.closeDrawer(GravityCompat.START);
+                } else {
+                    setEnabled(false);
+                    getOnBackPressedDispatcher().onBackPressed();
+                    setEnabled(true);
+                }
+            }
+        });
+
+        // --- Giữ nguyên toàn bộ logic thiết lập danh sách và phân trang cũ bên dưới ---
         edtSearch = findViewById(R.id.edtUserSearch);
         spinnerRole = findViewById(R.id.spinnerRoleFilter);
         btnAdd = findViewById(R.id.btnAdminAddUser);
         rvUsers = findViewById(R.id.rvAdminManageUsers);
 
-        // Ánh xạ thành phần giao diện điều phối trang
         btnPrevPage = findViewById(R.id.btnPrevPage);
         btnNextPage = findViewById(R.id.btnNextPage);
         layoutPageNumbersContainer = findViewById(R.id.layoutPageNumbersContainer);
@@ -88,7 +127,6 @@ public class AdminManageUsersActivity extends AppCompatActivity {
         });
         rvUsers.setAdapter(adapter);
 
-        // Sự kiện click nút mũi tên Trái
         btnPrevPage.setOnClickListener(v -> {
             if (currentPage > 0) {
                 currentPage--;
@@ -96,7 +134,6 @@ public class AdminManageUsersActivity extends AppCompatActivity {
             }
         });
 
-        // Sự kiện click nút mũi tên Phải
         btnNextPage.setOnClickListener(v -> {
             if (currentPage < totalPages - 1) {
                 currentPage++;
@@ -128,10 +165,15 @@ public class AdminManageUsersActivity extends AppCompatActivity {
         });
     }
 
+    // Cập nhật làm tươi danh sách tài khoản mỗi khi Admin quay lại từ trang chi tiết
     @Override
     protected void onResume() {
         super.onResume();
         loadUsersDataFromServer();
+        // Làm mới ảnh đại diện Admin trên Header (nếu có view)
+        if (findViewById(R.id.layoutHeaderManageUsers) != null && findViewById(R.id.layoutHeaderManageUsers).findViewById(R.id.headerAvatar) != null) {
+            HeaderUtils.loadHeaderAvatar(this, findViewById(R.id.layoutHeaderManageUsers).findViewById(R.id.headerAvatar));
+        }
     }
 
     private void loadUsersDataFromServer() {
@@ -150,18 +192,16 @@ public class AdminManageUsersActivity extends AppCompatActivity {
                             List<User> usersList = gson.fromJson(jsonUsers, new TypeToken<List<User>>(){}.getType());
 
                             adapter.setData(usersList);
-                            renderPaginationUIControls(); // Gọi hàm vẽ lại thanh điều hướng
+                            renderPaginationUIControls();
                         }
                     }
                     @Override public void onFailure(Call<Map<String, Object>> call, Throwable t) {}
                 });
     }
 
-    // ĐÃ SỬA: Thay đổi cấu trúc hiển thị số trang & Điều khiển nút < > luôn hiện, khóa bấm nếu kịch trang
     private void renderPaginationUIControls() {
         layoutPageNumbersContainer.removeAllViews();
 
-        // 1. XỬ LÝ NÚT < >: Luôn luôn hiện diện, nếu kịch biên thì disable + đặt độ mờ nhạt (Alpha = 0.3f)
         btnPrevPage.setEnabled(currentPage > 0);
         btnPrevPage.setAlpha(currentPage > 0 ? 1.0f : 0.3f);
 
@@ -170,7 +210,6 @@ public class AdminManageUsersActivity extends AppCompatActivity {
 
         if (totalPages <= 0) return;
 
-        // 2. Thuật toán cửa sổ trượt (Sliding Window) vẽ tối đa 5 ô số trang liền kề giống hệt phía màn hình User
         int maxVisible = 5;
         int startPage = Math.max(0, currentPage - maxVisible / 2);
         int endPage = Math.min(totalPages - 1, startPage + maxVisible - 1);
@@ -179,7 +218,7 @@ public class AdminManageUsersActivity extends AppCompatActivity {
             startPage = Math.max(0, endPage - maxVisible + 1);
         }
 
-        int btnSize = dpToPx(34); // Quy đổi kích thước chuẩn 34dp giống màn hình History của User
+        int btnSize = dpToPx(34);
         int btnMargin = dpToPx(3);
 
         for (int i = startPage; i <= endPage; i++) {
@@ -195,15 +234,12 @@ public class AdminManageUsersActivity extends AppCompatActivity {
             tvPage.setTextSize(13);
             tvPage.setTypeface(null, android.graphics.Typeface.BOLD);
 
-            // Gán background bo góc tròn mềm mại từ resource hệ thống có sẵn của bạn
             tvPage.setBackgroundResource(R.drawable.bg_page_btn);
 
             if (i == currentPage) {
-                // Trang hiện tại đang xem: Nền đỏ thương hiệu Admin, chữ trắng
                 tvPage.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#E74C3C")));
                 tvPage.setTextColor(Color.WHITE);
             } else {
-                // Các trang thông thường khác: Nền xám nhạt dịu mắt, chữ xám đen
                 tvPage.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#EEEEEE")));
                 tvPage.setTextColor(Color.parseColor("#333333"));
                 tvPage.setOnClickListener(v -> {
@@ -215,7 +251,6 @@ public class AdminManageUsersActivity extends AppCompatActivity {
         }
     }
 
-    // ĐÃ THÊM: Hàm quy đổi dp sang Pixel động phục vụ căn chỉnh kích cỡ nút số trang
     private int dpToPx(int dp) {
         float density = getResources().getDisplayMetrics().density;
         return Math.round(dp * density);

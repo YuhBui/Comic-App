@@ -12,8 +12,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
+import androidx.activity.OnBackPressedCallback;         // THÊM: Quản lý phím Back cứng hệ thống
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.GravityCompat;              // THÊM: Hỗ trợ điều hướng trượt trái
+import androidx.drawerlayout.widget.DrawerLayout;    // THÊM: Khai báo thành phần DrawerLayout root
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
@@ -24,6 +27,8 @@ import com.yuhbui.comicapp.data.model.ComicDetailResponse;
 import com.yuhbui.comicapp.data.model.Comment;
 import com.yuhbui.comicapp.ui.adapters.AdminChapterAdapter;
 import com.yuhbui.comicapp.ui.adapters.AdminCommentAdapter;
+import com.yuhbui.comicapp.utils.HeaderUtils;          // THÊM: Khởi tạo Header tập trung
+import com.yuhbui.comicapp.utils.MenuUtils;            // THÊM: Gọi Menu trượt Admin dùng chung
 import com.yuhbui.comicapp.utils.SharedPrefsManager;
 
 import java.util.List;
@@ -34,6 +39,8 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class AdminComicDetailActivity extends AppCompatActivity implements AdminCommentAdapter.OnCommentAdminActionListener {
+
+    private DrawerLayout drawerLayout; // THÊM: Khai báo DrawerLayout toàn cục
 
     private int comicId;
     private ImageView imgCover;
@@ -52,15 +59,48 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
 
         comicId = getIntent().getIntExtra("COMIC_ID", -1);
 
-        // Khởi tạo thanh Header Admin
+        // 1. Ánh xạ thành phần DrawerLayout mới bao bọc ngoài cùng
+        drawerLayout = findViewById(R.id.drawerLayout);
+
+        // 2. Khởi tạo và cấu hình thanh Header Admin chuyên biệt
         View layoutHeader = findViewById(R.id.layoutHeaderAdminDetail);
         TextView headerLogo = layoutHeader.findViewById(R.id.headerLogo);
         ImageView headerMenu = layoutHeader.findViewById(R.id.headerMenu);
-        layoutHeader.findViewById(R.id.headerSearch).setVisibility(View.GONE);
-        layoutHeader.findViewById(R.id.headerNotification).setVisibility(View.GONE);
-        headerLogo.setText("CHI TIẾT QUẢN TRỊ");
-        headerLogo.setTextColor(Color.parseColor("#E74C3C"));
-        headerMenu.setOnClickListener(v -> finish());
+
+        // Khởi tạo lõi các tính năng của Header
+        HeaderUtils.initHeader(this, layoutHeader, drawerLayout);
+
+        // Gán sự kiện click nút Menu góc trái để đóng/mở Menu trượt Admin
+        MenuUtils.setupAdminSideMenu(this, drawerLayout, headerMenu);
+
+        // YÊU CẦU: Khóa ẩn triệt để nút Tìm kiếm và Thông báo trên Header dành riêng cho Admin
+        if (layoutHeader.findViewById(R.id.headerSearch) != null) {
+            layoutHeader.findViewById(R.id.headerSearch).setVisibility(View.GONE);
+        }
+        if (layoutHeader.findViewById(R.id.headerNotification) != null) {
+            layoutHeader.findViewById(R.id.headerNotification).setVisibility(View.GONE);
+        }
+
+        headerLogo.setText("COMIC APP");
+        headerLogo.setOnClickListener(v -> {
+            Intent intent = new Intent(this, AdminDashboardActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            startActivity(intent);
+        });
+
+        // 3. CẤU HÌNH: Khóa nút Quay lại hệ thống - Ưu tiên đóng Menu trượt nếu đang mở
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (drawerLayout != null && drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                    drawerLayout.closeDrawer(GravityCompat.START);
+                } else {
+                    setEnabled(false);
+                    getOnBackPressedDispatcher().onBackPressed();
+                    setEnabled(true);
+                }
+            }
+        });
 
         // Ánh xạ toàn bộ View bao gồm khối thông tin nâng cấp mở rộng
         imgCover = findViewById(R.id.imgAdminDetailCover);
@@ -189,6 +229,12 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
         loadComicDetailData();
         loadChaptersData();
         loadCommentsData();
+
+        // Đồng bộ cập nhật lại ảnh đại diện Admin lên Header nếu có
+        View layoutHeader = findViewById(R.id.layoutHeaderAdminDetail);
+        if (layoutHeader != null && layoutHeader.findViewById(R.id.headerAvatar) != null) {
+            HeaderUtils.loadHeaderAvatar(this, layoutHeader.findViewById(R.id.headerAvatar));
+        }
     }
 
     private void showChapterFormDialog(@Nullable Map<String, Object> chapterData) {
@@ -270,14 +316,9 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
             @Override
             public void onResponse(Call<ComicDetailResponse> call, Response<ComicDetailResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
-
-                    // KHAI BÁO DÒNG NÀY ĐỂ KHẮC PHỤC LỖI "Cannot resolve symbol"
                     ComicDetailResponse detailResponse = response.body();
-
-                    // Lấy thực thể truyện gốc gán vào currentComic
                     currentComic = detailResponse.getComic();
 
-                    // Đổ dữ liệu lên các TextView giao diện Admin
                     tvTitle.setText(currentComic.getTitle());
                     tvAuthor.setText("Tác giả: " + currentComic.getAuthor());
                     tvStatus.setText("Tình trạng: " + currentComic.getStatus());
@@ -285,13 +326,10 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
 
                     tvViews.setText("👁️ " + currentComic.getViewCount());
                     tvRating.setText("⭐ " + currentComic.getRating() + "/5");
-
-                    // ĐÃ SỬA: Lấy favoriteCount từ vỏ bọc detailResponse thay vì currentComic
                     tvFavorites.setText("❤️ " + detailResponse.getFavoriteCount());
 
                     tvRelease.setText("Phát hành: " + (currentComic.getCreatedAt() != null ? formatToDateOnly(currentComic.getCreatedAt()) : "Đang cập nhật"));
 
-                    // ĐÃ SỬA: Kiểm tra genres từ detailResponse để tránh lỗi compile
                     if (detailResponse.getGenres() != null && !detailResponse.getGenres().isEmpty()) {
                         tvGenre.setText("Thể loại: " + detailResponse.getGenres());
                     } else {
@@ -350,7 +388,6 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
         });
     }
 
-    // ĐÃ SỬA: Thực hiện đúng chức năng Gắn tag phản hồi khi nhấn nút Phản hồi / Trả lời
     @Override
     public void onReply(Map<String, Object> comment) {
         String username = (String) comment.get("username");
@@ -361,7 +398,6 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
         }
     }
 
-    // ĐÃ BỔ SUNG: Chức năng xử lý khi bấm vào dòng văn bản Báo cáo sẽ hiển thị danh sách lý do
     @Override
     public void onShowReports(int commentId) {
         ApiClient.getApiService().adminGetCommentReports(commentId).enqueue(new Callback<List<String>>() {
@@ -384,7 +420,6 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
         });
     }
 
-    // ĐÃ BỔ SUNG: Kích hoạt chức năng tương tác nút Like/Dislike trực tiếp dành cho Admin
     @Override
     public void onInteract(int commentId, int type, int position) {
         int currentUserId = SharedPrefsManager.getUserId(this);
@@ -394,7 +429,7 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
             @Override
             public void onResponse(Call<Comment> call, Response<Comment> response) {
                 if (response.isSuccessful()) {
-                    loadCommentsData(); // Tải lại danh sách để cập nhật số lượt tương tác nhảy ngay lập tức
+                    loadCommentsData();
                 }
             }
             @Override public void onFailure(Call<Comment> call, Throwable t) {}

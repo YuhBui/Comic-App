@@ -10,8 +10,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.*;
 
+import androidx.activity.OnBackPressedCallback;       // THÊM: Quản lý nút Back
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.GravityCompat;              // THÊM: Hỗ trợ đóng mở Drawer
+import androidx.drawerlayout.widget.DrawerLayout;    // THÊM: Thành phần DrawerLayout root
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -27,6 +30,8 @@ import com.yuhbui.comicapp.data.model.Notification;
 import com.yuhbui.comicapp.ui.adapters.AdminComicAdapter;
 import com.yuhbui.comicapp.ui.adapters.AdminNotificationAdapter;
 import com.yuhbui.comicapp.ui.adapters.CategoryFilterAdapter;
+import com.yuhbui.comicapp.utils.HeaderUtils;          // THÊM: Lớp tiện ích Header dùng chung
+import com.yuhbui.comicapp.utils.MenuUtils;            // THÊM: Lớp tiện ích Menu dùng chung
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,14 +42,15 @@ import retrofit2.Response;
 
 public class AdminManageComicsActivity extends AppCompatActivity implements AdminComicAdapter.OnComicActionListener {
 
+    private DrawerLayout drawerLayout; // THÊM: Khai báo DrawerLayout toàn cục
+
     private RecyclerView rvAdminManageComics;
     private AdminComicAdapter adapter;
     private FloatingActionButton fabAddComic;
 
-    // SỬA ĐỔI: Thay thế RecyclerView thanh ngang cũ bằng nút biểu tượng bộ lọc mới
     private ImageView imgComicFilter;
     private CategoryFilterAdapter filterAdapter;
-    private List<Category> masterCategoriesList = new ArrayList<>(); // Bộ nhớ đệm danh sách thể loại từ server
+    private List<Category> masterCategoriesList = new ArrayList<>();
 
     private EditText edtComicSearch;
     private Button btnPrevPage, btnNextPage;
@@ -55,7 +61,6 @@ public class AdminManageComicsActivity extends AppCompatActivity implements Admi
     private int totalPages = 0;
     private final int pageSize = 10;
 
-    // Danh sách lưu giữ tất cả các ID thể loại đang được bấm chọn cùng lúc
     private List<Integer> selectedCategoryIds = new ArrayList<>();
 
     @Override
@@ -63,70 +68,106 @@ public class AdminManageComicsActivity extends AppCompatActivity implements Admi
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_admin_manage_comics);
 
+        // Ánh xạ thành phần DrawerLayout root mới bổ sung từ XML
+        drawerLayout = findViewById(R.id.drawerLayout);
+
         // 1. Khởi tạo Header đặc thù dành riêng cho Admin
-        View layoutHeader = findViewById(R.id.layoutHeaderManageComics);
-        ImageView headerMenu = layoutHeader.findViewById(R.id.headerMenu);
-        TextView headerLogo = layoutHeader.findViewById(R.id.headerLogo);
-        layoutHeader.findViewById(R.id.headerSearch).setVisibility(View.GONE);
-        layoutHeader.findViewById(R.id.headerNotification).setVisibility(View.GONE);
+        View layoutHeader = findViewById(R.id.layoutHeaderManageComics); //
+        ImageView headerMenu = layoutHeader.findViewById(R.id.headerMenu); //
+        TextView headerLogo = layoutHeader.findViewById(R.id.headerLogo); //
 
-        headerLogo.setText("QUẢN LÝ TRUYỆN TRANH");
+        // Khởi tạo các tính năng cơ bản của Header dùng chung
+        HeaderUtils.initHeader(this, layoutHeader, drawerLayout);
+
+        // THAY ĐỔI: Kích hoạt Menu trượt Admin thay vì đóng trang (finish) như cũ
+        MenuUtils.setupAdminSideMenu(this, drawerLayout, headerMenu);
+
+        // YÊU CẦU: Khóa ẩn triệt để hai nút Tìm kiếm và Thông báo trên thanh Header Admin
+        if (layoutHeader.findViewById(R.id.headerSearch) != null) {
+            layoutHeader.findViewById(R.id.headerSearch).setVisibility(View.GONE);
+        }
+        if (layoutHeader.findViewById(R.id.headerNotification) != null) {
+            layoutHeader.findViewById(R.id.headerNotification).setVisibility(View.GONE);
+        }
+
+        headerLogo.setText("COMIC APP");
         headerLogo.setTextColor(Color.parseColor("#E74C3C"));
-        headerMenu.setOnClickListener(v -> finish());
-
-        // 2. Ánh xạ các thành phần điều khiển
-        edtComicSearch = findViewById(R.id.edtComicSearch);
-        imgComicFilter = findViewById(R.id.imgAdminComicFilter); // Ánh xạ biểu tượng bộ lọc mới
-        btnPrevPage = findViewById(R.id.btnComicPrevPage);
-        btnNextPage = findViewById(R.id.btnComicNextPage);
-        layoutPageNumbersContainer = findViewById(R.id.layoutComicPageNumbersContainer);
-
-        // 3. Cài đặt RecyclerView danh sách truyện hiển thị
-        rvAdminManageComics = findViewById(R.id.rvAdminManageComics);
-        rvAdminManageComics.setLayoutManager(new LinearLayoutManager(this));
-        adapter = new AdminComicAdapter(this);
-        rvAdminManageComics.setAdapter(adapter);
-
-        // 4. Khởi tạo trạng thái ban đầu của bộ lọc tái sử dụng
-        selectedCategoryIds.add(0); // Mặc định vừa vào chọn nút ảo "Tất cả"
-        setupFilterAdapter();
-
-        // 5. SỬA ĐỔI CHÍNH: Bắt sự kiện bấm vào nút Biểu tượng Bộ lọc -> Mở hộp thoại trượt danh mục
-        imgComicFilter.setOnClickListener(v -> showCategoryFilterDialog());
-
-        // 6. Sự kiện click nút Thêm truyện nổi (Ghim cố định ở góc màn hình)
-        fabAddComic = findViewById(R.id.fabAddComic);
-        fabAddComic.setOnClickListener(v -> {
-            Intent intent = new Intent(this, AdminEditComicActivity.class);
+        headerLogo.setOnClickListener(v -> {
+            Intent intent = new Intent(this, AdminDashboardActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             startActivity(intent);
         });
 
-        setupFilterAndPaginationListeners();
-        loadCategoriesDataForFilterList();
+        // THÊM: Lắng nghe sự kiện nút Back cứng - Ưu tiên đóng Menu trượt nếu nó đang mở
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (drawerLayout != null && drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                    drawerLayout.closeDrawer(GravityCompat.START);
+                } else {
+                    setEnabled(false);
+                    getOnBackPressedDispatcher().onBackPressed();
+                    setEnabled(true);
+                }
+            }
+        });
+
+        // 2. Ánh xạ các thành phần điều khiển
+        edtComicSearch = findViewById(R.id.edtComicSearch); //
+        imgComicFilter = findViewById(R.id.imgAdminComicFilter); //
+        btnPrevPage = findViewById(R.id.btnComicPrevPage); //
+        btnNextPage = findViewById(R.id.btnComicNextPage); //
+        layoutPageNumbersContainer = findViewById(R.id.layoutComicPageNumbersContainer); //
+
+        // 3. Cài đặt RecyclerView danh sách truyện hiển thị
+        rvAdminManageComics = findViewById(R.id.rvAdminManageComics); //
+        rvAdminManageComics.setLayoutManager(new LinearLayoutManager(this)); //
+        adapter = new AdminComicAdapter(this); //
+        rvAdminManageComics.setAdapter(adapter); //
+
+        // 4. Khởi tạo trạng thái ban đầu của bộ lọc tái sử dụng
+        selectedCategoryIds.add(0); //
+        setupFilterAdapter(); //
+
+        // 5. Bắt sự kiện bấm vào nút Biểu tượng Bộ lọc -> Mở hộp thoại BottomSheet
+        imgComicFilter.setOnClickListener(v -> showCategoryFilterDialog()); //
+
+        // 6. Sự kiện click nút Thêm truyện nổi
+        fabAddComic = findViewById(R.id.fabAddComic); //
+        fabAddComic.setOnClickListener(v -> {
+            Intent intent = new Intent(this, AdminEditComicActivity.class);
+            startActivity(intent);
+        }); //
+
+        setupFilterAndPaginationListeners(); //
+        loadCategoriesDataForFilterList(); //
     }
 
+    // Làm tươi Avatar trên Header mỗi lần quay lại trang quản lý truyện này
     @Override
     protected void onResume() {
         super.onResume();
-        loadComicsDataFromServer();
+        loadComicsDataFromServer(); //
+        View layoutHeader = findViewById(R.id.layoutHeaderManageComics);
+        if (layoutHeader != null && layoutHeader.findViewById(R.id.headerAvatar) != null) {
+            HeaderUtils.loadHeaderAvatar(this, layoutHeader.findViewById(R.id.headerAvatar));
+        }
     }
 
-    // Hàm trợ giúp khởi tạo/làm mới thực thể Adapter giữ cấu trúc đa chọn
     private void setupFilterAdapter() {
         filterAdapter = new CategoryFilterAdapter(new CategoryFilterAdapter.OnCatClickListener() {
             @Override
             public void onCatClick(List<Integer> selectedIds) {
                 selectedCategoryIds = selectedIds;
                 currentPage = 0;
-                loadComicsDataFromServer(); // Cập nhật danh sách truyện ngay lập tức khi bấm chọn chip
+                loadComicsDataFromServer();
             }
         });
         if (!masterCategoriesList.isEmpty()) {
             filterAdapter.setCategories(masterCategoriesList);
         }
-    }
+    } //
 
-    // SỬA ĐỔI CHÍNH: Hàm khởi tạo và hiển thị BottomSheetDialog chứa Grid thể loại chia làm 3 cột y hệt phía User
     private void showCategoryFilterDialog() {
         BottomSheetDialog dialog = new BottomSheetDialog(this);
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_category_filter, null);
@@ -135,23 +176,21 @@ public class AdminManageComicsActivity extends AppCompatActivity implements Admi
         RecyclerView rvPopup = dialogView.findViewById(R.id.rvCategoryPopup);
         TextView tvClear = dialogView.findViewById(R.id.tvClearFilter);
 
-        // Cấu hình hiển thị danh sách thể loại dạng Lưới 3 cột giống hệt MainActivity phía User
         rvPopup.setLayoutManager(new GridLayoutManager(this, 3));
         rvPopup.setAdapter(filterAdapter);
 
-        // Sự kiện nút văn bản "Xóa lọc" bên trong Dialog
         tvClear.setOnClickListener(v -> {
             selectedCategoryIds.clear();
             selectedCategoryIds.add(0);
-            setupFilterAdapter(); // Làm mới hoàn toàn Adapter để đưa mọi ô chọn sáng màu quay về nút "Tất cả"
+            setupFilterAdapter();
             rvPopup.setAdapter(filterAdapter);
             currentPage = 0;
             loadComicsDataFromServer();
-            dialog.dismiss(); // Reset xong tiến hành đóng hộp thoại
+            dialog.dismiss();
         });
 
         dialog.show();
-    }
+    } //
 
     private void setupFilterAndPaginationListeners() {
         edtComicSearch.addTextChangedListener(new TextWatcher() {
@@ -166,7 +205,7 @@ public class AdminManageComicsActivity extends AppCompatActivity implements Admi
 
         btnPrevPage.setOnClickListener(v -> { if (currentPage > 0) { currentPage--; loadComicsDataFromServer(); } });
         btnNextPage.setOnClickListener(v -> { if (currentPage < totalPages - 1) { currentPage++; loadComicsDataFromServer(); } });
-    }
+    } //
 
     private void loadCategoriesDataForFilterList() {
         ApiClient.getApiService().getAllCategories().enqueue(new Callback<List<Category>>() {
@@ -190,7 +229,7 @@ public class AdminManageComicsActivity extends AppCompatActivity implements Admi
                 Toast.makeText(AdminManageComicsActivity.this, "Không thể tải bộ lọc thể loại!", Toast.LENGTH_SHORT).show();
             }
         });
-    }
+    } //
 
     private void loadComicsDataFromServer() {
         List<Integer> idsToSend = new ArrayList<>(selectedCategoryIds);
@@ -220,7 +259,7 @@ public class AdminManageComicsActivity extends AppCompatActivity implements Admi
                         Toast.makeText(AdminManageComicsActivity.this, "Lỗi tải danh sách truyện!", Toast.LENGTH_SHORT).show();
                     }
                 });
-    }
+    } //
 
     private void renderPaginationUIControls() {
         layoutPageNumbersContainer.removeAllViews();
@@ -269,24 +308,20 @@ public class AdminManageComicsActivity extends AppCompatActivity implements Admi
             }
             layoutPageNumbersContainer.addView(tvPage);
         }
-    }
+    } //
 
-    // Logic tích hợp xử lý Sửa và Xóa trong Activity quản lý của Admin
     private void openNotificationManager() {
-        // Đoạn code mẫu thực hiện gán danh sách xử lý sự kiện
         AdminNotificationAdapter adminAdapter = new AdminNotificationAdapter();
 
-        // Giả lập lấy danh sách thông báo hiện tại từ Api
         ApiClient.getApiService().getAllNotificationsForAdmin().enqueue(new Callback<List<Notification>>() {
             @Override
             public void onResponse(Call<List<Notification>> call, Response<List<Notification>> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     adminAdapter.setData(response.body(), new AdminNotificationAdapter.OnAdminNotifActionListener() {
 
-                        // CHỨC NĂNG SỬA THÔNG BÁO
                         @Override
                         public void onEdit(Notification notification) {
-                            View dialogView = LayoutInflater.from(AdminManageComicsActivity.this).inflate(R.layout.dialog_report, null); // Tái sử dụng dialog có EditText
+                            View dialogView = LayoutInflater.from(AdminManageComicsActivity.this).inflate(R.layout.dialog_report, null);
                             EditText edtNewContent = dialogView.findViewById(R.id.edtReportReason);
                             edtNewContent.setHint("Nhập nội dung chỉnh sửa...");
                             edtNewContent.setText(notification.getMessage());
@@ -312,7 +347,6 @@ public class AdminManageComicsActivity extends AppCompatActivity implements Admi
                                     .show();
                         }
 
-                        // CHỨC NĂNG XÓA THÔNG BÁO
                         @Override
                         public void onDelete(Notification notification, int position) {
                             new AlertDialog.Builder(AdminManageComicsActivity.this)
@@ -324,7 +358,6 @@ public class AdminManageComicsActivity extends AppCompatActivity implements Admi
                                                     @Override
                                                     public void onResponse(Call<Void> call, Response<Void> response) {
                                                         Toast.makeText(AdminManageComicsActivity.this, "Đã xóa thành công!", Toast.LENGTH_SHORT).show();
-                                                        // Làm tươi lại danh sách cục bộ trên giao diện
                                                         openNotificationManager();
                                                     }
                                                     @Override public void onFailure(Call<Void> call, Throwable t) {}
@@ -338,13 +371,13 @@ public class AdminManageComicsActivity extends AppCompatActivity implements Admi
             }
             @Override public void onFailure(Call<List<Notification>> call, Throwable t) {}
         });
-    }
+    } //
 
     private int dpToPx(int dp) {
         float density = getResources().getDisplayMetrics().density;
         return Math.round(dp * density);
-    }
+    } //
 
-    @Override public void onEdit(Comic comic) { /* Giữ nguyên logic cũ của bạn */ }
-    @Override public void onDelete(Comic comic, int position) { /* Giữ nguyên logic cũ của bạn */ }
+    @Override public void onEdit(Comic comic) {}
+    @Override public void onDelete(Comic comic, int position) {}
 }
