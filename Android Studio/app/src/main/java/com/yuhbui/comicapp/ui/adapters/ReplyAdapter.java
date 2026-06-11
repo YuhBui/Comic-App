@@ -1,6 +1,6 @@
 package com.yuhbui.comicapp.ui.adapters;
 
-import android.text.Html; // Thêm để xử lý định dạng màu cho chữ @tag
+import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,11 +11,19 @@ import com.yuhbui.comicapp.R;
 import com.yuhbui.comicapp.data.model.Comment;
 import java.util.ArrayList;
 import java.util.List;
-
 import retrofit2.Call;
 
 public class ReplyAdapter extends RecyclerView.Adapter<ReplyAdapter.ReplyViewHolder> {
     private List<Comment> replies = new ArrayList<>();
+    private OnReplyToReplyClickListener replyListener;
+
+    public interface OnReplyToReplyClickListener {
+        void onReplyToReplyClick(Comment childComment);
+    }
+
+    public void setOnReplyToReplyClickListener(OnReplyToReplyClickListener listener) {
+        this.replyListener = listener;
+    }
 
     public void setReplies(List<Comment> replies) {
         this.replies = replies;
@@ -29,35 +37,58 @@ public class ReplyAdapter extends RecyclerView.Adapter<ReplyAdapter.ReplyViewHol
         return new ReplyViewHolder(view);
     }
 
-    public interface OnReplyToReplyClickListener {
-        void onReplyToReplyClick(Comment childComment);
-    }
-
-    private OnReplyToReplyClickListener replyListener;
-
-    public void setOnReplyToReplyClickListener(OnReplyToReplyClickListener listener) {
-        this.replyListener = listener;
-    }
-
     @Override
     public void onBindViewHolder(@NonNull ReplyViewHolder holder, int position) {
         Comment reply = replies.get(position);
 
-        // ĐÃ SỬA: Hiển thị Tên người dùng thực tế nếu có thay vì ép ID thô cứng
+        // ========================================================
+        // 🛠️ ĐỘT PHÁ GIAO DIỆN: BIẾN DÒNG PHẢN HỒI THÀNH HỘP THOẠI (CHAT BUBBLE)
+        // ========================================================
+
+        // 1. Tạo hình bong bóng chat bo góc, màu nền xám xanh nhã nhặn (Giống Facebook)
+        android.graphics.drawable.GradientDrawable bubbleBg = new android.graphics.drawable.GradientDrawable();
+        bubbleBg.setCornerRadius(24f); // Bo tròn các góc mềm mại
+        bubbleBg.setColor(android.graphics.Color.parseColor("#F0F2F5")); // Nền xám sáng phân cấp rõ rệt
+        holder.itemView.setBackground(bubbleBg);
+
+        // 2. Thiết lập biên độ Margin động để đẩy lùi lề phải vào trong tạo không gian thở cho mắt
+        if (holder.itemView.getLayoutParams() instanceof ViewGroup.MarginLayoutParams) {
+            ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) holder.itemView.getLayoutParams();
+            params.setMargins(0, 6, 24, 6); // Cách trên dưới 6dp, thụt lề phải 24dp
+            holder.itemView.setLayoutParams(params);
+        }
+
+        // 3. Thêm khoảng đệm Padding nội khu để chữ viết không bị dính sát vào viền hộp thoại
+        holder.itemView.setPadding(32, 18, 32, 18);
+
+        // 4. Định hình lại kích thước chữ nhỏ hơn một bậc so với bình luận cha để phân chia vế
+        holder.tvUserReply.setTextSize(12.5f);
+        holder.tvReplyContent.setTextSize(13.5f);
+
+        // Cấu hình kích thước nhỏ cho thanh nút tương tác tiện ích bên dưới
+        holder.btnLike.setTextSize(11);
+        holder.btnDislike.setTextSize(11);
+        holder.btnReplyToReply.setTextSize(11);
+        holder.btnReport.setTextSize(11);
+
+        // ========================================================
+        // ĐỔ DỮ LIỆU VÀO CÁC THÀNH PHẦN VIEW
+        // ========================================================
+
         if (reply.getUserDisplayName() != null && !reply.getUserDisplayName().isEmpty()) {
             holder.tvUserReply.setText(reply.getUserDisplayName());
         } else {
             holder.tvUserReply.setText("Thành viên #" + reply.getUserId());
         }
 
-        // ĐÃ SỬA: Tô màu xanh dương nổi bật cho thẻ tag @tên_user của bình luận cháu
+        // Tô màu xanh dương đậm chuyên nghiệp cho thẻ tag @tên_user để nhấn mạnh luồng trả lời
         String content = reply.getContent();
         if (content != null && content.trim().startsWith("@")) {
             int firstSpaceIndex = content.indexOf(" ");
             if (firstSpaceIndex != -1) {
                 String tagPart = content.substring(0, firstSpaceIndex);
                 String mainText = content.substring(firstSpaceIndex);
-                holder.tvReplyContent.setText(Html.fromHtml("<b><font color='#1E88E5'>" + tagPart + "</font></b>" + mainText, Html.FROM_HTML_MODE_COMPACT));
+                holder.tvReplyContent.setText(Html.fromHtml("<b><font color='#0D47A1'>" + tagPart + "</font></b>" + mainText, Html.FROM_HTML_MODE_COMPACT));
             } else {
                 holder.tvReplyContent.setText(content);
             }

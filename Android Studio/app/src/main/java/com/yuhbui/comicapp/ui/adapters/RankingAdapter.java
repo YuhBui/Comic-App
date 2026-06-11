@@ -12,6 +12,8 @@ import com.bumptech.glide.Glide;
 import com.yuhbui.comicapp.R;
 import com.yuhbui.comicapp.data.model.Comic;
 import com.yuhbui.comicapp.ui.ComicDetailActivity;
+import com.yuhbui.comicapp.ui.admin.AdminComicDetailActivity; // THÊM IMPORT NÀY
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,6 +24,17 @@ import java.util.List;
 public class RankingAdapter extends RecyclerView.Adapter<RankingAdapter.RankViewHolder> {
 
     private List<Comic> comicList = new ArrayList<>();
+    private boolean isAdmin = false; // THÊM biến nhận diện quyền truy cập
+
+    // Constructor mặc định không tham số dành cho phía User đọc truyện công cộng
+    public RankingAdapter() {
+        this.isAdmin = false;
+    }
+
+    // ĐÃ THÊM: Constructor tùy chọn dành riêng cho Dashboard Quản trị viên
+    public RankingAdapter(boolean isAdmin) {
+        this.isAdmin = isAdmin;
+    }
 
     public void setComics(List<Comic> comics) {
         this.comicList = comics;
@@ -73,9 +86,16 @@ public class RankingAdapter extends RecyclerView.Adapter<RankingAdapter.RankView
                 .centerCrop()
                 .into(holder.imgCover);
 
-        // Click chuyển sang chi tiết
+        // ĐÃ SỬA: Kiểm tra quyền để chuyển hướng sang màn hình chi tiết tương ứng
         holder.itemView.setOnClickListener(v -> {
-            Intent intent = new Intent(holder.itemView.getContext(), ComicDetailActivity.class);
+            Intent intent;
+            if (isAdmin) {
+                // Nếu là Admin -> Mở chi tiết truyện của Admin quản trị
+                intent = new Intent(holder.itemView.getContext(), AdminComicDetailActivity.class);
+            } else {
+                // Nếu là User -> Mở chi tiết truyện thông thường
+                intent = new Intent(holder.itemView.getContext(), ComicDetailActivity.class);
+            }
             intent.putExtra("COMIC_ID", comic.getComicId());
             holder.itemView.getContext().startActivity(intent);
         });

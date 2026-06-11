@@ -48,6 +48,11 @@ public class CommentController {
         dto.setContent(comment.getContent());
         dto.setLikeCount(comment.getLikeCount());
         dto.setDislikeCount(comment.getDislikeCount());
+
+        // ĐÃ BỔ SUNG: Gán dữ liệu số lượng phản hồi và báo cáo để đồng bộ giao diện
+        dto.setReplyCount(comment.getReplyCount());
+        dto.setReportCount(comment.getReportCount());
+
         dto.setIsDeleted(comment.getIsDeleted());
         dto.setCreatedAt(comment.getCreatedAt());
 
@@ -67,44 +72,81 @@ public class CommentController {
         return dto;
     }
 
+    // 1. ĐÃ SỬA: API lấy danh sách bình luận gốc của bộ truyện kèm PHÂN TRANG (10 bản ghi/trang)
     @GetMapping("/comic/{comicId}")
-    public List<CommentResponseDTO> getCommentsByComic(@PathVariable Integer comicId) {
+    public ResponseEntity<List<CommentResponseDTO>> getCommentsByComic(
+            @PathVariable Integer comicId,
+            @RequestParam(defaultValue = "0") int page) {
+
         List<Comment> rawList = commentRepository.findByComicIdAndParentCommentIdIsNullOrderByCreatedAtDesc(comicId);
-        return rawList.stream()
+        List<CommentResponseDTO> dtoList = rawList.stream()
                 .filter(c -> c.getIsDeleted() == null || !c.getIsDeleted())
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
+
+        // Áp dụng cơ chế phân trang lũy tiến cắt mảng (subList) tương tự trang chủ truyện
+        int start = page * 10;
+        if (start >= dtoList.size()) {
+            return ResponseEntity.ok(new java.util.ArrayList<>());
+        }
+        int end = Math.min(start + 10, dtoList.size());
+
+        return ResponseEntity.ok(dtoList.subList(start, end));
     }
 
+    // 2. ĐÃ SỬA: API lấy danh sách bình luận con (Phản hồi) kèm PHÂN TRANG (10 bản ghi/trang)
     @GetMapping("/{parentCommentId}/replies")
-    public List<CommentResponseDTO> getReplies(@PathVariable Integer parentCommentId) {
+    public ResponseEntity<List<CommentResponseDTO>> getReplies(
+            @PathVariable Integer parentCommentId,
+            @RequestParam(defaultValue = "0") int page) {
+
         List<Comment> rawList = commentRepository.findByParentCommentIdOrderByCreatedAtAsc(parentCommentId);
-        return rawList.stream()
+        List<CommentResponseDTO> dtoList = rawList.stream()
                 .filter(c -> c.getIsDeleted() == null || !c.getIsDeleted())
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
+
+        // Áp dụng cơ chế phân trang lũy tiến cắt mảng (subList) tương tự trang chủ truyện
+        int start = page * 10;
+        if (start >= dtoList.size()) {
+            return ResponseEntity.ok(new java.util.ArrayList<>());
+        }
+        int end = Math.min(start + 10, dtoList.size());
+
+        return ResponseEntity.ok(dtoList.subList(start, end));
     }
 
+    // 3. ĐÃ SỬA: API lấy danh sách bình luận gốc của chương truyện kèm PHÂN TRANG (10 bản ghi/trang)
     @GetMapping("/chapter/{chapterId}")
-    public List<CommentResponseDTO> getCommentsByChapter(@PathVariable Integer chapterId) {
+    public ResponseEntity<List<CommentResponseDTO>> getCommentsByChapter(
+            @PathVariable Integer chapterId,
+            @RequestParam(defaultValue = "0") int page) {
+
         List<Comment> rawList = commentRepository.findByChapterIdAndParentCommentIdIsNullOrderByCreatedAtDesc(chapterId);
-        return rawList.stream()
+        List<CommentResponseDTO> dtoList = rawList.stream()
                 .filter(c -> c.getIsDeleted() == null || !c.getIsDeleted())
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
+
+        // Áp dụng cơ chế phân trang lũy tiến cắt mảng (subList) tương tự trang chủ truyện
+        int start = page * 10;
+        if (start >= dtoList.size()) {
+            return ResponseEntity.ok(new java.util.ArrayList<>());
+        }
+        int end = Math.min(start + 10, dtoList.size());
+
+        return ResponseEntity.ok(dtoList.subList(start, end));
     }
 
-    // 4. API GỬI BÌNH LUẬN MỚI (Đmap: ĐÃ TÍCH HỢP TÍNH NĂNG KHÓA CHAT CHO TÀI KHOẢN BỊ BAN)
+    // 4. API GỬI BÌNH LUẬN MỚI
     @PostMapping("/post")
     public ResponseEntity<?> postComment(@RequestBody Comment comment) {
         if (comment.getContent() == null || comment.getContent().trim().isEmpty()) {
             return ResponseEntity.badRequest().body("Nội dung bình luận không được để trống!");
         }
 
-        // BỔ SUNG: Kiểm tra xem tài khoản này có đang bị BAN (Khóa) hay không
         Optional<com.yuhbui.ComicAppBackend.entity.User> userOpt = userRepository.findById(comment.getUserId());
         if (userOpt.isPresent() && "Banned".equalsIgnoreCase(userOpt.get().getStatus())) {
-            // Trả về mã lỗi 403 Forbidden chặn không cho lưu xuống DB
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Tài khoản của bạn đã bị khóa chức năng bình luận do vi phạm quy chế!");
         }
 
@@ -122,6 +164,7 @@ public class CommentController {
         return ResponseEntity.ok(savedComment);
     }
 
+    // 5. API TƯƠNG TÁC LIKE/DISLIKE BÌNH LUẬN
     @PostMapping("/{commentId}/interact")
     public ResponseEntity<?> interactWithComment(
             @PathVariable Integer commentId,
@@ -171,6 +214,7 @@ public class CommentController {
         return ResponseEntity.ok(comment);
     }
 
+    // 6. API BÁO CÁO BÌNH LUẬN XẤU
     @PostMapping("/{commentId}/report")
     public ResponseEntity<?> reportComment(
             @PathVariable Integer commentId,
@@ -199,6 +243,7 @@ public class CommentController {
         return ResponseEntity.ok("Báo cáo đã được ghi nhận thành công!");
     }
 
+    // 7. API XÓA BÌNH LUẬN
     @PutMapping("/{commentId}/delete")
     public ResponseEntity<?> deleteComment(
             @PathVariable Integer commentId,

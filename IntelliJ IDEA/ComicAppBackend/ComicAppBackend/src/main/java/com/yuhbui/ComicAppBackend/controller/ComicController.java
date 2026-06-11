@@ -90,8 +90,8 @@ public class ComicController {
                     .getResultList();
             if (!chData.isEmpty()) {
                 Object[] chRow = chData.get(0);
-                dto.setLatestChapterNumber("Chương " + chRow[0].toString()); // Thêm tiền tố Chương để hiển thị
-                dto.setTimeUpdated(chRow[1] != null ? chRow[1].toString() : "Đang cập nhật");
+                dto.setLatestChapterNumber("Chương " + chRow[0].toString());
+                dto.setTimeUpdated(convertToRelativeTime(chRow[1])); // ĐÃ SỬA: Áp dụng định dạng "... trước"
             } else {
                 dto.setLatestChapterNumber("Chưa có chương");
                 dto.setTimeUpdated("Chưa cập nhật");
@@ -147,8 +147,9 @@ public class ComicController {
         }
     }
 
-    // 5. API Người dùng gửi đánh giá sao (1-5) cho truyện
+    // 5. API Người dùng gửi đánh giá sao (1-5) cho truyện - ĐÃ SỬA CHUẨN LOGIC VÀ THUẬT TOÁN
     @PostMapping("/{comicId}/rate")
+    @org.springframework.transaction.annotation.Transactional // Thêm transaction để thực hiện chỉnh sửa dữ liệu DB
     public ResponseEntity<?> rateComic(
             @PathVariable Integer comicId,
             @RequestParam Integer userId,
@@ -163,15 +164,44 @@ public class ComicController {
             return ResponseEntity.badRequest().body("Truyện không tồn tại!");
         }
 
-        Comic comic = comicOpt.get();
+        // Bước 1: Kiểm tra xem người dùng này đã từng đánh giá truyện này chưa
+        String checkSql = "SELECT Score FROM Rating WHERE UserID = :userId AND ComicID = :comicId";
+        List<?> existingRating = entityManager.createNativeQuery(checkSql)
+                .setParameter("userId", userId)
+                .setParameter("comicId", comicId)
+                .getResultList();
 
-        float currentRating = comic.getRating();
-        if (currentRating == 0) {
-            comic.setRating(Float.valueOf(score));
+        if (!existingRating.isEmpty()) {
+            // Nếu đã tồn tại -> Thực hiện CẬP NHẬT (Sửa đánh giá cũ)
+            String updateRatingSql = "UPDATE Rating SET Score = :score, UpdatedAt = CURRENT_TIMESTAMP WHERE UserID = :userId AND ComicID = :comicId";
+            entityManager.createNativeQuery(updateRatingSql)
+                    .setParameter("score", score)
+                    .setParameter("userId", userId)
+                    .setParameter("comicId", comicId)
+                    .executeUpdate();
         } else {
-            float newRating = (currentRating + score) / 2f;
-            newRating = Math.round(newRating * 10) / 10f;
-            comic.setRating(newRating);
+            // Nếu chưa tồn tại -> Thực hiện THÊM MỚI bản ghi đánh giá
+            String insertRatingSql = "INSERT INTO Rating (UserID, ComicID, Score, CreatedAt, UpdatedAt) VALUES (:userId, :comicId, :score, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
+            entityManager.createNativeQuery(insertRatingSql)
+                    .setParameter("userId", userId)
+                    .setParameter("comicId", comicId)
+                    .setParameter("score", score)
+                    .executeUpdate();
+        }
+
+        // Bước 2: Tính toán lại chính xác điểm trung bình thực tế từ bảng Rating bằng hàm AVG()
+        String avgSql = "SELECT AVG(CAST(Score AS DOUBLE)) FROM Rating WHERE ComicID = :comicId";
+        Double avgRating = (Double) entityManager.createNativeQuery(avgSql)
+                .setParameter("comicId", comicId)
+                .getSingleResult();
+
+        Comic comic = comicOpt.get();
+        if (avgRating != null) {
+            // Làm tròn kết quả điểm trung bình đến 1 chữ số thập phân (Ví dụ: 4.367 -> 4.4)
+            float roundedRating = Math.round(avgRating * 10) / 10f;
+            comic.setRating(roundedRating);
+        } else {
+            comic.setRating(Float.valueOf(score));
         }
 
         comicRepository.save(comic);
@@ -295,7 +325,7 @@ public class ComicController {
     }
 
     // =============================================
-    // HÀM PHỤ TRỢ: Chuyển đổi Object[] sang DTO
+    // HÀM PHỤ TRỢ: Chuyển đổi Object[] sang DTO ngoài trang chủ
     // =============================================
     private ComicHomeResponseDTO mapRowToDTO(Object[] row) {
         return new ComicHomeResponseDTO(
@@ -306,7 +336,7 @@ public class ComicController {
                 (Float) row[4],
                 (String) row[5],
                 row[6] != null ? "Chương " + row[6].toString() : "Chương 0",
-                "Mới cập nhật",
+                convertToRelativeTime(row[7]), // ĐÃ SỬA: Gọi hàm convert thời gian tương đối
                 row[8] != null ? ((Number) row[8]).longValue() : 0L,
                 row[9] != null ? ((Number) row[9]).longValue() : 0L
         );
@@ -328,13 +358,20 @@ public class ComicController {
         return ResponseEntity.ok(filteredList);
     }
 
-    // ĐÃ THÊM: API lấy danh sách truyện Yêu thích có tích hợp bộ lọc đa chọn AND Logic
+    // ĐÃ SỬA: API lấy danh sách truyện Yêu thích có tích hợp bộ lọc đa chọn AND Logic (NÂNG CẤP ĐẦY ĐỦ THÔNG SỐ)
     @GetMapping("/user-favorites/{userId}")
-    public ResponseEntity<List<Comic>> getFavoriteComicsFiltered(
+    public ResponseEntity<List<ComicHomeResponseDTO>> getFavoriteComicsFiltered(
             @PathVariable("userId") Integer userId,
             @RequestParam(value = "categoryIds", required = false) List<Integer> categoryIds) {
 
-        String sql = "SELECT c.* FROM Follows f JOIN Comics c ON f.ComicID = c.ComicID WHERE f.UserID = :userId";
+        // Câu truy vấn vạn năng lấy đầy đủ 10 cột dữ liệu thống kê tương tự trang chủ
+        String sql = "SELECT c.ComicID, c.Title, c.CoverImageUrl, c.ViewCount, c.Rating, c.Status, " +
+                "(SELECT ch.ChapterNumber FROM Chapters ch WHERE ch.ComicID = c.ComicID ORDER BY ch.ChapterNumber DESC LIMIT 1) AS latestChapter, " +
+                "(SELECT ch.CreatedAt FROM Chapters ch WHERE ch.ComicID = c.ComicID ORDER BY ch.ChapterNumber DESC LIMIT 1) AS timeUpdate, " +
+                "(SELECT COUNT(*) FROM Follows fl WHERE fl.ComicID = c.ComicID) AS follows, " +
+                "(SELECT COUNT(*) FROM Comments cmt WHERE cmt.ComicID = c.ComicID) AS comments " +
+                "FROM Follows f JOIN Comics c ON f.ComicID = c.ComicID WHERE f.UserID = :userId";
+
         boolean hasCategories = categoryIds != null && !categoryIds.isEmpty();
 
         if (hasCategories) {
@@ -342,7 +379,7 @@ public class ComicController {
         }
         sql += " ORDER BY f.ComicID DESC";
 
-        var query = entityManager.createNativeQuery(sql, Comic.class);
+        var query = entityManager.createNativeQuery(sql);
         query.setParameter("userId", userId);
         if (hasCategories) {
             query.setParameter("categoryIds", categoryIds);
@@ -350,7 +387,63 @@ public class ComicController {
         }
 
         @SuppressWarnings("unchecked")
-        List<Comic> list = query.getResultList();
-        return ResponseEntity.ok(list);
+        List<Object[]> list = query.getResultList();
+
+        // Ánh xạ dữ liệu thô sang danh sách DTO chứa đầy đủ thông số tương tác gửi về Android
+        List<ComicHomeResponseDTO> dtoList = list.stream()
+                .map(this::mapRowToDTO)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(dtoList);
+    }
+
+    /**
+     * Hàm chuyển đổi mốc thời gian từ database sang dạng tương đối (X ngày/giờ/phút trước)
+     */
+    private String convertToRelativeTime(Object timeObj) {
+        if (timeObj == null) return "Đang cập nhật";
+
+        java.time.LocalDateTime dateTime = null;
+
+        // Kiểm tra và ép kiểu an toàn từ kết quả Native Query
+        if (timeObj instanceof java.sql.Timestamp) {
+            dateTime = ((java.sql.Timestamp) timeObj).toLocalDateTime();
+        } else if (timeObj instanceof java.time.LocalDateTime) {
+            dateTime = (java.time.LocalDateTime) timeObj;
+        } else {
+            try {
+                // Trường hợp trả về dạng String "yyyy-MM-dd HH:mm:ss"
+                String timeStr = timeObj.toString().replace(" ", "T");
+                dateTime = java.time.LocalDateTime.parse(timeStr);
+            } catch (Exception e) {
+                return timeObj.toString(); // Nếu lỗi parse thì trả về chuỗi gốc
+            }
+        }
+
+        java.time.LocalDateTime now = java.time.LocalDateTime.now();
+        java.time.Duration duration = java.time.Duration.between(dateTime, now);
+
+        long seconds = duration.getSeconds();
+        if (seconds < 0) seconds = 0; // Tránh lỗi lệch giây hệ thống hiển thị tương lai
+
+        long minutes = seconds / 60;
+        long hours = minutes / 60;
+        long days = hours / 24;
+        long months = days / 30;
+        long years = days / 365;
+
+        if (seconds < 60) {
+            return "Vừa xong";
+        } else if (minutes < 60) {
+            return minutes + " phút trước";
+        } else if (hours < 24) {
+            return hours + " giờ trước";
+        } else if (days < 30) {
+            return days + " ngày trước";
+        } else if (months < 12) {
+            return months + " tháng trước";
+        } else {
+            return years + " năm trước";
+        }
     }
 }

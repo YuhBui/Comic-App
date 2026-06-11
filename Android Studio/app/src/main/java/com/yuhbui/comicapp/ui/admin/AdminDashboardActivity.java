@@ -69,7 +69,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
 
         // 3. Cấu hình RecyclerView hiển thị danh sách dọc Top 10 truyện
         rvAdminTopComic.setLayoutManager(new LinearLayoutManager(this));
-        rankingAdapter = new RankingAdapter();
+        rankingAdapter = new RankingAdapter(true);
         rvAdminTopComic.setAdapter(rankingAdapter);
 
         // 4. Lắng nghe sự kiện từ bộ lọc dùng chung Ngày / Tuần / Tháng

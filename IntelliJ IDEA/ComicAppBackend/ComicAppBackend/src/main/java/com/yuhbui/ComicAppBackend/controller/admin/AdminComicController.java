@@ -274,13 +274,14 @@ public class AdminComicController {
         String sql = "SELECT c.CommentID, u.DisplayName, u.AvatarUrl, c.Content, " +
                 "CAST(COALESCE(SUM(CASE WHEN ci.InteractionType = 1 THEN 1 ELSE 0 END), 0) AS SIGNED) as Likes, " +
                 "CAST(COALESCE(SUM(CASE WHEN ci.InteractionType = -1 THEN 1 ELSE 0 END), 0) AS SIGNED) as Dislikes, " +
-                "CAST(COUNT(DISTINCT cr.ReportID) AS SIGNED) as Reports " +
+                "CAST(COUNT(DISTINCT cr.ReportID) AS SIGNED) as Reports, " +
+                "c.ReplyCount " +
                 "FROM Comments c " +
                 "JOIN Users u ON c.UserID = u.UserID " +
                 "LEFT JOIN Comment_Interactions ci ON c.CommentID = ci.CommentID " +
                 "LEFT JOIN Comment_Reports cr ON c.CommentID = cr.CommentID " +
-                "WHERE c.ComicID = :comicId " +
-                "GROUP BY c.CommentID, u.DisplayName, u.AvatarUrl, c.Content, c.CreatedAt " +
+                "WHERE c.ComicID = :comicId AND c.ParentCommentID IS NULL " + // Lọc bỏ bình luận con khỏi danh sách chính
+                "GROUP BY c.CommentID, u.DisplayName, u.AvatarUrl, c.Content, c.CreatedAt, c.ReplyCount " +
                 "ORDER BY c.CreatedAt DESC";
         try {
             @SuppressWarnings("unchecked")
@@ -295,6 +296,7 @@ public class AdminComicController {
                 map.put("likes", row[4]);
                 map.put("dislikes", row[5]);
                 map.put("reports", row[6]);
+                map.put("replyCount", row[7]); // Thêm dòng này để truyền thông tin về app Admin
                 responseList.add(map);
             }
             return ResponseEntity.ok(responseList);

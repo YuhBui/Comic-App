@@ -19,7 +19,7 @@ import com.yuhbui.comicapp.data.api.ApiClient;
 import com.yuhbui.comicapp.data.model.Comment;
 import com.yuhbui.comicapp.utils.SharedPrefsManager;
 import java.util.ArrayList;
-import java.util.Collections; // Bổ sung để sắp xếp dữ liệu
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -86,9 +86,8 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
         holder.btnDislike.setText("👎 Ghét (" + comment.getDislikeCount() + ")");
         holder.btnReply.setText("💬 Phản hồi (" + comment.getReplyCount() + ")");
 
-        holder.rvReplies.setLayoutManager(new LinearLayoutManager(context));
-        ReplyAdapter replyAdapter = new ReplyAdapter();
-        holder.rvReplies.setAdapter(replyAdapter);
+        // Đã lấy lại adapter đã tạo sẵn từ ViewHolder, loại bỏ việc khởi tạo mới liên tục gây lag ứng dụng
+        ReplyAdapter replyAdapter = holder.replyAdapter;
 
         if (!repliesCache.containsKey(commentId)) {
             repliesCache.put(commentId, new ArrayList<>());
@@ -97,7 +96,7 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
 
         List<Comment> cachedReplies = repliesCache.get(commentId);
         int currentDisplayedCount = displayedCountCache.get(commentId);
-        int totalRepliesCount = comment.getReplyCount();
+        int totalRepliesCount = Math.max(comment.getReplyCount(), cachedReplies.size());
 
         if (currentDisplayedCount > 0 && !cachedReplies.isEmpty()) {
             holder.rvReplies.setVisibility(View.VISIBLE);
@@ -115,7 +114,7 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
             holder.rvReplies.setVisibility(View.GONE);
             replyAdapter.setReplies(new ArrayList<>());
 
-            // ĐÃ SỬA: Bình luận cha không có phản hồi thì ẩn hoàn toàn vùng text phản hồi
+            // CHUẨN ĐỊNH DẠNG: Chỉ hiện dòng chữ xem phản hồi nếu có phản hồi con thực tế (> 0)
             if (totalRepliesCount > 0) {
                 holder.tvLoadMoreReplies.setVisibility(View.VISIBLE);
                 holder.tvLoadMoreReplies.setText("—— Xem phản hồi (" + totalRepliesCount + ") ——");
@@ -124,16 +123,16 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
             }
         }
 
-        // ĐÃ SỬA: Bắt sự kiện phản hồi của bình luận con (Cháu) -> Truyền thêm tên để chèn `@tên_user`
+        // Bắt sự kiện phản hồi của bình luận con (Cháu) -> Truyền thêm tên để chèn `@tên_user`
         replyAdapter.setOnReplyToReplyClickListener(childComment -> {
             if (replyListener != null) {
                 Comment ghostComment = new Comment();
-                ghostComment.setCommentId(comment.getCommentId()); // Gốc luồng vẫn ăn theo cha lớn nhất
+                ghostComment.setCommentId(comment.getCommentId());
                 ghostComment.setUserId(childComment.getUserId());
 
                 String validName = (childComment.getUserDisplayName() != null && !childComment.getUserDisplayName().isEmpty())
                         ? childComment.getUserDisplayName() : "Thành viên #" + childComment.getUserId();
-                ghostComment.setUserDisplayName(validName); // Gán tên hiển thị đích danh
+                ghostComment.setUserDisplayName(validName);
 
                 replyListener.onReplyClick(ghostComment);
             }
@@ -208,16 +207,15 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
                                 if (response.isSuccessful() && response.body() != null) {
                                     List<Comment> serverReplies = response.body();
 
-                                    // 1. SẮP XẾP: Luôn hiển thị từ CŨ đến MỚI (Tăng dần theo commentId/Thời gian)
+                                    // SẮP XẾP: Hiển thị từ CŨ đến MỚI từ trên xuống dưới (Tăng dần theo ID thời gian)
                                     Collections.sort(serverReplies, (c1, c2) -> Integer.compare(c1.getCommentId(), c2.getCommentId()));
 
-                                    // 2. THUẬT TOÁN GẮN TAG: Quét tìm comment cháu để bổ sung chuỗi @tên_user
+                                    // THUẬT TOÁN GẮN TAG: Quét tìm comment cháu để bổ sung chuỗi @tên_user
                                     Map<Integer, Comment> lookupMap = new HashMap<>();
                                     for (Comment r : serverReplies) {
                                         lookupMap.put(r.getCommentId(), r);
                                     }
                                     for (Comment r : serverReplies) {
-                                        // Nếu parentCommentId không trùng với ID gốc, nghĩa là r là câu trả lời cho 1 comment con khác (Cháu)
                                         if (r.getParentCommentId() != null && r.getParentCommentId() != commentId) {
                                             Comment immediateParent = lookupMap.get(r.getParentCommentId());
                                             if (immediateParent != null) {
@@ -232,13 +230,13 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
                                     }
 
                                     repliesCache.put(commentId, serverReplies);
-                                    paginateReplies(commentId, holder, replyAdapter, totalRepliesCount);
+                                    paginateReplies(commentId, holder, replyAdapter, Math.max(comment.getReplyCount(), serverReplies.size()));
                                 }
                             }
                             @Override public void onFailure(Call<List<Comment>> call, Throwable t) {}
                         });
             } else {
-                paginateReplies(commentId, holder, replyAdapter, totalRepliesCount);
+                paginateReplies(commentId, holder, replyAdapter, Math.max(comment.getReplyCount(), currentList.size()));
             }
         });
     }
@@ -327,6 +325,7 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
         TextView tvUserComment, tvCommentContent, btnLike, btnDislike, btnReply, btnReport, tvCommentChapterTag, tvLoadMoreReplies;
         ImageView imgUserAvatar;
         RecyclerView rvReplies;
+        ReplyAdapter replyAdapter;
 
         public CommentViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -340,6 +339,14 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
             tvCommentChapterTag = itemView.findViewById(R.id.tvCommentChapterTag);
             rvReplies = itemView.findViewById(R.id.recyclerViewReplies);
             tvLoadMoreReplies = itemView.findViewById(R.id.tvLoadMoreReplies);
+
+            rvReplies.setLayoutManager(new LinearLayoutManager(itemView.getContext()));
+
+            // ĐÃ THÊM FIX QUAN TRỌNG: Ngăn chặn cuộn lồng nhau giúp RecyclerView con tự động nở ra theo bọc chiều cao nội dung
+            rvReplies.setNestedScrollingEnabled(false);
+
+            replyAdapter = new ReplyAdapter();
+            rvReplies.setAdapter(replyAdapter);
         }
     }
 

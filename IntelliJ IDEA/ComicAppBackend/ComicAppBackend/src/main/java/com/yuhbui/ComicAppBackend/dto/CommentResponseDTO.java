@@ -13,6 +13,8 @@ public class CommentResponseDTO {
     private String content;
     private Integer likeCount;
     private Integer dislikeCount;
+    private Integer replyCount;
+    private Integer reportCount;
     private Boolean isDeleted;
     private LocalDateTime createdAt;
 

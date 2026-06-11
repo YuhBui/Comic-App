@@ -13,6 +13,7 @@ import com.yuhbui.comicapp.R;
 import com.yuhbui.comicapp.data.api.ApiClient;
 import com.yuhbui.comicapp.data.model.Comment;
 import java.util.ArrayList;
+import java.util.Collections; // Duy trì sắp xếp cũ đến mới
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -72,10 +73,20 @@ public class AdminCommentAdapter extends RecyclerView.Adapter<AdminCommentAdapte
                 .circleCrop()
                 .into(holder.imgAvatar);
 
-        // Khởi tạo danh sách ReplyAdapter thụt đầu dòng nối đuôi cho Admin
+        // ========== ĐÃ SỬA: CẤU HÌNH CHO RECYCLERVIEW BÌNH LUẬN CON PHÍA ADMIN ==========
         holder.rvReplies.setLayoutManager(new LinearLayoutManager(holder.itemView.getContext()));
+        holder.rvReplies.setNestedScrollingEnabled(false); // CHỐT CHẶN: Ngăn lỗi crash layout, ép hiển thị lồng ngay bên dưới cha
+
         ReplyAdapter replyAdapter = new ReplyAdapter();
         holder.rvReplies.setAdapter(replyAdapter);
+
+        // Lấy số lượng phản hồi từ dữ liệu Map (hỗ trợ cả 2 khóa replyCount / repliesCount)
+        int totalReplies = 0;
+        if (comment.containsKey("replyCount") && comment.get("replyCount") != null) {
+            totalReplies = getSafeInt(comment.get("replyCount"));
+        } else if (comment.containsKey("repliesCount") && comment.get("repliesCount") != null) {
+            totalReplies = getSafeInt(comment.get("repliesCount"));
+        }
 
         if (!repliesCache.containsKey(commentId)) {
             repliesCache.put(commentId, new ArrayList<>());
@@ -85,30 +96,39 @@ public class AdminCommentAdapter extends RecyclerView.Adapter<AdminCommentAdapte
         List<Comment> cachedReplies = repliesCache.get(commentId);
         int currentDisplayedCount = displayedCountCache.get(commentId);
 
+        // Logic ẩn hiện dòng chữ "Xem phản hồi" dựa theo trạng thái đóng mở và số lượng reply thực tế
         if (currentDisplayedCount > 0 && !cachedReplies.isEmpty()) {
             holder.rvReplies.setVisibility(View.VISIBLE);
             int endBound = Math.min(currentDisplayedCount, cachedReplies.size());
             replyAdapter.setReplies(new ArrayList<>(cachedReplies.subList(0, endBound)));
 
+            holder.tvLoadMoreReplies.setVisibility(View.VISIBLE);
             if (cachedReplies.size() > currentDisplayedCount) {
-                holder.tvLoadMoreReplies.setText("—— Xem thêm phản hồi quản trị ——");
+                holder.tvLoadMoreReplies.setText("—— Xem thêm phản hồi ——");
             } else {
                 holder.tvLoadMoreReplies.setText("—— Thu gọn phản hồi ——");
             }
         } else {
             holder.rvReplies.setVisibility(View.GONE);
             replyAdapter.setReplies(new ArrayList<>());
-            holder.tvLoadMoreReplies.setText("—— Xem phản hồi con ——");
+
+            // Chỉ những bình luận có câu trả lời thực tế mới hiển thị dòng chữ
+            if (totalReplies > 0) {
+                holder.tvLoadMoreReplies.setVisibility(View.VISIBLE);
+                holder.tvLoadMoreReplies.setText("—— Xem phản hồi (" + totalReplies + ") ——");
+            } else {
+                holder.tvLoadMoreReplies.setVisibility(View.GONE); // Không có phản hồi con -> Ẩn hoàn toàn nút
+            }
         }
 
         holder.btnReply.setOnClickListener(v -> listener.onReply(comment));
-
         holder.tvLikes.setOnClickListener(v -> listener.onInteract(commentId, 1, position));
         holder.tvDislikes.setOnClickListener(v -> listener.onInteract(commentId, -1, position));
         holder.tvReports.setOnClickListener(v -> listener.onShowReports(commentId));
         holder.btnDelete.setOnClickListener(v -> listener.onDelete(commentId, position));
 
         // Click tải dữ liệu phân trang phản hồi thụt đầu dòng cho màn hình Admin
+        int finalTotalReplies = totalReplies;
         holder.tvLoadMoreReplies.setOnClickListener(v -> {
             List<Comment> currentList = repliesCache.get(commentId);
             if (currentList == null || currentList.isEmpty()) {
@@ -117,24 +137,29 @@ public class AdminCommentAdapter extends RecyclerView.Adapter<AdminCommentAdapte
                             @Override
                             public void onResponse(Call<List<Comment>> call, Response<List<Comment>> response) {
                                 if (response.isSuccessful() && response.body() != null) {
-                                    repliesCache.put(commentId, response.body());
-                                    paginateAdminReplies(commentId, holder, replyAdapter);
+                                    List<Comment> serverReplies = response.body();
+
+                                    // Sắp xếp theo ID tăng dần để các phản hồi mới hơn nối tiếp từ trên xuống dưới (Cũ ở trên, mới ở dưới)
+                                    Collections.sort(serverReplies, (c1, c2) -> Integer.compare(c1.getCommentId(), c2.getCommentId()));
+
+                                    repliesCache.put(commentId, serverReplies);
+                                    paginateAdminReplies(commentId, holder, replyAdapter, finalTotalReplies);
                                 }
                             }
                             @Override public void onFailure(Call<List<Comment>> call, Throwable t) {}
                         });
             } else {
-                paginateAdminReplies(commentId, holder, replyAdapter);
+                paginateAdminReplies(commentId, holder, replyAdapter, finalTotalReplies);
             }
         });
     }
 
-    private void paginateAdminReplies(int commentId, CommentViewHolder holder, ReplyAdapter replyAdapter) {
+    private void paginateAdminReplies(int commentId, CommentViewHolder holder, ReplyAdapter replyAdapter, int totalReplies) {
         List<Comment> fullList = repliesCache.get(commentId);
         int currentCount = displayedCountCache.get(commentId);
 
         if (fullList == null || fullList.isEmpty()) {
-            holder.tvLoadMoreReplies.setText("—— Không có phản hồi ——");
+            holder.tvLoadMoreReplies.setVisibility(View.GONE);
             return;
         }
 
@@ -142,7 +167,13 @@ public class AdminCommentAdapter extends RecyclerView.Adapter<AdminCommentAdapte
             displayedCountCache.put(commentId, 0);
             holder.rvReplies.setVisibility(View.GONE);
             replyAdapter.setReplies(new ArrayList<>());
-            holder.tvLoadMoreReplies.setText("—— Xem phản hồi con ——");
+
+            if (totalReplies > 0) {
+                holder.tvLoadMoreReplies.setVisibility(View.VISIBLE);
+                holder.tvLoadMoreReplies.setText("—— Xem phản hồi (" + totalReplies + ") ——");
+            } else {
+                holder.tvLoadMoreReplies.setVisibility(View.GONE);
+            }
             return;
         }
 
@@ -155,6 +186,7 @@ public class AdminCommentAdapter extends RecyclerView.Adapter<AdminCommentAdapte
         holder.rvReplies.setVisibility(View.VISIBLE);
         replyAdapter.setReplies(new ArrayList<>(fullList.subList(0, currentCount)));
 
+        holder.tvLoadMoreReplies.setVisibility(View.VISIBLE);
         if (currentCount < fullList.size()) {
             holder.tvLoadMoreReplies.setText("—— Xem thêm phản hồi quản trị ——");
         } else {

@@ -258,8 +258,8 @@ public class MainActivity extends AppCompatActivity {
         recyclerViewSearchResults = findViewById(R.id.recyclerViewSearchResults);
 
         if (recyclerViewSearchResults != null) {
-            recyclerViewSearchResults.setLayoutManager(new LinearLayoutManager(this));
-            searchResultAdapter = new ComicAdapter(true);
+            recyclerViewSearchResults.setLayoutManager(new GridLayoutManager(this, 2));
+            searchResultAdapter = new ComicAdapter();
             recyclerViewSearchResults.setAdapter(searchResultAdapter);
         }
     }
@@ -277,7 +277,6 @@ public class MainActivity extends AppCompatActivity {
         // Đăng ký sự kiện Click cho các danh mục chức năng trong `layout_side_menu.xml`
         findViewById(R.id.menuHome).setOnClickListener(v -> {
             drawerLayout.closeDrawer(GravityCompat.START);
-            // Hiện tại đang đứng ở MainActivity nên chỉ cần đóng menu sườn
         });
 
         findViewById(R.id.menuHistory).setOnClickListener(v -> {
@@ -314,12 +313,18 @@ public class MainActivity extends AppCompatActivity {
                 edtHeaderSearch.requestFocus();
                 InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
                 if (imm != null) imm.showSoftInput(edtHeaderSearch, InputMethodManager.SHOW_IMPLICIT);
-                headerSearch.setImageResource(android.R.drawable.ic_menu_close_clear_cancel);
+                headerSearch.setImageResource(android.R.drawable.ic_menu_close_clear_cancel); // Đổi thành nút X
             } else {
                 String keyword = edtHeaderSearch.getText().toString().trim();
                 if (!keyword.isEmpty()) {
+                    edtHeaderSearch.setText("");
                     if (suggestionPopup.isShowing()) suggestionPopup.dismiss();
-                    performSearch(keyword);
+                    if (searchResultAdapter != null) {
+                        searchResultAdapter.setComics(new java.util.ArrayList<>());
+                    }
+                    edtHeaderSearch.requestFocus();
+                    InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+                    if (imm != null) imm.showSoftInput(edtHeaderSearch, InputMethodManager.SHOW_IMPLICIT);
                 } else {
                     closeSearch();
                 }
