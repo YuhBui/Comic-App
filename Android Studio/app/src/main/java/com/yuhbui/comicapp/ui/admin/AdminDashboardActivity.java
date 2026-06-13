@@ -10,13 +10,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.view.GravityCompat;              // THÊM: Điều hướng DrawerLayout trượt trái
-import androidx.drawerlayout.widget.DrawerLayout;    // THÊM: Thành phần DrawerLayout root
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.signature.ObjectKey;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.data.Entry;
@@ -26,14 +24,16 @@ import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
 import com.yuhbui.comicapp.R;
 import com.yuhbui.comicapp.data.api.ApiClient;
 import com.yuhbui.comicapp.data.model.Comic;
-import com.yuhbui.comicapp.data.model.User;
 import com.yuhbui.comicapp.ui.adapters.RankingAdapter;
-import com.yuhbui.comicapp.utils.HeaderUtils;          // THÊM: Đồng bộ thanh Header tập trung
-import com.yuhbui.comicapp.utils.MenuUtils;            // THÊM: Điều hướng Menu trượt Admin dùng chung
+import com.yuhbui.comicapp.utils.HeaderUtils;
+import com.yuhbui.comicapp.utils.MenuUtils;
 import com.yuhbui.comicapp.utils.SharedPrefsManager;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -41,14 +41,21 @@ import retrofit2.Response;
 
 public class AdminDashboardActivity extends AppCompatActivity {
 
-    private DrawerLayout drawerLayout; // THÊM: Khai báo thành phần quản lý Menu trượt đè
+    private DrawerLayout drawerLayout;
 
     private RadioGroup rgDashboardFilter;
     private LineChart lineChartAccess;
     private RecyclerView rvAdminTopComic;
     private RankingAdapter rankingAdapter;
 
-    // Các thành phần thuộc thanh Header dùng chung
+    // Các thành phần điều hướng thời gian mới thêm
+    private ImageView btnPrevPeriod, btnNextPeriod;
+    private TextView tvCurrentPeriod;
+
+    // Các biến lưu trạng thái bộ lọc và thời gian neo hiện tại
+    private String currentType = "day";
+    private Calendar currentCalendar = Calendar.getInstance();
+
     private View layoutHeaderAdmin;
     private ImageView headerMenu, headerAvatar;
     private TextView headerLogo;
@@ -58,32 +65,60 @@ public class AdminDashboardActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_admin_dashboard);
 
-        // 1. Ánh xạ DrawerLayout đè và các thành phần giao diện chính
         drawerLayout = findViewById(R.id.drawerLayout);
         rgDashboardFilter = findViewById(R.id.rgDashboardFilter);
         lineChartAccess = findViewById(R.id.lineChartAccess);
         rvAdminTopComic = findViewById(R.id.rvAdminTopComic);
 
-        // 2. Thiết lập cấu hình tùy biến thanh Header Admin & Menu trượt tập trung
+        // Ánh xạ các nút tiến lùi mới
+        btnPrevPeriod = findViewById(R.id.btnPrevPeriod);
+        btnNextPeriod = findViewById(R.id.btnNextPeriod);
+        tvCurrentPeriod = findViewById(R.id.tvCurrentPeriod);
+
         setupAdminHeaderView();
 
-        // 3. Cấu hình RecyclerView hiển thị danh sách dọc Top 10 truyện
         rvAdminTopComic.setLayoutManager(new LinearLayoutManager(this));
         rankingAdapter = new RankingAdapter(true);
         rvAdminTopComic.setAdapter(rankingAdapter);
 
-        // 4. Lắng nghe sự kiện từ bộ lọc dùng chung Ngày / Tuần / Tháng
+        // 1. Lắng nghe sự kiện đổi bộ lọc RadioGroup
         rgDashboardFilter.setOnCheckedChangeListener((group, checkedId) -> {
-            String type = "day";
             if (checkedId == R.id.rbDashWeek) {
-                type = "week";
+                currentType = "week";
             } else if (checkedId == R.id.rbDashMonth) {
-                type = "month";
+                currentType = "month";
+            } else {
+                currentType = "day";
             }
-            loadDashboardData(type);
+            // Đặt lại thời gian về mốc hôm nay khi chuyển bộ lọc
+            currentCalendar = Calendar.getInstance();
+            updatePeriodDisplayAndLoad();
         });
 
-        // 5. CẤU HÌNH: Khóa nút quay lại (Back cứng) - Ưu tiên đóng Menu trượt nếu đang mở
+        // 2. Click mũi tên trái (<) để lùi thời gian
+        btnPrevPeriod.setOnClickListener(v -> {
+            if ("day".equals(currentType)) {
+                currentCalendar.add(Calendar.DAY_OF_MONTH, -1);
+            } else if ("week".equals(currentType)) {
+                currentCalendar.add(Calendar.WEEK_OF_YEAR, -1);
+            } else {
+                currentCalendar.add(Calendar.MONTH, -1);
+            }
+            updatePeriodDisplayAndLoad();
+        });
+
+        // 3. Click mũi tên phải (>) để tiến thời gian
+        btnNextPeriod.setOnClickListener(v -> {
+            if ("day".equals(currentType)) {
+                currentCalendar.add(Calendar.DAY_OF_MONTH, 1);
+            } else if ("week".equals(currentType)) {
+                currentCalendar.add(Calendar.WEEK_OF_YEAR, 1);
+            } else {
+                currentCalendar.add(Calendar.MONTH, 1);
+            }
+            updatePeriodDisplayAndLoad();
+        });
+
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
@@ -97,11 +132,10 @@ public class AdminDashboardActivity extends AppCompatActivity {
             }
         });
 
-        // Tải dữ liệu thống kê mặc định lần đầu tiên (Theo Ngày)
-        loadDashboardData("day");
+        // Tải dữ liệu ban đầu lần đầu vào màn hình
+        updatePeriodDisplayAndLoad();
     }
 
-    // Làm mới avatar Admin mỗi khi quay lại từ trang Profile
     @Override
     protected void onResume() {
         super.onResume();
@@ -110,25 +144,56 @@ public class AdminDashboardActivity extends AppCompatActivity {
         }
     }
 
-    private void loadDashboardData(String type) {
-        fetchAccessChartData(type);
+    /**
+     * Hàm tự động cập nhật định dạng chữ hiển thị trên thanh điều hướng và gọi API dữ liệu
+     */
+    private void updatePeriodDisplayAndLoad() {
+        SimpleDateFormat displayFormat;
+
+        if ("day".equals(currentType)) {
+            displayFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+            tvCurrentPeriod.setText(displayFormat.format(currentCalendar.getTime()));
+        } else if ("week".equals(currentType)) {
+            Calendar cloneCal = (Calendar) currentCalendar.clone();
+            int dayOfWeek = cloneCal.get(Calendar.DAY_OF_WEEK);
+
+            // Đưa lịch về Thứ 2 của tuần hiện tại
+            int daysToMonday = (dayOfWeek == Calendar.SUNDAY) ? -6 : (Calendar.MONDAY - dayOfWeek);
+            cloneCal.add(Calendar.DAY_OF_MONTH, daysToMonday);
+
+            SimpleDateFormat weekFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
+            String startStr = weekFormat.format(cloneCal.getTime());
+
+            cloneCal.add(Calendar.DAY_OF_MONTH, 6);
+            String endStr = weekFormat.format(cloneCal.getTime());
+
+            tvCurrentPeriod.setText(startStr + " - " + endStr);
+        } else {
+            displayFormat = new SimpleDateFormat("MM/yyyy", Locale.getDefault());
+            tvCurrentPeriod.setText(displayFormat.format(currentCalendar.getTime()));
+        }
+
+        // Tạo chuỗi ngày dạng yyyy-MM-dd gửi lên API Server
+        SimpleDateFormat apiFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        String targetDateStr = apiFormat.format(currentCalendar.getTime());
+
+        loadDashboardData(currentType, targetDateStr);
+    }
+
+    private void loadDashboardData(String type, String targetDate) {
+        fetchAccessChartData(type, targetDate);
         fetchTop10ComicsData(type);
     }
 
-    /**
-     * Hàm cấu hình thanh Header chuyên dụng cho Admin tích hợp Menu trượt mới
-     */
     private void setupAdminHeaderView() {
         layoutHeaderAdmin = findViewById(R.id.layoutHeaderAdmin);
         headerMenu = layoutHeaderAdmin.findViewById(R.id.headerMenu);
         headerLogo = layoutHeaderAdmin.findViewById(R.id.headerLogo);
         headerAvatar = layoutHeaderAdmin.findViewById(R.id.headerAvatar);
 
-        // 1. Khởi tạo cấu hình Header và Menu trượt Admin
         HeaderUtils.initHeader(this, layoutHeaderAdmin, drawerLayout);
         MenuUtils.setupAdminSideMenu(this, drawerLayout, headerMenu);
 
-        // 2. THÊM ĐOẠN NÀY: Ẩn triệt để hai nút Tìm kiếm và Thông báo đối với Admin
         if (layoutHeaderAdmin.findViewById(R.id.headerSearch) != null) {
             layoutHeaderAdmin.findViewById(R.id.headerSearch).setVisibility(View.GONE);
         }
@@ -136,7 +201,6 @@ public class AdminDashboardActivity extends AppCompatActivity {
             layoutHeaderAdmin.findViewById(R.id.headerNotification).setVisibility(View.GONE);
         }
 
-        // Tùy biến phong cách chữ tiêu đề Admin như cũ
         if (headerLogo != null) {
             headerLogo.setText("COMIC APP");
             headerLogo.setTextColor(Color.parseColor("#E74C3C"));
@@ -147,8 +211,8 @@ public class AdminDashboardActivity extends AppCompatActivity {
         }
     }
 
-    private void fetchAccessChartData(String type) {
-        ApiClient.getApiService().getAdminAccessStats(type).enqueue(new Callback<List<Map<String, Object>>>() {
+    private void fetchAccessChartData(String type, String targetDate) {
+        ApiClient.getApiService().getAdminAccessStats(type, targetDate).enqueue(new Callback<List<Map<String, Object>>>() {
             @Override
             public void onResponse(Call<List<Map<String, Object>>> call, Response<List<Map<String, Object>>> response) {
                 if (response.isSuccessful() && response.body() != null) {
@@ -170,7 +234,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
 
                     if (entries.isEmpty()) {
                         lineChartAccess.clear();
-                        lineChartAccess.setNoDataText("Không có dữ liệu truy cập trong khoảng thời gian này!");
+                        lineChartAccess.setNoDataText("Không có dữ liệu truy cập!");
                         lineChartAccess.invalidate();
                         return;
                     }
@@ -201,7 +265,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(Call<List<Map<String, Object>>> call, Throwable t) {
-                Toast.makeText(AdminDashboardActivity.this, "Lỗi kết nối máy chủ biểu đồ!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(AdminDashboardActivity.this, "Lỗi kết nối biểu đồ!", Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -245,6 +309,4 @@ public class AdminDashboardActivity extends AppCompatActivity {
         });
         popupMenu.show();
     }
-
-    // Đã xóa bỏ hàm showAdminPopupMenu() cũ do logic bấm mục menu trượt đã được quản lý tập trung bên trong lớp MenuUtils.
 }

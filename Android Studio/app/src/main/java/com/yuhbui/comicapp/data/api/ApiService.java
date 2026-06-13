@@ -298,4 +298,10 @@ public interface ApiService {
     // API xóa bỏ thông báo
     @DELETE("api/notifications/admin/delete/{id}")
     Call<Void> adminDeleteNotification(@Path("id") int id);
+
+    @GET("/api/admin/dashboard/access-stats")
+    Call<List<java.util.Map<String, Object>>> getAdminAccessStats(
+            @Query("type") String type,
+            @Query("targetDate") String targetDate
+    );
 }
