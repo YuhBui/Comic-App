@@ -51,4 +51,10 @@ dependencies {
     implementation("com.github.bumptech.glide:glide:4.16.0")
     implementation("androidx.viewpager2:viewpager2:1.1.0")
     implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
+
+    val roomVersion = "2.6.1"
+    implementation("androidx.room:room-runtime:$roomVersion")
+    annotationProcessor("androidx.room:room-compiler:$roomVersion")
+
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
 }

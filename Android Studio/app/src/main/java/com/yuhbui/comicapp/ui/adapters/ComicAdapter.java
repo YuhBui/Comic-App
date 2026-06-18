@@ -24,6 +24,21 @@ public class ComicAdapter extends RecyclerView.Adapter<ComicAdapter.ComicViewHol
 
     private List<Comic> comicList = new ArrayList<>();
     private boolean isListView = false;
+    private boolean isDownloadMode = false;
+
+    public void setDownloadMode(boolean isDownloadMode) {
+        this.isDownloadMode = isDownloadMode;
+        notifyDataSetChanged();
+    }
+    private OnItemClickListener onItemClickListener;
+
+    public interface OnItemClickListener {
+        void onItemClick(Comic comic);
+    }
+
+    public void setOnItemClickListener(OnItemClickListener listener) {
+        this.onItemClickListener = listener;
+    }
 
     public ComicAdapter() {
         this.isListView = false;
@@ -65,10 +80,29 @@ public class ComicAdapter extends RecyclerView.Adapter<ComicAdapter.ComicViewHol
                 .into(holder.imgCover);
 
         holder.itemView.setOnClickListener(v -> {
-            Intent intent = new Intent(holder.itemView.getContext(), ComicDetailActivity.class);
-            intent.putExtra("COMIC_ID", comic.getComicId());
-            holder.itemView.getContext().startActivity(intent);
+            if (onItemClickListener != null) {
+                onItemClickListener.onItemClick(comic);
+            } else {
+                Intent intent = new Intent(holder.itemView.getContext(), ComicDetailActivity.class);
+                intent.putExtra("COMIC_ID", comic.getComicId());
+                intent.putExtra("COMIC_TITLE", comic.getTitle());
+                holder.itemView.getContext().startActivity(intent);
+            }
         });
+
+        if (isDownloadMode) {
+            holder.tvLatestChapter.setVisibility(View.GONE);
+            holder.tvTimeUpdate.setVisibility(View.GONE);
+            holder.tvViews.setVisibility(View.GONE);
+            holder.tvLikes.setVisibility(View.GONE);
+            holder.tvComments.setVisibility(View.GONE);
+        } else {
+            holder.tvLatestChapter.setVisibility(View.VISIBLE);
+            holder.tvTimeUpdate.setVisibility(View.VISIBLE);
+            holder.tvViews.setVisibility(View.VISIBLE);
+            holder.tvLikes.setVisibility(View.VISIBLE);
+            holder.tvComments.setVisibility(View.VISIBLE);
+        }
     }
 
     @Override

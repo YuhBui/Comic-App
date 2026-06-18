@@ -9,6 +9,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.yuhbui.comicapp.R;
 import com.yuhbui.comicapp.data.model.ChapterImage;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,11 +32,24 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
     @Override
     public void onBindViewHolder(@NonNull ImageViewHolder holder, int position) {
         ChapterImage image = imageList.get(position);
-        Glide.with(holder.itemView.getContext())
-                .load(image.getImageUrl())
-                .dontAnimate() // Tắt animation chuyển cảnh để ảnh hiển thị ngay lập tức, không gây lag chiều cao layout
-                .placeholder(android.R.drawable.progress_horizontal) // Hiện thanh tiến trình chờ tải
-                .into(holder.imgPage);
+
+        String pathOrUrl = image.getImageUrl();
+
+        // TỰ ĐỘNG CHUYỂN ĐỔI: Nếu đường dẫn chứa thư mục download local thì load bằng đối tượng File vật lý
+        if (pathOrUrl != null && pathOrUrl.contains("truyen_downloads")) {
+            Glide.with(holder.itemView.getContext())
+                    .load(new File(pathOrUrl))
+                    .dontAnimate()
+                    .placeholder(android.R.drawable.progress_horizontal)
+                    .into(holder.imgPage);
+        } else {
+            // Ngược lại load qua URL mạng như bình thường
+            Glide.with(holder.itemView.getContext())
+                    .load(pathOrUrl)
+                    .dontAnimate()
+                    .placeholder(android.R.drawable.progress_horizontal)
+                    .into(holder.imgPage);
+        }
     }
 
     @Override

@@ -61,6 +61,17 @@
         android:paddingStart="8dp"/>
 
     <TextView
+        android:id="@+id/menuDownloads"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:gravity="center_vertical"
+        android:text="📥  Truyện tải xuống"
+        android:textColor="#333333"
+        android:textSize="15sp"
+        android:background="?attr/selectableItemBackground"
+        android:paddingStart="8dp"/>
+
+    <TextView
         android:id="@+id/menuProfile"
         android:layout_width="match_parent"
         android:layout_height="48dp"

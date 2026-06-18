@@ -70,7 +70,18 @@ public class MenuUtils {
             });
         }
 
-        // 5. Xử lý sự kiện click cho mục "Hồ sơ cá nhân"
+        // 5. Xử lý sự kiện click cho mục "Truyện tải xuống"
+        View menuDownloads = activity.findViewById(R.id.menuDownloads);
+        if (menuDownloads != null) {
+            menuDownloads.setOnClickListener(v -> {
+                drawerLayout.closeDrawer(GravityCompat.START);
+                if (!(activity instanceof com.yuhbui.comicapp.ui.DownloadListActivity)) {
+                    activity.startActivity(new Intent(activity, com.yuhbui.comicapp.ui.DownloadListActivity.class));
+                }
+            });
+        }
+
+        // 6. Xử lý sự kiện click cho mục "Hồ sơ cá nhân"
         View menuProfile = activity.findViewById(R.id.menuProfile);
         if (menuProfile != null) {
             menuProfile.setOnClickListener(v -> {
@@ -81,7 +92,7 @@ public class MenuUtils {
             });
         }
 
-        // 6. Xử lý sự kiện click cho mục "Đăng xuất"
+        // 7. Xử lý sự kiện click cho mục "Đăng xuất"
         View menuLogout = activity.findViewById(R.id.menuLogout);
         if (menuLogout != null) {
             menuLogout.setOnClickListener(v -> {

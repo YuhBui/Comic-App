@@ -99,6 +99,15 @@ public class MainActivity extends AppCompatActivity {
         selectedCategoryIds.add(0);
 
         initViews();
+
+        // KIỂM TRA MẠNG: Tự động chuyển hướng thẳng sang màn hình Offline nếu mất kết nối
+        if (!isNetworkAvailable()) {
+            Toast.makeText(this, "Không có kết nối mạng! Đang chuyển sang chế độ đọc offline.", Toast.LENGTH_LONG).show();
+            startActivity(new Intent(MainActivity.this, DownloadListActivity.class));
+            finish();
+            return;
+        }
+
         setupHeader();
         setupRecommendedSlider();
         setupNewUpdatesSection();
@@ -292,6 +301,12 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.menuProfile).setOnClickListener(v -> {
             drawerLayout.closeDrawer(GravityCompat.START);
             startActivity(new Intent(MainActivity.this, ProfileActivity.class));
+        });
+
+        // ĐĂNG KÝ: Sự kiện click cho danh mục Truyện tải xuống offline mới bổ sung
+        findViewById(R.id.menuDownloads).setOnClickListener(v -> {
+            drawerLayout.closeDrawer(GravityCompat.START);
+            startActivity(new Intent(MainActivity.this, DownloadListActivity.class));
         });
 
         findViewById(R.id.menuLogout).setOnClickListener(v -> {
@@ -488,6 +503,12 @@ public class MainActivity extends AppCompatActivity {
         newUpdatesAdapter = new ComicAdapter();
         recyclerViewComics.setLayoutManager(new GridLayoutManager(this, 2));
         recyclerViewComics.setAdapter(newUpdatesAdapter);
+        newUpdatesAdapter.setOnItemClickListener(comic -> {
+            Intent intent = new Intent(MainActivity.this, ComicDetailActivity.class);
+            intent.putExtra("COMIC_ID", comic.getComicId());
+            intent.putExtra("COMIC_TITLE", comic.getTitle());
+            startActivity(intent);
+        });
         recyclerViewComics.setNestedScrollingEnabled(false);
 
         btnFilterIcon.setOnClickListener(v -> showCategoryFilterDialog());
@@ -747,7 +768,7 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(new Intent(this, FollowActivity.class));
                 return true;
             } else if (id == R.id.menu_downloads) {
-                Toast.makeText(this, "Truyện tải xuống", Toast.LENGTH_SHORT).show();
+                startActivity(new Intent(this, DownloadListActivity.class));
                 return true;
             } else if (id == R.id.menu_profile) {
                 startActivity(new Intent(MainActivity.this, ProfileActivity.class));
@@ -791,5 +812,22 @@ public class MainActivity extends AppCompatActivity {
     private int dpToPx(int dp) {
         float density = getResources().getDisplayMetrics().density;
         return Math.round(dp * density);
+    }
+
+    // THAY THẾ TOÀN BỘ HÀM isNetworkAvailable() CŨ BẰNG HÀM NÀY
+    private boolean isNetworkAvailable() {
+        android.net.ConnectivityManager connectivityManager = (android.net.ConnectivityManager) getSystemService(android.content.Context.CONNECTIVITY_SERVICE);
+        if (connectivityManager != null) {
+            // Sử dụng cơ chế hiện đại phù hợp hoàn toàn với API cao
+            android.net.Network network = connectivityManager.getActiveNetwork();
+            if (network == null) return false;
+
+            android.net.NetworkCapabilities capabilities = connectivityManager.getNetworkCapabilities(network);
+            return capabilities != null && (
+                    capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_WIFI) ||
+                            capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_CELLULAR) ||
+                            capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_ETHERNET));
+        }
+        return false;
     }
 }

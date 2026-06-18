@@ -3,14 +3,26 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:padding="16dp"
+    android:gravity="center_vertical"
     android:background="?android:attr/selectableItemBackground"
     android:orientation="horizontal">
 
     <TextView
         android:id="@+id/tvChapterName"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_weight="1"
         android:text="Chapter 1"
         android:textSize="16sp"
         android:textColor="#333333"/>
+
+    <ImageButton
+        android:id="@+id/btnChapterAction"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginStart="8dp"
+        android:background="?android:attr/selectableItemBackground"
+        android:src="@android:drawable/stat_sys_download"
+        android:contentDescription="Chức năng Offline" />
+
 </LinearLayout>
