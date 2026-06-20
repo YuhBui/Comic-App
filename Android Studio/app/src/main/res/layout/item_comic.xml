@@ -1,16 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:padding="8dp">
 
-    <ImageView
-        android:id="@+id/imgCover"
+    <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="200dp"
-        android:scaleType="centerCrop"
-        android:background="#E0E0E0" />
+        app:cardCornerRadius="6dp"
+        app:cardElevation="0dp">
+
+        <ImageView
+            android:id="@+id/imgCover"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:background="#2A2A2A" />
+    </androidx.cardview.widget.CardView>
 
     <TextView
         android:id="@+id/tvTitle"
@@ -18,9 +26,9 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:text="Tên Truyện"
-        android:textSize="16sp"
+        android:textSize="15sp"
         android:textStyle="bold"
         android:maxLines="2"
         android:ellipsize="end"
-        android:textColor="#000000"/>
+        android:textColor="#FFFFFF"/>
 </LinearLayout>

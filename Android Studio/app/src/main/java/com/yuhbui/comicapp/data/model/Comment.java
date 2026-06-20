@@ -27,6 +27,12 @@ public class Comment {
     @SerializedName("dislikeCount")
     private int dislikeCount;
 
+    @SerializedName("isLiked")
+    private boolean isLiked;
+
+    @SerializedName("isDisliked")
+    private boolean isDisliked;
+
     @SerializedName("replyCount")
     private int replyCount;
 
@@ -106,6 +112,22 @@ public class Comment {
 
     public void setDislikeCount(int dislikeCount) {
         this.dislikeCount = dislikeCount;
+    }
+
+    public boolean isLiked() {
+        return isLiked;
+    }
+
+    public void setLiked(boolean liked) {
+        isLiked = liked;
+    }
+
+    public boolean isDisliked() {
+        return isDisliked;
+    }
+
+    public void setDisliked(boolean disliked) {
+        isDisliked = disliked;
     }
 
     public int getReplyCount() {

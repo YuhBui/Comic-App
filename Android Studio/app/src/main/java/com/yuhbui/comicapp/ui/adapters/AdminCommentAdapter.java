@@ -1,10 +1,13 @@
 package com.yuhbui.comicapp.ui.adapters;
 
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -12,8 +15,9 @@ import com.bumptech.glide.Glide;
 import com.yuhbui.comicapp.R;
 import com.yuhbui.comicapp.data.api.ApiClient;
 import com.yuhbui.comicapp.data.model.Comment;
+import com.yuhbui.comicapp.utils.SharedPrefsManager;
 import java.util.ArrayList;
-import java.util.Collections; // Duy trì sắp xếp cũ đến mới
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,7 +30,6 @@ public class AdminCommentAdapter extends RecyclerView.Adapter<AdminCommentAdapte
     private List<Map<String, Object>> commentList = new ArrayList<>();
     private final OnCommentAdminActionListener listener;
 
-    // Cache duy trì dữ liệu phản hồi con lồng thụt lề cho giao diện quản trị Admin
     private final Map<Integer, List<Comment>> repliesCache = new HashMap<>();
     private final Map<Integer, Integer> displayedCountCache = new HashMap<>();
 
@@ -61,11 +64,11 @@ public class AdminCommentAdapter extends RecyclerView.Adapter<AdminCommentAdapte
         holder.tvUser.setText((String) comment.get("username"));
         holder.tvContent.setText((String) comment.get("content"));
 
-        holder.tvLikes.setText("👍 " + getSafeLong(comment.get("likes")));
-        holder.tvDislikes.setText("👎 " + getSafeLong(comment.get("dislikes")));
+        holder.tvLikes.setText("(" + getSafeLong(comment.get("likes")) + ")");
+        holder.tvDislikes.setText("(" + getSafeLong(comment.get("dislikes")) + ")");
 
         long reportCount = getSafeLong(comment.get("reports"));
-        holder.tvReports.setText("⚠️ Báo cáo (" + reportCount + ")");
+        holder.tvReports.setText("Báo cáo (" + reportCount + ")");
 
         Glide.with(holder.itemView.getContext())
                 .load((String) comment.get("avatarUrl"))
@@ -73,14 +76,15 @@ public class AdminCommentAdapter extends RecyclerView.Adapter<AdminCommentAdapte
                 .circleCrop()
                 .into(holder.imgAvatar);
 
-        // ========== ĐÃ SỬA: CẤU HÌNH CHO RECYCLERVIEW BÌNH LUẬN CON PHÍA ADMIN ==========
+        // --- CẬP NHẬT BAN ĐẦU GIAO DIỆN ICON VECTOR CHUYỂN ĐỔI CHUẨN XÁC ---
+        updateAdminLikeDislikeUI(holder, comment);
+
         holder.rvReplies.setLayoutManager(new LinearLayoutManager(holder.itemView.getContext()));
-        holder.rvReplies.setNestedScrollingEnabled(false); // CHỐT CHẶN: Ngăn lỗi crash layout, ép hiển thị lồng ngay bên dưới cha
+        holder.rvReplies.setNestedScrollingEnabled(false);
 
         ReplyAdapter replyAdapter = new ReplyAdapter();
         holder.rvReplies.setAdapter(replyAdapter);
 
-        // Lấy số lượng phản hồi từ dữ liệu Map (hỗ trợ cả 2 khóa replyCount / repliesCount)
         int totalReplies = 0;
         if (comment.containsKey("replyCount") && comment.get("replyCount") != null) {
             totalReplies = getSafeInt(comment.get("replyCount"));
@@ -96,7 +100,6 @@ public class AdminCommentAdapter extends RecyclerView.Adapter<AdminCommentAdapte
         List<Comment> cachedReplies = repliesCache.get(commentId);
         int currentDisplayedCount = displayedCountCache.get(commentId);
 
-        // Logic ẩn hiện dòng chữ "Xem phản hồi" dựa theo trạng thái đóng mở và số lượng reply thực tế
         if (currentDisplayedCount > 0 && !cachedReplies.isEmpty()) {
             holder.rvReplies.setVisibility(View.VISIBLE);
             int endBound = Math.min(currentDisplayedCount, cachedReplies.size());
@@ -112,36 +115,56 @@ public class AdminCommentAdapter extends RecyclerView.Adapter<AdminCommentAdapte
             holder.rvReplies.setVisibility(View.GONE);
             replyAdapter.setReplies(new ArrayList<>());
 
-            // Chỉ những bình luận có câu trả lời thực tế mới hiển thị dòng chữ
             if (totalReplies > 0) {
                 holder.tvLoadMoreReplies.setVisibility(View.VISIBLE);
                 holder.tvLoadMoreReplies.setText("—— Xem phản hồi (" + totalReplies + ") ——");
             } else {
-                holder.tvLoadMoreReplies.setVisibility(View.GONE); // Không có phản hồi con -> Ẩn hoàn toàn nút
+                holder.tvLoadMoreReplies.setVisibility(View.GONE);
             }
         }
 
-        holder.btnReply.setOnClickListener(v -> listener.onReply(comment));
-        holder.tvLikes.setOnClickListener(v -> listener.onInteract(commentId, 1, position));
-        holder.tvDislikes.setOnClickListener(v -> listener.onInteract(commentId, -1, position));
-        holder.tvReports.setOnClickListener(v -> listener.onShowReports(commentId));
-        holder.btnDelete.setOnClickListener(v -> listener.onDelete(commentId, position));
+        int currentUserId = SharedPrefsManager.getUserId(holder.itemView.getContext());
+        int commentUserId = getSafeInt(comment.get("userId"));
 
-        // Click tải dữ liệu phân trang phản hồi thụt đầu dòng cho màn hình Admin
+        holder.layoutLike.setOnClickListener(v -> {
+            if (commentUserId == currentUserId && currentUserId != -1) {
+                return;
+            }
+            if (listener != null) listener.onInteract(commentId, 1, position);
+        });
+
+        holder.layoutDislike.setOnClickListener(v -> {
+            if (commentUserId == currentUserId && currentUserId != -1) {
+                return;
+            }
+            if (listener != null) listener.onInteract(commentId, -1, position);
+        });
+
+        holder.layoutReply.setOnClickListener(v -> {
+            if (listener != null) listener.onReply(comment);
+        });
+
+        holder.layoutReport.setOnClickListener(v -> {
+            if (listener != null) listener.onShowReports(commentId);
+        });
+
+        holder.layoutDelete.setOnClickListener(v -> {
+            if (listener != null) listener.onDelete(commentId, position);
+        });
+
         int finalTotalReplies = totalReplies;
         holder.tvLoadMoreReplies.setOnClickListener(v -> {
             List<Comment> currentList = repliesCache.get(commentId);
             if (currentList == null || currentList.isEmpty()) {
-                ApiClient.getApiService().getRepliesByParentId(commentId)
+
+                // SỬA TẠI ĐÂY: Truyền thêm tham số userId vào sau commentId để khớp định dạng của ApiService
+                ApiClient.getApiService().getRepliesByParentId(commentId, currentUserId != -1 ? currentUserId : null)
                         .enqueue(new Callback<List<Comment>>() {
                             @Override
                             public void onResponse(Call<List<Comment>> call, Response<List<Comment>> response) {
                                 if (response.isSuccessful() && response.body() != null) {
                                     List<Comment> serverReplies = response.body();
-
-                                    // Sắp xếp theo ID tăng dần để các phản hồi mới hơn nối tiếp từ trên xuống dưới (Cũ ở trên, mới ở dưới)
                                     Collections.sort(serverReplies, (c1, c2) -> Integer.compare(c1.getCommentId(), c2.getCommentId()));
-
                                     repliesCache.put(commentId, serverReplies);
                                     paginateAdminReplies(commentId, holder, replyAdapter, finalTotalReplies);
                                 }
@@ -152,6 +175,32 @@ public class AdminCommentAdapter extends RecyclerView.Adapter<AdminCommentAdapte
                 paginateAdminReplies(commentId, holder, replyAdapter, finalTotalReplies);
             }
         });
+    }
+
+    // --- HÀM HELPER: THAY ĐỔI TRẠNG THÁI TIM FILL MÀU CHO PHÍA ADMIN ---
+    private void updateAdminLikeDislikeUI(CommentViewHolder holder, Map<String, Object> comment) {
+        boolean isLiked = getSafeBoolean(comment.get("isLiked")) || getSafeBoolean(comment.get("liked"));
+        boolean isDisliked = getSafeBoolean(comment.get("isDisliked")) || getSafeBoolean(comment.get("disliked"));
+
+        if (isLiked) {
+            holder.imgLikeIcon.setImageResource(R.drawable.ic_thumb_up_filled);
+            holder.imgLikeIcon.setImageTintList(ColorStateList.valueOf(Color.parseColor("#FFB77D")));
+            holder.tvLikes.setTextColor(Color.parseColor("#FFB77D"));
+        } else {
+            holder.imgLikeIcon.setImageResource(R.drawable.ic_thumb_up_outline);
+            holder.imgLikeIcon.setImageTintList(ColorStateList.valueOf(Color.parseColor("#DBC2B0")));
+            holder.tvLikes.setTextColor(Color.parseColor("#DBC2B0"));
+        }
+
+        if (isDisliked) {
+            holder.imgDislikeIcon.setImageResource(R.drawable.ic_thumb_down_filled);
+            holder.imgDislikeIcon.setImageTintList(ColorStateList.valueOf(Color.parseColor("#E91E63")));
+            holder.tvDislikes.setTextColor(Color.parseColor("#E91E63"));
+        } else {
+            holder.imgDislikeIcon.setImageResource(R.drawable.ic_thumb_down_outline);
+            holder.imgDislikeIcon.setImageTintList(ColorStateList.valueOf(Color.parseColor("#DBC2B0")));
+            holder.tvDislikes.setTextColor(Color.parseColor("#DBC2B0"));
+        }
     }
 
     private void paginateAdminReplies(int commentId, CommentViewHolder holder, ReplyAdapter replyAdapter, int totalReplies) {
@@ -204,12 +253,19 @@ public class AdminCommentAdapter extends RecyclerView.Adapter<AdminCommentAdapte
         return 0;
     }
 
+    private boolean getSafeBoolean(Object obj) {
+        if (obj instanceof Boolean) return (Boolean) obj;
+        if (obj instanceof String) return Boolean.parseBoolean((String) obj);
+        return false;
+    }
+
     @Override
     public int getItemCount() { return commentList.size(); }
 
     static class CommentViewHolder extends RecyclerView.ViewHolder {
-        ImageView imgAvatar;
-        TextView tvUser, tvContent, tvLikes, tvDislikes, tvReports, btnReply, btnDelete, tvLoadMoreReplies;
+        ImageView imgAvatar, imgLikeIcon, imgDislikeIcon, imgReport;
+        TextView tvUser, tvContent, tvLikes, tvDislikes, tvReports, btnReply, btnDelete, tvLoadMoreReplies, tvReportText;
+        View layoutLike, layoutDislike, layoutReply, layoutReport, layoutDelete;
         RecyclerView rvReplies;
 
         public CommentViewHolder(@NonNull View itemView) {
@@ -217,13 +273,25 @@ public class AdminCommentAdapter extends RecyclerView.Adapter<AdminCommentAdapte
             imgAvatar = itemView.findViewById(R.id.imgAdminCommentAvatar);
             tvUser = itemView.findViewById(R.id.tvAdminCommentUser);
             tvContent = itemView.findViewById(R.id.tvAdminCommentContent);
+            rvReplies = itemView.findViewById(R.id.recyclerViewAdminReplies);
+            tvLoadMoreReplies = itemView.findViewById(R.id.tvAdminLoadMoreReplies);
+
+            // Ánh xạ thành công các khối Layout bọc ngoài
+            layoutLike = itemView.findViewById(R.id.layoutAdminLikeComment);
+            layoutDislike = itemView.findViewById(R.id.layoutAdminDislikeComment);
+            layoutReply = itemView.findViewById(R.id.layoutAdminReplyComment);
+            layoutReport = itemView.findViewById(R.id.layoutAdminReportComment);
+            layoutDelete = itemView.findViewById(R.id.layoutAdminDeleteComment);
+
+            // Ánh xạ các Text số lượng và Icon con bên trong để gán đổi động mượt mà
             tvLikes = itemView.findViewById(R.id.tvAdminCommentLikes);
             tvDislikes = itemView.findViewById(R.id.tvAdminCommentDislikes);
             tvReports = itemView.findViewById(R.id.tvAdminCommentReports);
             btnReply = itemView.findViewById(R.id.btnAdminCommentReply);
             btnDelete = itemView.findViewById(R.id.btnAdminCommentDelete);
-            rvReplies = itemView.findViewById(R.id.recyclerViewAdminReplies);
-            tvLoadMoreReplies = itemView.findViewById(R.id.tvAdminLoadMoreReplies);
+
+            imgLikeIcon = itemView.findViewById(R.id.imgAdminLikeIcon);
+            imgDislikeIcon = itemView.findViewById(R.id.imgAdminDislikeIcon);
         }
     }
 }

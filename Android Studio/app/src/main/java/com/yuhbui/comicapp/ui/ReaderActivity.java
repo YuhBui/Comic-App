@@ -1,19 +1,26 @@
 package com.yuhbui.comicapp.ui;
 
 import android.content.Intent;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.Spinner;
+import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.GravityCompat;
+import androidx.core.widget.NestedScrollView;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -48,18 +55,29 @@ public class ReaderActivity extends AppCompatActivity {
     private RecyclerView recyclerViewImages;
     private ImageAdapter imageAdapter;
 
-    // Khai báo các biến cho phần bình luận
+    // Khai báo các biến cho phần bình luận theo ID mới
     private RecyclerView recyclerViewComments;
     private CommentAdapter commentAdapter;
     private EditText edtCommentInput;
     private Button btnSendComment;
 
-    // --- CÁC BIẾN ĐIỀU HƯỚNG CHUYỂN CHƯƠNG MỚI TÍCH HỢP ---
-    private Button btnPrevChapter, btnNextChapter;
-    private Spinner spinnerChapters;
+    // --- CÁC BIẾN ĐIỀU HƯỚNG CHUYỂN CHƯƠNG MỚI THEO KHUNG ĐÔI ICON (FOOTER) ---
+    private LinearLayout layoutReaderFooter;
+    private ImageButton btnPrevChapter, btnNextChapter;
+    private TextView tvChapterSelector;
     private List<Chapter> allChaptersInComic = new ArrayList<>();
     private int currentChapterIndex = -1;
-    private boolean isSpinnerFirstInit = true;
+
+    // --- CÁC BIẾN ĐIỀU HƯỚNG CỐ ĐỊNH (INLINE GIỮA TRUYỆN VÀ COMMENT) ---
+    private LinearLayout layoutReaderInlineNav;
+    private ImageButton btnInlinePrevChapter, btnInlineNextChapter;
+    private TextView tvInlineChapterSelector;
+    private RecyclerView rvInlineChaptersDropdown;
+    private NestedScrollView scrollReaderContainer;
+
+    // --- ĐÃ BỔ SUNG: CÁC BIẾN TOÀN CỤC ĐIỀU KHIỂN POPUP DANH SÁCH CHƯƠNG FOOTER NỔI NGƯỢC ---
+    private View cvFooterChaptersPopup;
+    private RecyclerView rvFooterChaptersPopup;
 
     private int currentChapterId = -1;
     private int currentComicId = -1;
@@ -67,13 +85,15 @@ public class ReaderActivity extends AppCompatActivity {
 
     // --- BIẾN PHỤC VỤ CHẾ ĐỘ OFFLINE ---
     private boolean isOfflineMode = false;
-    private LinearLayout layoutCommentContainerReader;
-    private Button btnDeleteChapterReader;
+    private LinearLayout layoutChapterCommentsMainBox;
+    private View cardFabDownload;
+    private ImageView btnFabDownloadChapter;
     private final ExecutorService databaseExecutor = Executors.newSingleThreadExecutor();
 
     // --- KHAI BÁO CÁC THÀNH PHẦN CỦA HEADER DÙNG CHUNG ---
     private View layoutHeader;
     private TextView headerLogo;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -97,6 +117,10 @@ public class ReaderActivity extends AppCompatActivity {
             public void handleOnBackPressed() {
                 if (drawerLayout != null && drawerLayout.isDrawerOpen(GravityCompat.START)) {
                     drawerLayout.closeDrawer(GravityCompat.START);
+                } else if (cvFooterChaptersPopup != null && cvFooterChaptersPopup.getVisibility() == View.VISIBLE) {
+                    cvFooterChaptersPopup.setVisibility(View.GONE);
+                } else if (rvInlineChaptersDropdown != null && rvInlineChaptersDropdown.getVisibility() == View.VISIBLE) {
+                    rvInlineChaptersDropdown.setVisibility(View.GONE);
                 } else {
                     setEnabled(false);
                     getOnBackPressedDispatcher().onBackPressed();
@@ -105,8 +129,8 @@ public class ReaderActivity extends AppCompatActivity {
             }
         });
 
-        // 1. Ánh xạ phần đọc ảnh truyện
-        recyclerViewImages = findViewById(R.id.recyclerViewImages);
+        // 1. Ánh xạ phần đọc ảnh truyện theo ID mới: recyclerViewReaderPages
+        recyclerViewImages = findViewById(R.id.recyclerViewReaderPages);
         recyclerViewImages.setLayoutManager(new LinearLayoutManager(this));
         recyclerViewImages.setHasFixedSize(false);
         recyclerViewImages.setItemViewCacheSize(30);
@@ -115,20 +139,42 @@ public class ReaderActivity extends AppCompatActivity {
         imageAdapter = new ImageAdapter();
         recyclerViewImages.setAdapter(imageAdapter);
 
-        // 2. Ánh xạ phần bình luận và nút offline bổ sung
-        recyclerViewComments = findViewById(R.id.recyclerViewCommentsReader);
-        edtCommentInput = findViewById(R.id.edtCommentInputReader);
-        btnSendComment = findViewById(R.id.btnSendCommentReader);
-        layoutCommentContainerReader = findViewById(R.id.layoutCommentContainerReader);
-        btnDeleteChapterReader = findViewById(R.id.btnDeleteChapterReader);
+        // 2. Ánh xạ phần bình luận và các nút chức năng theo ID thiết kế mới
+        recyclerViewComments = findViewById(R.id.recyclerViewChapterComments);
+        edtCommentInput = findViewById(R.id.edtChapterCommentInput);
+        btnSendComment = findViewById(R.id.btnChapterSendComment);
+        layoutChapterCommentsMainBox = findViewById(R.id.layoutChapterCommentsMainBox);
 
         recyclerViewComments.setLayoutManager(new LinearLayoutManager(this));
         commentAdapter = new CommentAdapter();
         recyclerViewComments.setAdapter(commentAdapter);
 
+        // Ánh xạ cụm điều hướng Footer nổi dưới đáy
+        layoutReaderFooter = findViewById(R.id.layoutReaderFooter);
         btnPrevChapter = findViewById(R.id.btnPrevChapter);
         btnNextChapter = findViewById(R.id.btnNextChapter);
-        spinnerChapters = findViewById(R.id.spinnerChapters);
+        tvChapterSelector = findViewById(R.id.tvChapterSelector);
+
+        // Ánh xạ cụm điều hướng Cố định (Inline Nav) mới tinh
+        scrollReaderContainer = findViewById(R.id.scrollReaderContainer);
+        layoutReaderInlineNav = findViewById(R.id.layoutReaderInlineNav);
+        btnInlinePrevChapter = findViewById(R.id.btnInlinePrevChapter);
+        btnInlineNextChapter = findViewById(R.id.btnInlineNextChapter);
+        tvInlineChapterSelector = findViewById(R.id.tvInlineChapterSelector);
+        rvInlineChaptersDropdown = findViewById(R.id.rvInlineChaptersDropdown);
+
+        rvInlineChaptersDropdown.setLayoutManager(new LinearLayoutManager(this));
+
+        // Ánh xạ cụm nút FAB ô vuông di động nổi
+        cardFabDownload = findViewById(R.id.cardFabDownload);
+        btnFabDownloadChapter = findViewById(R.id.btnFabDownloadChapter);
+
+        // --- ĐÃ BỔ SUNG: ÁNH XẠ KHUNG CHỨA DANH SÁCH CHƯƠNG NỔI LÊN TRÊN CỦA FOOTER ---
+        cvFooterChaptersPopup = findViewById(R.id.cvFooterChaptersPopup);
+        rvFooterChaptersPopup = findViewById(R.id.rvFooterChaptersPopup);
+        if (rvFooterChaptersPopup != null) {
+            rvFooterChaptersPopup.setLayoutManager(new LinearLayoutManager(this));
+        }
 
         // Lấy dữ liệu Intent truyền từ màn hình chi tiết sang
         currentChapterId = getIntent().getIntExtra("CHAPTER_ID", -1);
@@ -137,17 +183,55 @@ public class ReaderActivity extends AppCompatActivity {
 
         // THIẾT LẬP TRẠNG THÁI GIAO DIỆN PHÂN TÁCH OFFLINE
         if (isOfflineMode) {
-            layoutCommentContainerReader.setVisibility(View.GONE); // Ẩn hoàn toàn khối comment theo ý bạn
-            btnDeleteChapterReader.setVisibility(View.VISIBLE);    // Hiện nút xóa chương nhanh
+            if (layoutChapterCommentsMainBox != null) {
+                layoutChapterCommentsMainBox.setVisibility(View.GONE); // Ẩn khối comment offline
+            }
+            if (layoutReaderInlineNav != null) {
+                layoutReaderInlineNav.setVisibility(View.GONE); // Ẩn luôn cụm inline khi offline cho tối giản
+            }
 
-            btnDeleteChapterReader.setOnClickListener(v -> {
-                new androidx.appcompat.app.AlertDialog.Builder(ReaderActivity.this)
+            // Biến đổi nút FAB thành tính năng Xóa chương truyện khi đang offline
+            if (cardFabDownload != null) {
+                cardFabDownload.setVisibility(View.VISIBLE);
+            }
+            if (btnFabDownloadChapter != null) {
+                btnFabDownloadChapter.setImageResource(android.R.drawable.ic_menu_delete);
+                btnFabDownloadChapter.setImageTintList(ColorStateList.valueOf(Color.parseColor("#E74C3C")));
+                btnFabDownloadChapter.setOnClickListener(v -> new androidx.appcompat.app.AlertDialog.Builder(ReaderActivity.this)
                         .setTitle("Xóa chương truyện")
                         .setMessage("Bạn có muốn xóa chương đang đọc này khỏi máy không?")
                         .setPositiveButton("Xóa", (dialog, which) -> deleteCurrentChapterOffline())
                         .setNegativeButton("Hủy", null)
-                        .show();
-            });
+                        .show());
+            }
+        } else {
+            // Chế độ Online: Gắn sự kiện click tải chương cho nút FAB ô vuông
+            if (cardFabDownload != null) {
+                cardFabDownload.setVisibility(View.VISIBLE);
+            }
+            if (btnFabDownloadChapter != null) {
+                btnFabDownloadChapter.setOnClickListener(v -> downloadCurrentChapterViaReader());
+            }
+
+            // LOGIC LẮNG NGHE CUỘN MÀN HÌNH ĐỂ ẨN/HIỆN FOOTER THÔNG MINH
+            if (scrollReaderContainer != null && layoutReaderInlineNav != null) {
+                scrollReaderContainer.setOnScrollChangeListener((NestedScrollView.OnScrollChangeListener) (v, scrollX, scrollY, oldScrollX, oldScrollY) -> {
+                    int[] location = new int[2];
+                    layoutReaderInlineNav.getLocationOnScreen(location);
+                    int inlineNavY = location[1];
+                    int screenHeight = v.getContext().getResources().getDisplayMetrics().heightPixels;
+
+                    // Nếu thanh Inline Nav đã lọt vào màn hình -> Ẩn thanh Footer dưới đáy và gập luôn popup nổi lên trên
+                    if (inlineNavY < screenHeight - 50) {
+                        layoutReaderFooter.setVisibility(View.GONE);
+                        if (cvFooterChaptersPopup != null) {
+                            cvFooterChaptersPopup.setVisibility(View.GONE);
+                        }
+                    } else {
+                        layoutReaderFooter.setVisibility(View.VISIBLE);
+                    }
+                });
+            }
         }
 
         // Tải nội dung ảnh chương truyện
@@ -155,7 +239,7 @@ public class ReaderActivity extends AppCompatActivity {
             loadChapterContent(currentChapterId);
         }
 
-        // Tải danh sách chương gán vào thanh chọn dropdown (Spinner)
+        // Tải danh sách chương gán vào thanh chọn điều hướng
         if (currentComicId != -1) {
             if (isOfflineMode) {
                 loadOfflineChaptersNavigation();
@@ -164,48 +248,40 @@ public class ReaderActivity extends AppCompatActivity {
             }
         }
 
-        btnPrevChapter.setOnClickListener(v -> {
+        // Thiết lập sự kiện click cho các cụm nút bấm chuyển chương (Đồng bộ lẫn nhau)
+        View.OnClickListener prevClick = v -> {
             if (currentChapterIndex < allChaptersInComic.size() - 1) {
                 navigateToChapter(currentChapterIndex + 1);
             }
-        });
+        };
+        btnPrevChapter.setOnClickListener(prevClick);
+        btnInlinePrevChapter.setOnClickListener(prevClick);
 
-        btnNextChapter.setOnClickListener(v -> {
+        View.OnClickListener nextClick = v -> {
             if (currentChapterIndex > 0) {
                 navigateToChapter(currentChapterIndex - 1);
             }
-        });
+        };
+        btnNextChapter.setOnClickListener(nextClick);
+        btnInlineNextChapter.setOnClickListener(nextClick);
 
         commentAdapter.setOnCommentClickListener(new CommentAdapter.OnCommentClickListener() {
             @Override
             public void onReplyClick(Comment parentComment) {
                 targetParentCommentId = parentComment.getCommentId();
-                if (parentComment.getParentCommentId() == null && parentComment.getUserId() != 0) {
-                    String tagText = "@Thành viên #" + parentComment.getUserId() + " ";
+                if (parentComment.getUserDisplayName() != null && !parentComment.getUserDisplayName().isEmpty()) {
+                    String tagText = "@" + parentComment.getUserDisplayName() + " ";
                     edtCommentInput.setText(tagText);
                     edtCommentInput.setSelection(tagText.length());
                     edtCommentInput.setHint("Đang trả lời...");
                 } else {
-                    edtCommentInput.setHint("Trả lời bình luận của #" + parentComment.getUserId() + ":");
+                    edtCommentInput.setHint("Trả lời bình luận...");
                 }
                 edtCommentInput.requestFocus();
             }
         });
 
         btnSendComment.setOnClickListener(v -> sendCommentToServer());
-
-        // CẤU HÌNH: Xử lý nút Tải xuống hình vuông cố định ở góc (Floating Button)
-        android.widget.ImageButton btnFloatingDownloadReader = findViewById(R.id.btnFloatingDownloadReader);
-        if (isOfflineMode) {
-            if (btnFloatingDownloadReader != null) {
-                btnFloatingDownloadReader.setVisibility(View.GONE); // Đang offline ẩn nút tải đi
-            }
-        } else {
-            if (btnFloatingDownloadReader != null) {
-                btnFloatingDownloadReader.setVisibility(View.VISIBLE);
-                btnFloatingDownloadReader.setOnClickListener(v -> downloadCurrentChapterViaReader());
-            }
-        }
     }
 
     @Override
@@ -228,18 +304,15 @@ public class ReaderActivity extends AppCompatActivity {
                 saveHistoryToServer(userId, currentComicId, chapterId);
             }
 
-            // CHÈN THÊM ĐOẠN NÀY: Kiểm tra xem chương này đã tải chưa để ẩn/hiện nút tải nổi
-            View btnFloatingDownload = findViewById(R.id.btnFloatingDownloadReader);
-            if (btnFloatingDownload != null) {
+            if (cardFabDownload != null) {
                 databaseExecutor.execute(() -> {
                     AppDatabase db = AppDatabase.getInstance(this);
-                    // Truy vấn kiểm tra bản ghi chương trong Room DB
                     DownloadedChapter localChapter = db.offlineDao().getChapterById(chapterId);
                     runOnUiThread(() -> {
                         if (localChapter != null) {
-                            btnFloatingDownload.setVisibility(View.GONE);  // Đã tải -> Ẩn nút
+                            cardFabDownload.setVisibility(View.GONE);
                         } else {
-                            btnFloatingDownload.setVisibility(View.VISIBLE); // Chưa tải -> Hiện nút
+                            cardFabDownload.setVisibility(View.VISIBLE);
                         }
                     });
                 });
@@ -260,7 +333,7 @@ public class ReaderActivity extends AppCompatActivity {
 
             for (DownloadedImage localImg : localImages) {
                 ChapterImage img = new ChapterImage();
-                img.setImageUrl(localImg.getLocalFilePath()); // Gán đường dẫn local vào url để adapter xử lý
+                img.setImageUrl(localImg.getLocalFilePath());
                 mappedList.add(img);
             }
 
@@ -284,44 +357,74 @@ public class ReaderActivity extends AppCompatActivity {
             }
 
             allChaptersInComic = mappedChapters;
-            setupSpinnerNavigation();
+            setupChapterSelectorNavigation();
         });
     }
 
-    private void setupSpinnerNavigation() {
+    private void setupChapterSelectorNavigation() {
         runOnUiThread(() -> {
-            List<String> spinnerItems = new ArrayList<>();
+            if (allChaptersInComic == null || allChaptersInComic.isEmpty()) return;
+
             for (int i = 0; i < allChaptersInComic.size(); i++) {
-                Chapter ch = allChaptersInComic.get(i);
-                spinnerItems.add("Chương " + ch.getChapterNumber() + (ch.getTitle() != null ? ": " + ch.getTitle() : ""));
-                if (ch.getChapterId() == currentChapterId) {
+                if (allChaptersInComic.get(i).getChapterId() == currentChapterId) {
                     currentChapterIndex = i;
+                    break;
                 }
             }
 
-            ArrayAdapter<String> adapter = new ArrayAdapter<>(ReaderActivity.this,
-                    android.R.layout.simple_spinner_item, spinnerItems);
-            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-            spinnerChapters.setAdapter(adapter);
-
             if (currentChapterIndex != -1) {
-                isSpinnerFirstInit = true;
-                spinnerChapters.setSelection(currentChapterIndex);
+                Chapter currentCh = allChaptersInComic.get(currentChapterIndex);
+                String chText = "Chương " + currentCh.getChapterNumber();
+                tvChapterSelector.setText(chText);
+                tvInlineChapterSelector.setText(chText);
                 updateButtonNavigationUI();
             }
 
-            spinnerChapters.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            // =========================================================================
+            // 🛠️ ĐÃ NÂNG CẤP: SỬ DỤNG POPUPWINDOW ĐỂ BIẾN THÀNH Ô BỌC NỔI DROPDOWN CHUẨN FIGMA
+            // =========================================================================
+            View.OnClickListener showDropdownMenuAction = new View.OnClickListener() {
                 @Override
-                public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                    if (isSpinnerFirstInit) {
-                        isSpinnerFirstInit = false;
-                        return;
+                public void onClick(View v) {
+                    // Khởi tạo giao diện ô bọc menu từ file XML mới tạo
+                    View popupView = LayoutInflater.from(ReaderActivity.this).inflate(R.layout.layout_chapter_dropdown, null);
+                    RecyclerView rvDropdownChapters = popupView.findViewById(R.id.rvDropdownChapters);
+                    rvDropdownChapters.setLayoutManager(new LinearLayoutManager(ReaderActivity.this));
+
+                    // Đo kích thước thực tế của CardView bọc danh sách
+                    popupView.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
+                    int popupWidth = v.getWidth(); // Cho chiều rộng khớp hoàn toàn với độ dài nút bấm
+                    int popupHeight = (int) (280 * getResources().getDisplayMetrics().density); // Khóa cứng chiều cao tối đa 280dp chống tràn màn hình
+
+                    // Thiết lập cửa sổ nổi đè lên trên layer giao diện chính
+                    final PopupWindow popupWindow = new PopupWindow(popupView, popupWidth, popupHeight, true);
+
+                    // Cơ chế chạm vùng trống bên ngoài tự đóng (Bỏ hoàn toàn nút Hủy rườm rà)
+                    popupWindow.setOutsideTouchable(true);
+                    popupWindow.setFocusable(true);
+                    popupWindow.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(Color.TRANSPARENT));
+
+                    // Thiết lập dữ liệu và bắt sự kiện click chuyển chương
+                    InlineChapterDropdownAdapter dropdownAdapter = new InlineChapterDropdownAdapter(allChaptersInComic, currentChapterIndex, index -> {
+                        navigateToChapter(index);
+                        popupWindow.dismiss(); // Tự gập menu lại ngay khi chọn chương thành công
+                    });
+                    rvDropdownChapters.setAdapter(dropdownAdapter);
+
+                    // TOÁN TỬ ĐỊNH VỊ HƯỚNG HIỂN THỊ THÔNG MINH CHO TỪNG DẠNG NÚT
+                    if (v.getId() == R.id.tvChapterSelector) {
+                        // 1. ĐỐI VỚI FOOTER: Ép tọa độ Y nhảy ngược lên PHÍA TRÊN thanh Footer điều hướng
+                        popupWindow.showAsDropDown(v, 0, -(popupHeight + v.getHeight() + 8)); // Lệch lên cách 8px cho thoáng
+                    } else if (v.getId() == R.id.tvInlineChapterSelector) {
+                        // 2. ĐỐI VỚI CỐ ĐỊNH (INLINE): Thả trôi tự nhiên ngay PHÍA DƯỚI nút bấm (Vẽ đè lên, KHÔNG đẩy dịch bình luận)
+                        popupWindow.showAsDropDown(v, 0, 4);
                     }
-                    navigateToChapter(position);
                 }
-                @Override
-                public void onNothingSelected(AdapterView<?> parent) {}
-            });
+            };
+
+            // Gán đồng bộ hành động mở Dropdown Card cho cả 2 view điều hướng
+            tvChapterSelector.setOnClickListener(showDropdownMenuAction);
+            tvInlineChapterSelector.setOnClickListener(showDropdownMenuAction);
         });
     }
 
@@ -330,7 +433,6 @@ public class ReaderActivity extends AppCompatActivity {
             try {
                 AppDatabase db = AppDatabase.getInstance(this);
 
-                // 1. Xóa file vật lý trong máy
                 File chapterDirectory = new File(getFilesDir(), "truyen_downloads/comic_" + currentComicId + "/chapter_" + currentChapterId);
                 if (chapterDirectory.exists() && chapterDirectory.isDirectory()) {
                     File[] images = chapterDirectory.listFiles();
@@ -340,11 +442,9 @@ public class ReaderActivity extends AppCompatActivity {
                     chapterDirectory.delete();
                 }
 
-                // 2. Xóa bản ghi trong Room DB
                 db.offlineDao().deleteChapterById(currentChapterId);
                 db.offlineDao().deleteImagesByChapter(currentChapterId);
 
-                // 3. Đếm xem truyện còn chương nào không
                 int countLeft = db.offlineDao().getChapterCountByComic(currentComicId);
                 if (countLeft == 0) {
                     DownloadedComic targetComic = db.offlineDao().getComicById(currentComicId);
@@ -374,18 +474,15 @@ public class ReaderActivity extends AppCompatActivity {
         });
     }
 
-    // THÊM MỚI: Luồng xử lý tải chương truyện trực tiếp từ màn hình đọc
     private void downloadCurrentChapterViaReader() {
         runOnUiThread(() -> Toast.makeText(this, "Đang tải xuống chương hiện tại...", Toast.LENGTH_SHORT).show());
         databaseExecutor.execute(() -> {
             try {
                 AppDatabase db = AppDatabase.getInstance(this);
-                View btnFloatingDownload = findViewById(R.id.btnFloatingDownloadReader);
-                if (btnFloatingDownload != null) {
-                    btnFloatingDownload.setVisibility(View.GONE);
+                if (cardFabDownload != null) {
+                    cardFabDownload.setVisibility(View.GONE);
                 }
 
-                // 1. Đồng bộ thông tin bộ truyện cốt lõi nếu chưa tồn tại ở local
                 if (db.offlineDao().getComicById(currentComicId) == null) {
                     Response<com.yuhbui.comicapp.data.model.ComicDetailResponse> response =
                             ApiClient.getApiService().getComicDetail(currentComicId, null).execute();
@@ -403,7 +500,6 @@ public class ReaderActivity extends AppCompatActivity {
                     }
                 }
 
-                // 2. Định dạng tìm kiếm đối tượng chương hiện tại để lấy thông tin text
                 Chapter currentCh = null;
                 if (currentChapterIndex >= 0 && currentChapterIndex < allChaptersInComic.size()) {
                     currentCh = allChaptersInComic.get(currentChapterIndex);
@@ -416,11 +512,13 @@ public class ReaderActivity extends AppCompatActivity {
                     }
                 }
                 if (currentCh == null) {
-                    runOnUiThread(() -> Toast.makeText(this, "Chưa tải xong danh sách chương từ máy chủ!", Toast.LENGTH_SHORT).show());
+                    runOnUiThread(() -> {
+                        Toast.makeText(this, "Chưa tải xong danh sách chương!", Toast.LENGTH_SHORT).show();
+                        if (cardFabDownload != null) cardFabDownload.setVisibility(View.VISIBLE);
+                    });
                     return;
                 }
 
-                // 3. Tải danh sách ảnh trang truyện về bộ nhớ máy
                 Response<List<ChapterImage>> imgResponse = ApiClient.getApiService().getImagesByChapterId(currentChapterId).execute();
                 if (imgResponse.isSuccessful() && imgResponse.body() != null) {
                     List<DownloadedImage> localImagesList = new ArrayList<>();
@@ -446,14 +544,21 @@ public class ReaderActivity extends AppCompatActivity {
                     db.offlineDao().insertChapter(dCh);
                     db.offlineDao().insertImages(localImagesList);
                     runOnUiThread(() -> Toast.makeText(this, "Đã tải chương offline thành công!", Toast.LENGTH_SHORT).show());
+                } else {
+                    runOnUiThread(() -> {
+                        if (cardFabDownload != null) cardFabDownload.setVisibility(View.VISIBLE);
+                    });
                 }
             } catch (Exception e) {
                 e.printStackTrace();
+                runOnUiThread(() -> {
+                    if (cardFabDownload != null) cardFabDownload.setVisibility(View.VISIBLE);
+                });
             }
         });
     }
 
-    // ========== LUỒNG XỬ LÝ MẠNG ONLINE CŨ GIỮ NGUYÊN ==========
+    // ========== LUỒNG XỬ LÝ MẠNG ONLINE ==========
 
     private void loadAllChaptersNavigation(int comicId) {
         ApiClient.getApiService().getChaptersByComicId(comicId).enqueue(new Callback<List<Chapter>>() {
@@ -461,7 +566,7 @@ public class ReaderActivity extends AppCompatActivity {
             public void onResponse(Call<List<Chapter>> call, Response<List<Chapter>> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     allChaptersInComic = response.body();
-                    setupSpinnerNavigation();
+                    setupChapterSelectorNavigation();
                 }
             }
             @Override
@@ -479,27 +584,37 @@ public class ReaderActivity extends AppCompatActivity {
 
             loadChapterContent(currentChapterId);
 
-            isSpinnerFirstInit = true;
-            spinnerChapters.setSelection(currentChapterIndex);
+            Chapter currentCh = allChaptersInComic.get(currentChapterIndex);
+            String chText = "Chương " + currentCh.getChapterNumber();
+            tvChapterSelector.setText(chText);
+            tvInlineChapterSelector.setText(chText);
             updateButtonNavigationUI();
+
+            // Tự động gập ẩn danh sách chương ở cả 2 phân hệ sau khi chuyển chương thành công
+            if (rvInlineChaptersDropdown != null) {
+                rvInlineChaptersDropdown.setVisibility(View.GONE);
+            }
+            if (cvFooterChaptersPopup != null) {
+                cvFooterChaptersPopup.setVisibility(View.GONE);
+            }
         }
     }
 
     private void updateButtonNavigationUI() {
-        if (currentChapterIndex >= allChaptersInComic.size() - 1) {
-            btnPrevChapter.setEnabled(false);
-            btnPrevChapter.setAlpha(0.4f);
-        } else {
-            btnPrevChapter.setEnabled(true);
-            btnPrevChapter.setAlpha(1.0f);
+        boolean hasPrev = currentChapterIndex < allChaptersInComic.size() - 1;
+        btnPrevChapter.setEnabled(hasPrev);
+        btnPrevChapter.setAlpha(hasPrev ? 1.0f : 0.4f);
+        if (btnInlinePrevChapter != null) {
+            btnInlinePrevChapter.setEnabled(hasPrev);
+            btnInlinePrevChapter.setAlpha(hasPrev ? 1.0f : 0.4f);
         }
 
-        if (currentChapterIndex <= 0) {
-            btnNextChapter.setEnabled(false);
-            btnNextChapter.setAlpha(0.4f);
-        } else {
-            btnNextChapter.setEnabled(true);
-            btnNextChapter.setAlpha(1.0f);
+        boolean hasNext = currentChapterIndex > 0;
+        btnNextChapter.setEnabled(hasNext);
+        btnNextChapter.setAlpha(hasNext ? 1.0f : 0.4f);
+        if (btnInlineNextChapter != null) {
+            btnInlineNextChapter.setEnabled(hasNext);
+            btnInlineNextChapter.setAlpha(hasNext ? 1.0f : 0.4f);
         }
     }
 
@@ -554,7 +669,7 @@ public class ReaderActivity extends AppCompatActivity {
             public void onResponse(Call<Comment> call, Response<Comment> response) {
                 if (response.isSuccessful()) {
                     edtCommentInput.setText("");
-                    edtCommentInput.setHint("Chia sẻ cảm xúc về chương này...");
+                    edtCommentInput.setHint("Viết bình luận...");
                     if (targetParentCommentId != null) {
                         commentAdapter.resetRepliesCache(targetParentCommentId);
                     }
@@ -578,5 +693,63 @@ public class ReaderActivity extends AppCompatActivity {
             @Override public void onResponse(Call<com.yuhbui.comicapp.data.model.ReadingHistory> call, Response<com.yuhbui.comicapp.data.model.ReadingHistory> response) {}
             @Override public void onFailure(Call<com.yuhbui.comicapp.data.model.ReadingHistory> call, Throwable t) {}
         });
+    }
+
+    // =========================================================================
+    // ⚙️ LỚP ADAPTER NỘI BỘ: Quản lý danh sách thả xuống mượt mà hợp tone Manga Noir
+    // =========================================================================
+    private static class InlineChapterDropdownAdapter extends RecyclerView.Adapter<InlineChapterDropdownAdapter.ViewHolder> {
+        private final List<Chapter> chapters;
+        private final int selectedIndex;
+        private final OnItemClickListener listener;
+
+        interface OnItemClickListener {
+            void onItemClick(int index);
+        }
+
+        InlineChapterDropdownAdapter(List<Chapter> chapters, int selectedIndex, OnItemClickListener listener) {
+            this.chapters = chapters;
+            this.selectedIndex = selectedIndex;
+            this.listener = listener;
+        }
+
+        @NonNull
+        @Override
+        public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            View view = LayoutInflater.from(parent.getContext()).inflate(android.R.layout.simple_list_item_1, parent, false);
+            return new ViewHolder(view);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+            Chapter ch = chapters.get(position);
+            String titleText = "Chương " + ch.getChapterNumber() + (ch.getTitle() != null && !ch.getTitle().isEmpty() ? ": " + ch.getTitle() : "");
+            holder.textView.setText(titleText);
+
+            holder.textView.setTextSize(14);
+            holder.itemView.setPadding(32, 24, 32, 24);
+
+            if (position == selectedIndex) {
+                holder.textView.setTextColor(Color.parseColor("#FFB77D"));
+                holder.textView.setTypeface(null, android.graphics.Typeface.BOLD);
+            } else {
+                holder.textView.setTextColor(Color.parseColor("#DBC2B0"));
+            }
+
+            holder.itemView.setOnClickListener(v -> listener.onItemClick(position));
+        }
+
+        @Override
+        public int getItemCount() {
+            return chapters != null ? chapters.size() : 0;
+        }
+
+        static class ViewHolder extends RecyclerView.ViewHolder {
+            TextView textView;
+            ViewHolder(@NonNull View itemView) {
+                super(itemView);
+                textView = itemView.findViewById(android.R.id.text1);
+            }
+        }
     }
 }

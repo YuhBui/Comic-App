@@ -203,6 +203,8 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         loadHeaderAvatar();
         loadUnreadNotificationCount();
+
+        loadAllData();
     }
 
     private void loadUnreadNotificationCount() {
@@ -293,7 +295,7 @@ public class MainActivity extends AppCompatActivity {
             startActivity(new Intent(MainActivity.this, HistoryActivity.class));
         });
 
-        findViewById(R.id.menuFollow).setOnClickListener(v -> {
+        findViewById(R.id.menuFavorites).setOnClickListener(v -> {
             drawerLayout.closeDrawer(GravityCompat.START);
             startActivity(new Intent(MainActivity.this, FollowActivity.class));
         });
@@ -607,7 +609,10 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        ApiClient.getApiService().filterComicsByCategories(selectedCategoryIds, page).enqueue(new Callback<List<Comic>>() {
+        int userId = SharedPrefsManager.getUserId(this);
+        Integer apiUserId = (userId != -1) ? userId : null;
+
+        ApiClient.getApiService().filterComicsByCategories(selectedCategoryIds, page, apiUserId).enqueue(new Callback<List<Comic>>() {
             @Override
             public void onResponse(Call<List<Comic>> call, Response<List<Comic>> response) {
                 if (response.isSuccessful() && response.body() != null) {
@@ -622,6 +627,7 @@ public class MainActivity extends AppCompatActivity {
                     updatePageNumbers(page, totalPages);
                 }
             }
+
             @Override
             public void onFailure(Call<List<Comic>> call, Throwable t) {
                 Log.e("YUH_TEST", "Lỗi lọc đa thể loại User: " + t.getMessage());
@@ -699,7 +705,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void loadRecommendedComics() {
-        ApiClient.getApiService().getRecommendedComics().enqueue(new Callback<List<Comic>>() {
+        int userId = SharedPrefsManager.getUserId(this);
+        Integer apiUserId = (userId != -1) ? userId : null;
+
+        ApiClient.getApiService().getRecommendedComics(apiUserId).enqueue(new Callback<List<Comic>>() {
             @Override
             public void onResponse(Call<List<Comic>> call, Response<List<Comic>> response) {
                 if (response.isSuccessful() && response.body() != null) {
@@ -715,7 +724,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void loadNewUpdatesComics(int page) {
-        ApiClient.getApiService().getHomeUpdates(page).enqueue(new Callback<List<Comic>>() {
+        int userId = SharedPrefsManager.getUserId(this);
+        Integer apiUserId = (userId != -1) ? userId : null;
+
+        ApiClient.getApiService().getHomeUpdates(page, apiUserId).enqueue(new Callback<List<Comic>>() {
             @Override
             public void onResponse(Call<List<Comic>> call, Response<List<Comic>> response) {
                 if (response.isSuccessful() && response.body() != null) {
@@ -738,7 +750,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void loadRankingData(String type) {
-        ApiClient.getApiService().getTopRanking(type).enqueue(new Callback<List<Comic>>() {
+        int userId = SharedPrefsManager.getUserId(this);
+        Integer apiUserId = (userId != -1) ? userId : null;
+
+        ApiClient.getApiService().getTopRanking(type, apiUserId).enqueue(new Callback<List<Comic>>() {
             @Override
             public void onResponse(Call<List<Comic>> call, Response<List<Comic>> response) {
                 if (response.isSuccessful() && response.body() != null) {
@@ -814,7 +829,6 @@ public class MainActivity extends AppCompatActivity {
         return Math.round(dp * density);
     }
 
-    // THAY THẾ TOÀN BỘ HÀM isNetworkAvailable() CŨ BẰNG HÀM NÀY
     private boolean isNetworkAvailable() {
         android.net.ConnectivityManager connectivityManager = (android.net.ConnectivityManager) getSystemService(android.content.Context.CONNECTIVITY_SERVICE);
         if (connectivityManager != null) {

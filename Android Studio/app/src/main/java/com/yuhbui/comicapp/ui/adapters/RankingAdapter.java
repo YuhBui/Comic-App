@@ -1,6 +1,8 @@
 package com.yuhbui.comicapp.ui.adapters;
 
 import android.content.Intent;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,26 +14,20 @@ import com.bumptech.glide.Glide;
 import com.yuhbui.comicapp.R;
 import com.yuhbui.comicapp.data.model.Comic;
 import com.yuhbui.comicapp.ui.ComicDetailActivity;
-import com.yuhbui.comicapp.ui.admin.AdminComicDetailActivity; // THÊM IMPORT NÀY
+import com.yuhbui.comicapp.ui.admin.AdminComicDetailActivity;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Adapter cho danh sách Bảng Xếp Hạng Top 10
- * Mỗi item hiển thị: Số thứ hạng | Ảnh bìa | Tiêu đề + Chương + Stats
- */
 public class RankingAdapter extends RecyclerView.Adapter<RankingAdapter.RankViewHolder> {
 
     private List<Comic> comicList = new ArrayList<>();
-    private boolean isAdmin = false; // THÊM biến nhận diện quyền truy cập
+    private boolean isAdmin = false;
 
-    // Constructor mặc định không tham số dành cho phía User đọc truyện công cộng
     public RankingAdapter() {
         this.isAdmin = false;
     }
 
-    // ĐÃ THÊM: Constructor tùy chọn dành riêng cho Dashboard Quản trị viên
     public RankingAdapter(boolean isAdmin) {
         this.isAdmin = isAdmin;
     }
@@ -53,10 +49,8 @@ public class RankingAdapter extends RecyclerView.Adapter<RankingAdapter.RankView
     public void onBindViewHolder(@NonNull RankViewHolder holder, int position) {
         Comic comic = comicList.get(position);
 
-        // Số thứ hạng (1-indexed)
         holder.tvRankNumber.setText(String.valueOf(position + 1));
 
-        // Đổi màu badge cho top 3
         if (position == 0) {
             holder.tvRankNumber.setBackgroundResource(R.drawable.bg_rank_badge_gold);
         } else if (position == 1) {
@@ -67,33 +61,38 @@ public class RankingAdapter extends RecyclerView.Adapter<RankingAdapter.RankView
             holder.tvRankNumber.setBackgroundResource(R.drawable.bg_rank_badge);
         }
 
-        // Tiêu đề và chương mới
         holder.tvTitle.setText(comic.getTitle());
         String chapter = comic.getLatestChapterNumber() != null
                 ? "Chương " + comic.getLatestChapterNumber()
                 : "Chương -";
         holder.tvLatestChapter.setText(chapter);
 
-        // Thống kê
-        holder.tvViews.setText("👁 " + formatNumber(comic.getViewCount()));
-        holder.tvLikes.setText("❤ " + formatNumber(comic.getFollowCount()));
-        holder.tvComments.setText("💬 " + formatNumber(comic.getCommentCount()));
+        holder.tvViews.setText(formatNumber(comic.getViewCount()));
+        holder.tvLikes.setText(formatNumber(comic.getFollowCount()));
+        holder.tvComments.setText(formatNumber(comic.getCommentCount()));
 
-        // Tải ảnh bìa
+        // Thực hiện logic Fill tim đỏ khi truyện đã được follow trong bảng xếp hạng Top 10
+        if (holder.imgRankLikesIcon != null) {
+            if (comic.isFollowed()) {
+                holder.imgRankLikesIcon.setImageResource(R.drawable.ic_heart_filled);
+                holder.imgRankLikesIcon.setImageTintList(ColorStateList.valueOf(Color.parseColor("#FFFFFF")));
+            } else {
+                holder.imgRankLikesIcon.setImageResource(R.drawable.ic_heart_outline);
+                holder.imgRankLikesIcon.setImageTintList(ColorStateList.valueOf(Color.parseColor("#FFFFFF")));
+            }
+        }
+
         Glide.with(holder.itemView.getContext())
                 .load(comic.getCoverImageUrl())
                 .placeholder(R.drawable.ic_launcher_background)
                 .centerCrop()
                 .into(holder.imgCover);
 
-        // ĐÃ SỬA: Kiểm tra quyền để chuyển hướng sang màn hình chi tiết tương ứng
         holder.itemView.setOnClickListener(v -> {
             Intent intent;
             if (isAdmin) {
-                // Nếu là Admin -> Mở chi tiết truyện của Admin quản trị
                 intent = new Intent(holder.itemView.getContext(), AdminComicDetailActivity.class);
             } else {
-                // Nếu là User -> Mở chi tiết truyện thông thường
                 intent = new Intent(holder.itemView.getContext(), ComicDetailActivity.class);
             }
             intent.putExtra("COMIC_ID", comic.getComicId());
@@ -114,12 +113,13 @@ public class RankingAdapter extends RecyclerView.Adapter<RankingAdapter.RankView
 
     static class RankViewHolder extends RecyclerView.ViewHolder {
         TextView tvRankNumber, tvTitle, tvLatestChapter, tvViews, tvLikes, tvComments;
-        ImageView imgCover;
+        ImageView imgCover, imgRankLikesIcon;
 
         public RankViewHolder(@NonNull View itemView) {
             super(itemView);
             tvRankNumber     = itemView.findViewById(R.id.tvRankNumber);
             imgCover         = itemView.findViewById(R.id.imgRankCover);
+            imgRankLikesIcon = itemView.findViewById(R.id.imgRankLikesIcon);
             tvTitle          = itemView.findViewById(R.id.tvRankTitle);
             tvLatestChapter  = itemView.findViewById(R.id.tvRankLatestChapter);
             tvViews          = itemView.findViewById(R.id.tvRankViews);

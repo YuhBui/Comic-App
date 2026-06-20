@@ -1,6 +1,8 @@
 package com.yuhbui.comicapp.ui;
 
 import android.content.Intent;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -60,16 +62,15 @@ public class ComicDetailActivity extends AppCompatActivity {
     private TextView tvViews, tvFavorites, tvRatingAverage, tvDescription;
     private RatingBar ratingBarUser;
     private Button btnStartReading;
-    private TextView btnToggleFavorite;
-
+    private ImageView btnToggleFavorite;
     private boolean isCurrentlyFavorite = false;
     private boolean isUserBanned = false;
 
-    // --- THÊM BIẾN QUẢN LÝ OFFLINE ---
+    // --- BIẾN QUẢN LÝ OFFLINE ---
     private boolean isOfflineMode = false;
-    private Comic onlineComicData; // Giữ lại thông tin để phục vụ lúc download dữ liệu text
+    private Comic onlineComicData;
     private String onlineGenres;
-    private final ExecutorService databaseExecutor = Executors.newSingleThreadExecutor(); // Luồng nền xử lý Room DB & Tải file
+    private final ExecutorService databaseExecutor = Executors.newSingleThreadExecutor();
 
     // Thành phần xử lý danh sách chương truyện (MVVM)
     private ComicDetailViewModel viewModel;
@@ -106,7 +107,7 @@ public class ComicDetailActivity extends AppCompatActivity {
         tvDescription = findViewById(R.id.tvComicDescription);
         ratingBarUser = findViewById(R.id.ratingBarUser);
         btnStartReading = findViewById(R.id.btnStartReading);
-        btnToggleFavorite = findViewById(R.id.btnToggleFavorite);
+        btnToggleFavorite = findViewById(R.id.btnToggleFavorite); // TỰ ĐỘNG ÁNH XẠ SANG IMAGEVIEW CHUẨN XÁC
 
         recyclerView = findViewById(R.id.recyclerViewChapters);
         recyclerViewComments = findViewById(R.id.recyclerViewComments);
@@ -171,31 +172,38 @@ public class ComicDetailActivity extends AppCompatActivity {
         if (getIntent() != null) {
             currentComicId = getIntent().getIntExtra("COMIC_ID", -1);
             currentComicTitle = getIntent().getStringExtra("COMIC_TITLE");
-            isOfflineMode = getIntent().getBooleanExtra("IS_OFFLINE_MODE", false); // THÊM: Nhận diện chế độ Offline
+            isOfflineMode = getIntent().getBooleanExtra("IS_OFFLINE_MODE", false);
         }
         tvTitle.setText(currentComicTitle);
-        adapter.setOfflineMode(isOfflineMode); // Đồng bộ chế độ hiển thị nút cho Adapter
+        adapter.setOfflineMode(isOfflineMode);
 
         int currentUserId = SharedPrefsManager.getUserId(this);
 
         // --- XỬ LÝ PHÂN TÁCH GIAO DIỆN OFFLINE / ONLINE ---
         if (isOfflineMode) {
-            // Thực hiện ẩn trạng thái, lượt xem, yêu thích, đánh giá, bình luận theo đúng yêu cầu
+            // Thực hiện ẩn trạng thái theo đúng yêu cầu thiết kế tối giản offline
             tvStatus.setVisibility(View.GONE);
             tvViews.setVisibility(View.GONE);
-            btnToggleFavorite.setVisibility(View.GONE);
             tvFavorites.setVisibility(View.GONE);
             tvRatingAverage.setVisibility(View.GONE);
-            ratingBarUser.setVisibility(View.GONE);
 
-            recyclerViewComments.setVisibility(View.GONE);
-            edtCommentInput.setVisibility(View.GONE);
-            btnSendComment.setVisibility(View.GONE);
+            // Ẩn luôn cả cụm khung hộp chứa Đánh giá chấm sao và Bình luận
+            if (findViewById(R.id.layoutUserRatingBox) != null) {
+                findViewById(R.id.layoutUserRatingBox).setVisibility(View.GONE);
+            }
+            if (findViewById(R.id.layoutCommentsMainBox) != null) {
+                findViewById(R.id.layoutCommentsMainBox).setVisibility(View.GONE);
+            }
+
+            // Ẩn thẻ MaterialCardView viền bọc ngoài nút Tim vuông
+            if (btnToggleFavorite != null && btnToggleFavorite.getParent() instanceof View) {
+                ((View) btnToggleFavorite.getParent()).setVisibility(View.GONE);
+            }
 
             // Tải dữ liệu lưu local từ Room Database
             loadOfflineComicDetailsAndChapters();
         } else {
-            // Chế độ ONLINE hoạt động bình thường như cũ
+            // Chế độ ONLINE hoạt động bình thường
             if (currentUserId != -1) {
                 checkCurrentUserBanStatus(currentUserId);
             }
@@ -216,7 +224,7 @@ public class ComicDetailActivity extends AppCompatActivity {
                 loadComicFullDetails(currentComicId, currentUserId != -1 ? currentUserId : null);
                 viewModel.loadChapters(currentComicId);
                 loadComments(currentComicId);
-                loadDownloadedChapterIds(); // Kiểm tra những chương đã tải để hiển thị dấu tích tích xanh
+                loadDownloadedChapterIds();
             }
 
             btnToggleFavorite.setOnClickListener(v -> {
@@ -261,23 +269,21 @@ public class ComicDetailActivity extends AppCompatActivity {
             });
         }
 
-        // Bắt sự kiện click nút BẮT ĐẦU ĐỌC TRUYỆN (Áp dụng cho cả Online và Offline)
+        // Bắt sự kiện click nút BẮT ĐẦU ĐỌC TRUYỆN
         btnStartReading.setOnClickListener(v -> {
             if (globalChapterList != null && !globalChapterList.isEmpty()) {
-                // Đọc chương đầu tiên (phần tử cuối của mảng xếp DESC)
                 Chapter firstChapter = globalChapterList.get(globalChapterList.size() - 1);
 
                 Intent intent = new Intent(ComicDetailActivity.this, ReaderActivity.class);
                 intent.putExtra("CHAPTER_ID", firstChapter.getChapterId());
                 intent.putExtra("COMIC_ID", currentComicId);
-                intent.putExtra("IS_OFFLINE_MODE", isOfflineMode); // Gửi kèm trạng thái mạng sang Reader
+                intent.putExtra("IS_OFFLINE_MODE", isOfflineMode);
                 startActivity(intent);
             } else {
                 Toast.makeText(this, "Truyện hiện chưa cập nhật chương nội dung nào!", Toast.LENGTH_SHORT).show();
             }
         });
 
-        // Đăng ký nhận Callback xử lý sự kiện bấm Nút vuông (Tải xuống / Xóa) từ Adapter
         adapter.setOnChapterActionListener(new ChapterAdapter.OnChapterActionListener() {
             @Override
             public void onDownloadClick(Chapter chapter) {
@@ -305,7 +311,7 @@ public class ComicDetailActivity extends AppCompatActivity {
         }
     }
 
-    // ========== LOGIC TRUY VẤN VÀ TRIỂN KHAI OFFLINE (ROOM DB) ==========
+    // ========== LOGIC TRUY VẤN OFFLINE (ROOM DB) ==========
 
     private void loadOfflineComicDetailsAndChapters() {
         databaseExecutor.execute(() -> {
@@ -328,7 +334,6 @@ public class ComicDetailActivity extends AppCompatActivity {
                     }
                 }
 
-                // Ánh xạ danh sách chương local về đối tượng Chapter của Adapter để hiển thị lên RecyclerView
                 List<Chapter> mappedChapters = new ArrayList<>();
                 for (DownloadedChapter localCh : localChapters) {
                     Chapter ch = new Chapter();
@@ -339,7 +344,7 @@ public class ComicDetailActivity extends AppCompatActivity {
                     mappedChapters.add(ch);
                 }
 
-                globalChapterList = mappedChapters; // Cập nhật biến global để nút bắt đầu đọc click được
+                globalChapterList = mappedChapters;
                 adapter.setChapters(mappedChapters);
             });
         });
@@ -369,11 +374,9 @@ public class ComicDetailActivity extends AppCompatActivity {
             try {
                 AppDatabase db = AppDatabase.getInstance(ComicDetailActivity.this);
 
-                // 1. Kiểm tra xem thông tin cốt lõi của truyện đã được lưu local chưa
                 DownloadedComic localComic = db.offlineDao().getComicById(currentComicId);
                 String localCoverPath = "";
                 if (localComic == null) {
-                    // Tiến hành download file ảnh bìa về máy
                     if (onlineComicData.getCoverImageUrl() != null && !onlineComicData.getCoverImageUrl().isEmpty()) {
                         localCoverPath = DownloadUtils.downloadFile(
                                 ComicDetailActivity.this,
@@ -393,7 +396,6 @@ public class ComicDetailActivity extends AppCompatActivity {
                     db.offlineDao().insertComic(newComic);
                 }
 
-                // 2. Chạy API lấy danh sách ảnh của chương bằng cơ chế đồng bộ (.execute()) bên trong Thread nền
                 Response<List<ChapterImage>> imageResponse = ApiClient.getApiService()
                         .getImagesByChapterId(chapter.getChapterId()).execute();
 
@@ -401,7 +403,6 @@ public class ComicDetailActivity extends AppCompatActivity {
                     List<ChapterImage> serverImages = imageResponse.body();
                     List<DownloadedImage> localImagesList = new ArrayList<>();
 
-                    // Vòng lặp tải tuần tự toàn bộ trang ảnh truyện về Internal Storage
                     for (int i = 0; i < serverImages.size(); i++) {
                         ChapterImage serverImg = serverImages.get(i);
                         String localImgPath = DownloadUtils.downloadFile(
@@ -420,7 +421,6 @@ public class ComicDetailActivity extends AppCompatActivity {
                         }
                     }
 
-                    // 3. Ghi thông tin chương và đường dẫn ảnh local vào Room DB
                     DownloadedChapter localChapter = new DownloadedChapter();
                     localChapter.setChapterId(chapter.getChapterId());
                     localChapter.setComicId(currentComicId);
@@ -432,7 +432,7 @@ public class ComicDetailActivity extends AppCompatActivity {
 
                     runOnUiThread(() -> {
                         Toast.makeText(ComicDetailActivity.this, "Tải thành công Chương " + chapter.getChapterNumber(), Toast.LENGTH_SHORT).show();
-                        loadDownloadedChapterIds(); // Làm tươi giao diện hiển thị dấu tích
+                        loadDownloadedChapterIds();
                     });
                 } else {
                     runOnUiThread(() -> Toast.makeText(ComicDetailActivity.this, "Không thể tải danh sách ảnh từ Server!", Toast.LENGTH_SHORT).show());
@@ -449,7 +449,6 @@ public class ComicDetailActivity extends AppCompatActivity {
             try {
                 AppDatabase db = AppDatabase.getInstance(ComicDetailActivity.this);
 
-                // 1. Tìm và xóa sạch file ảnh trang truyện vật lý trong thư mục máy
                 File chapterDirectory = new File(getFilesDir(), "truyen_downloads/comic_" + currentComicId + "/chapter_" + chapter.getChapterId());
                 if (chapterDirectory.exists() && chapterDirectory.isDirectory()) {
                     File[] images = chapterDirectory.listFiles();
@@ -461,14 +460,11 @@ public class ComicDetailActivity extends AppCompatActivity {
                     chapterDirectory.delete();
                 }
 
-                // 2. Xóa liên kết bản ghi dữ liệu trong Room DB
                 db.offlineDao().deleteChapterById(chapter.getChapterId());
                 db.offlineDao().deleteImagesByChapter(chapter.getChapterId());
 
-                // 3. Kiểm tra xem bộ truyện này còn chương nào khác không
                 int totalChaptersLeft = db.offlineDao().getChapterCountByComic(currentComicId);
                 if (totalChaptersLeft == 0) {
-                    // Nếu không còn chương nào, tiến hành xóa sạch truyện khỏi bộ lưu trữ offline
                     DownloadedComic targetComic = db.offlineDao().getComicById(currentComicId);
                     if (targetComic != null) {
                         if (targetComic.getLocalCoverPath() != null && !targetComic.getLocalCoverPath().isEmpty()) {
@@ -478,7 +474,6 @@ public class ComicDetailActivity extends AppCompatActivity {
                         db.offlineDao().deleteComic(targetComic);
                     }
 
-                    // Xóa nốt thư mục gốc của bộ truyện nếu trống
                     File comicDirectory = new File(getFilesDir(), "truyen_downloads/comic_" + currentComicId);
                     if (comicDirectory.exists() && comicDirectory.isDirectory()) {
                         comicDirectory.delete();
@@ -486,12 +481,12 @@ public class ComicDetailActivity extends AppCompatActivity {
 
                     runOnUiThread(() -> {
                         Toast.makeText(ComicDetailActivity.this, "Truyện không còn chương nào nên đã được gỡ khỏi mục Tải xuống!", Toast.LENGTH_LONG).show();
-                        finish(); // Out màn hình quay ra lại trang danh sách truyện đã tải
+                        finish();
                     });
                 } else {
                     runOnUiThread(() -> {
                         Toast.makeText(ComicDetailActivity.this, "Đã xóa chương thành công!", Toast.LENGTH_SHORT).show();
-                        loadOfflineComicDetailsAndChapters(); // Làm tươi danh sách chương local còn lại
+                        loadOfflineComicDetailsAndChapters();
                     });
                 }
             } catch (Exception e) {
@@ -501,7 +496,7 @@ public class ComicDetailActivity extends AppCompatActivity {
         });
     }
 
-    // ========== LUỒNG XỬ LÝ MẠNG ONLINE CŨ GIỮ NGUYÊN ==========
+    // ========== LUỒNG XỬ LÝ MẠNG ONLINE ==========
 
     private void checkCurrentUserBanStatus(int userId) {
         ApiClient.getApiService().getUserProfile(userId).enqueue(new Callback<User>() {
@@ -525,13 +520,18 @@ public class ComicDetailActivity extends AppCompatActivity {
         });
     }
 
+    // ĐÃ SỬA: Logic thay đổi tài nguyên Icon Vector cho nút Tim vuông chuẩn Figma
     private void updateFavoriteButtonUI(boolean isFav) {
-        if (isFav) {
-            btnToggleFavorite.setText("❤️ Đã yêu thích");
-            btnToggleFavorite.setAlpha(0.6f);
-        } else {
-            btnToggleFavorite.setText("🤍 Yêu thích");
-            btnToggleFavorite.setAlpha(1.0f);
+        if (btnToggleFavorite != null) {
+            if (isFav) {
+                btnToggleFavorite.setImageResource(R.drawable.ic_heart_filled);
+                btnToggleFavorite.setImageTintList(ColorStateList.valueOf(Color.parseColor("#CC003C")));
+                btnToggleFavorite.setAlpha(0.9f);
+            } else {
+                btnToggleFavorite.setImageResource(R.drawable.ic_heart_outline);
+                btnToggleFavorite.setImageTintList(ColorStateList.valueOf(Color.parseColor("#FFB77D")));
+                btnToggleFavorite.setAlpha(1.0f);
+            }
         }
     }
 
@@ -543,22 +543,17 @@ public class ComicDetailActivity extends AppCompatActivity {
                     ComicDetailResponse data = response.body();
                     Comic comic = data.getComic();
 
-                    // Gán vào biến online phục vụ khi người dùng nhấn download
                     onlineComicData = comic;
                     onlineGenres = data.getGenres();
 
                     tvTitle.setText(comic.getTitle());
                     tvAuthor.setText("Tác giả: " + (comic.getAuthor() != null ? comic.getAuthor() : "Đang cập nhật"));
-                    tvViews.setText("👁️ " + comic.getViewCount());
+                    tvViews.setText("Lượt xem: " + comic.getViewCount());
                     tvDescription.setText(comic.getDescription());
                     tvGenre.setText("Thể loại: " + data.getGenres());
 
-                    tvFavorites.setText("❤️ " + String.valueOf(data.getFavoriteCount()));
-                    tvRatingAverage.setText("⭐ " + comic.getRating() + "/5");
-
-                    String statusStr = (comic.getStatus() != null ? comic.getStatus() : "Đang tiến hành");
-                    String latestChapStr = (data.getLatestChapterNumber() != null ? data.getLatestChapterNumber() : "Chưa có");
-                    tvStatus.setText("Tình trạng: " + statusStr);
+                    tvFavorites.setText("Yêu thích: " + String.valueOf(data.getFavoriteCount()));
+                    tvRatingAverage.setText(String.valueOf(comic.getRating()));
 
                     if (comic.getCreatedAt() != null && !comic.getCreatedAt().isEmpty()) {
                         tvRelease.setText("Phát hành: " + formatToDateOnly(comic.getCreatedAt()));
@@ -587,11 +582,9 @@ public class ComicDetailActivity extends AppCompatActivity {
             return "Đang cập nhật";
         }
         try {
-            // Tách lấy phần ngày yyyy-MM-dd trước ký tự 'T' hoặc khoảng trắng của timestamp
             String datePart = rawDateTime.contains("T") ? rawDateTime.split("T")[0] : rawDateTime.split(" ")[0];
             String[] parts = datePart.split("-");
             if (parts.length == 3) {
-                // Đảo thứ tự hiển thị từ yyyy-MM-dd sang dd/MM/yyyy tương tự bên Admin
                 return parts[2] + "/" + parts[1] + "/" + parts[0];
             }
             return datePart;
@@ -618,7 +611,11 @@ public class ComicDetailActivity extends AppCompatActivity {
     }
 
     private void loadComments(int comicId) {
-        ApiClient.getApiService().getCommentsByComic(comicId).enqueue(new Callback<List<Comment>>() {
+        // Lấy Id người dùng hiện tại để gửi lên đối chiếu trạng thái fill màu
+        int currentUserId = SharedPrefsManager.getUserId(this);
+        Integer apiUserId = (currentUserId != -1) ? currentUserId : null;
+
+        ApiClient.getApiService().getCommentsByComic(comicId, apiUserId).enqueue(new Callback<List<Comment>>() {
             @Override
             public void onResponse(Call<List<Comment>> call, Response<List<Comment>> response) {
                 if (response.isSuccessful() && response.body() != null) {

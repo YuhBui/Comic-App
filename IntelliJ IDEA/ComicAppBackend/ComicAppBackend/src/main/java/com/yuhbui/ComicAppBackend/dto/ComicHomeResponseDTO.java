@@ -18,4 +18,7 @@ public class ComicHomeResponseDTO {
     private String timeUpdated;         // Thời gian vừa cập nhật
     private Long followCount;           // Số lượt yêu thích
     private Long commentCount;          // Số lượt bình luận
+
+    @com.fasterxml.jackson.annotation.JsonProperty("isFollowed")
+    private boolean isFollowed;
 }

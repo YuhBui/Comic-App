@@ -377,7 +377,12 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
     }
 
     private void loadCommentsData() {
-        ApiClient.getApiService().adminGetComicComments(comicId).enqueue(new Callback<List<Map<String, Object>>>() {
+        // Lấy ID tài khoản Admin đang đăng nhập hệ thống hiện tại
+        int currentUserId = SharedPrefsManager.getUserId(this);
+        Integer apiUserId = (currentUserId != -1) ? currentUserId : null;
+
+        // Bổ sung apiUserId vào tham số thứ hai của hàm gọi API
+        ApiClient.getApiService().adminGetComicComments(comicId, apiUserId).enqueue(new Callback<List<Map<String, Object>>>() {
             @Override
             public void onResponse(Call<List<Map<String, Object>>> call, Response<List<Map<String, Object>>> response) {
                 if (response.isSuccessful() && response.body() != null) {

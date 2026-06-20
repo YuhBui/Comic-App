@@ -1,15 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Layout item bảng xếp hạng Top 10
-     Bố cục: số thứ tự | ảnh | thông tin (tiêu đề, chương, stats) -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:padding="8dp"
     android:gravity="center_vertical"
-    android:background="?android:attr/selectableItemBackground">
+    android:background="#333333">
 
-    <!-- Số thứ hạng -->
     <TextView
         android:id="@+id/tvRankNumber"
         android:layout_width="32dp"
@@ -21,7 +19,6 @@
         android:textColor="#FFFFFF"
         android:background="@drawable/bg_rank_badge"/>
 
-    <!-- Ảnh bìa nhỏ -->
     <ImageView
         android:id="@+id/imgRankCover"
         android:layout_width="60dp"
@@ -30,7 +27,6 @@
         android:scaleType="centerCrop"
         android:background="#DDDDDD"/>
 
-    <!-- Thông tin bên phải ảnh -->
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="match_parent"
@@ -39,61 +35,78 @@
         android:layout_marginStart="10dp"
         android:gravity="center_vertical">
 
-        <!-- Tiêu đề truyện -->
         <TextView
             android:id="@+id/tvRankTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Tiêu đề truyện"
             android:textStyle="bold"
-            android:textColor="#111111"
+            android:textColor="#FFFFFF"
             android:textSize="14sp"
             android:maxLines="2"
             android:ellipsize="end"/>
 
-        <!-- Chương mới nhất -->
         <TextView
             android:id="@+id/tvRankLatestChapter"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             android:text="Chương 0"
-            android:textColor="#FF9800"
+            android:textColor="#D97707"
             android:textStyle="bold"
             android:textSize="12sp"/>
 
-        <!-- Hàng stats: View, Like, Comment -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:layout_marginTop="6dp"
-            android:gravity="center_vertical">
+            android:gravity="center_vertical"
+            android:alpha="0.7">
 
+            <ImageView
+                android:layout_width="12dp"
+                android:layout_height="12dp"
+                android:src="@drawable/ic_eye"
+                app:tint="#FFFFFF"/>
             <TextView
                 android:id="@+id/tvRankViews"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="👁 0"
-                android:textColor="#666666"
+                android:layout_marginStart="2dp"
+                android:text="0"
+                android:textColor="#FFFFFF"
                 android:textSize="11sp"/>
 
+            <ImageView
+                android:id="@+id/imgRankLikesIcon"
+                android:layout_width="12dp"
+                android:layout_height="12dp"
+                android:layout_marginStart="10dp"
+                android:src="@drawable/ic_heart_outline"
+                app:tint="#FFFFFF"/>
             <TextView
                 android:id="@+id/tvRankLikes"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="10dp"
-                android:text="❤ 0"
-                android:textColor="#666666"
+                android:layout_marginStart="2dp"
+                android:text="0"
+                android:textColor="#FFFFFF"
                 android:textSize="11sp"/>
 
+            <ImageView
+                android:layout_width="12dp"
+                android:layout_height="12dp"
+                android:layout_marginStart="10dp"
+                android:src="@drawable/ic_comment"
+                app:tint="#FFFFFF"/>
             <TextView
                 android:id="@+id/tvRankComments"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="10dp"
-                android:text="💬 0"
-                android:textColor="#666666"
+                android:layout_marginStart="2dp"
+                android:text="0"
+                android:textColor="#FFFFFF"
                 android:textSize="11sp"/>
         </LinearLayout>
     </LinearLayout>

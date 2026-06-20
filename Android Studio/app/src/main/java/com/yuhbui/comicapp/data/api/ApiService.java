@@ -47,7 +47,10 @@ public interface ApiService {
     Call<ReadingHistory> saveReadingHistory(@Body ReadingHistory history);
 
     @GET("/api/comments/comic/{comicId}")
-    Call<List<Comment>> getCommentsByComic(@Path("comicId") int comicId);
+    Call<List<Comment>> getCommentsByComic(
+            @Path("comicId") int comicId,
+            @Query("userId") Integer userId
+    );
 
     @POST("/api/comments/post")
     Call<Comment> postComment(@Body Comment comment);
@@ -60,7 +63,10 @@ public interface ApiService {
     );
 
     @GET("/api/comments/{parentCommentId}/replies")
-    Call<List<Comment>> getRepliesByParentId(@Path("parentCommentId") int parentCommentId);
+    Call<List<Comment>> getRepliesByParentId(
+            @Path("parentCommentId") int parentCommentId,
+            @Query("userId") Integer userId
+    );
 
     @POST("/api/comments/{commentId}/report")
     Call<String> reportComment(
@@ -105,37 +111,47 @@ public interface ApiService {
 
     // API lấy truyện mới cập nhật kèm phân trang số
     @GET("/api/comics/home/updates")
-    Call<List<Comic>> getHomeUpdates(@Query("page") int page);
+    Call<List<Comic>> getHomeUpdates(
+            @Query("page") int page,
+            @Query("userId") Integer userId
+    );
 
     // API lấy danh sách truyện đề cử hot (top rating)
     @GET("/api/comics/home/recommended")
-    Call<List<Comic>> getRecommendedComics();
+    Call<List<Comic>> getRecommendedComics(@Query("userId") Integer userId);
 
     // Lấy danh sách toàn bộ thể loại để làm thanh lọc
     @GET("/api/categories")
     Call<List<Category>> getCategories();
 
-    // Lấy danh sách truyện đã được lọc theo mã thể loại
+    // Lấy danh sách truyện đã được lọc theo mã thể loại kèm trạng thái follow của User
     @GET("/api/comics/filter")
     Call<List<Comic>> filterComicsByCategories(
             @Query("categoryIds") List<Integer> categoryIds,
-            @Query("page") int page
+            @Query("page") int page,
+            @Query("userId") Integer userId
     );
+
     // API lấy bảng xếp hạng top 10
     @GET("/api/comics/home/ranking")
-    Call<List<Comic>> getTopRanking(@Query("type") String type);
+    Call<List<Comic>> getTopRanking(
+            @Query("type") String type,
+            @Query("userId") Integer userId
+    );
 
     @GET("/api/history/user/{userId}")
     Call<List<Comic>> getReadingHistoryByUserId(
             @Path("userId") int userId,
             @Query("categoryIds") List<Integer> categoryIds
     );
+
     // Lấy danh sách truyện yêu thích của người dùng (kèm đầy đủ thông số)
     @GET("/api/comics/user-favorites/{userId}")
     Call<List<Comic>> getFavoriteComicsFiltered(
             @Path("userId") int userId,
             @Query("categoryIds") List<Integer> categoryIds
     );
+
     @GET("/api/users/{id}")
     Call<User> getUserProfile(@Path("id") int userId);
 
@@ -175,6 +191,7 @@ public interface ApiService {
 
     @GET("api/admin/comics/categories-list")
     Call<List<Map<String, Object>>> adminGetFilterCategories();
+
     @POST("/api/categories")
     Call<Category> createCategory(@Body Category category);
 
@@ -186,6 +203,7 @@ public interface ApiService {
 
     @PUT("/api/admin/comics/{id}")
     Call<Comic> adminUpdateComic(@Path("id") Integer id, @Body Comic comic, @Query("categoryIds") List<Integer> categoryIds);
+
     @DELETE("/api/admin/comics/{id}")
     Call<okhttp3.ResponseBody> adminDeleteComic(@Path("id") Integer id);
 
@@ -194,7 +212,10 @@ public interface ApiService {
     Call<Map<String, String>> adminUploadCover(@Part MultipartBody.Part file);
 
     @GET("/api/admin/comics/{id}/comments")
-    Call<List<Map<String, Object>>> adminGetComicComments(@Path("id") Integer id);
+    Call<List<Map<String, Object>>> adminGetComicComments(
+            @Path("id") Integer id,
+            @Query("userId") Integer userId
+    );
 
     @DELETE("/api/admin/comics/comments/{commentId}")
     Call<Map<String, Object>> adminDeleteComment(@Path("commentId") Integer commentId);
@@ -265,6 +286,7 @@ public interface ApiService {
             @Part MultipartBody.Part role,
             @Part MultipartBody.Part file
     );
+
     @PUT("/api/admin/users/{id}/toggle-ban")
     Call<Map<String, Object>> adminToggleBanUser(@Path("id") int id);
 
@@ -288,7 +310,8 @@ public interface ApiService {
     Call<Void> adminCreateNotification(@Body com.yuhbui.comicapp.data.model.Notification notification);
 
     // Lấy toàn bộ danh sách thông báo hệ thống (Dành cho Admin quản lý)
-    @GET("api/notifications/user/1") // Tạm thời lấy danh sách tổng hoặc tạo endpoint riêng, ở đây ta gọi danh sách để hiển thị
+    @GET("api/notifications/user/1")
+    // Tạm thời lấy danh sách tổng hoặc tạo endpoint riêng, ở đây ta gọi danh sách để hiển thị
     Call<List<com.yuhbui.comicapp.data.model.Notification>> getAllNotificationsForAdmin();
 
     // API cập nhật sửa đổi thông báo

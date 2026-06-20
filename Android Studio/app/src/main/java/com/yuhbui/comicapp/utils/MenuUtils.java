@@ -60,7 +60,7 @@ public class MenuUtils {
         }
 
         // 4. Xử lý sự kiện click cho mục "Đang theo dõi"
-        View menuFollow = activity.findViewById(R.id.menuFollow);
+        View menuFollow = activity.findViewById(R.id.menuFavorites);
         if (menuFollow != null) {
             menuFollow.setOnClickListener(v -> {
                 drawerLayout.closeDrawer(GravityCompat.START);

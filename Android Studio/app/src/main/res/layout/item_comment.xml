@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="12dp">
+    android:padding="12dp"
+    android:background="#1E1E1E">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -17,7 +19,7 @@
             android:layout_width="36dp"
             android:layout_height="36dp"
             android:layout_marginEnd="8dp"
-            android:background="#CCCCCC"
+            android:background="#2A2A2A"
             android:scaleType="centerCrop"/>
 
         <LinearLayout
@@ -32,7 +34,7 @@
                 android:layout_height="wrap_content"
                 android:text="User ID"
                 android:textStyle="bold"
-                android:textColor="#2196F3"
+                android:textColor="#FFB77D"
                 android:textSize="14sp"/>
 
             <TextView
@@ -41,7 +43,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
                 android:text="• Chương 1"
-                android:textColor="#888888"
+                android:textColor="#DBC2B0"
+                android:alpha="0.5"
                 android:textSize="12sp"
                 android:textStyle="italic"/>
         </LinearLayout>
@@ -53,7 +56,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp"
         android:text="Nội dung bình luận ở đây..."
-        android:textColor="#333333"
+        android:textColor="#DBC2B0"
         android:textSize="15sp"/>
 
     <LinearLayout
@@ -63,48 +66,114 @@
         android:layout_marginTop="8dp"
         android:gravity="center_vertical">
 
+        <LinearLayout
+        android:id="@+id/layoutLikeComment"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:clickable="true"
+        android:focusable="true"
+        android:padding="4dp">
+        <ImageView
+            android:id="@+id/imgLikeCommentIcon"
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:src="@drawable/ic_thumb_up_outline"
+            app:tint="#DBC2B0"/>
         <TextView
-            android:id="@+id/btnLikeComment"
+            android:id="@+id/tvLikeCommentCount"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="👍 Thích (0)"
+            android:layout_marginStart="4dp"
+            android:text="(0)"
+            android:textColor="#DBC2B0"
             android:textSize="13sp"/>
+    </LinearLayout>
 
         <View android:layout_width="12dp" android:layout_height="1dp"/>
 
-        <TextView
-            android:id="@+id/btnDislikeComment"
+        <LinearLayout
+            android:id="@+id/layoutDislikeComment"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="👎 Ghét (0)"
-            android:textSize="13sp"/>
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:clickable="true"
+            android:focusable="true"
+            android:padding="4dp">
+            <ImageView
+                android:id="@+id/imgDislikeCommentIcon"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:src="@drawable/ic_thumb_down_outline"
+                app:tint="#DBC2B0"/>
+            <TextView
+                android:id="@+id/tvDislikeCommentCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:text="(0)"
+                android:textColor="#DBC2B0"
+                android:textSize="13sp"/>
+        </LinearLayout>
 
         <View android:layout_width="12dp" android:layout_height="1dp"/>
 
-        <TextView
-            android:id="@+id/btnReplyComment"
+        <LinearLayout
+            android:id="@+id/layoutReplyComment"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="💬 Phản hồi (0)"
-            android:textColor="#FF9800"
-            android:textStyle="bold"
-            android:textSize="13sp"
-            android:padding="4dp"/>
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:clickable="true"
+            android:focusable="true"
+            android:padding="4dp">
+            <ImageView
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:src="@drawable/ic_comment"
+                app:tint="#FFB77D"/>
+            <TextView
+                android:id="@+id/tvReplyCommentCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:text="Phản hồi (0)"
+                android:textColor="#FFB77D"
+                android:textStyle="bold"
+                android:textSize="13sp"/>
+        </LinearLayout>
 
         <View
             android:layout_width="0dp"
             android:layout_height="1dp"
             android:layout_weight="1"/>
 
-        <TextView
-            android:id="@+id/btnReportComment"
+        <LinearLayout
+            android:id="@+id/layoutReportComment"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="⚠️ Báo cáo"
-            android:textColor="#E91E63"
-            android:textSize="12sp"
-            android:padding="4dp"/>
-
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:clickable="true"
+            android:focusable="true"
+            android:padding="4dp">
+            <ImageView
+                android:id="@+id/imgReportComment"
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:src="@android:drawable/ic_menu_report_image"
+                app:tint="#E91E63"/>
+            <TextView
+                android:id="@+id/tvReportCommentText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:text="Báo cáo"
+                android:textColor="#E91E63"
+                android:textSize="12sp"/>
+        </LinearLayout>
     </LinearLayout>
 
     <androidx.recyclerview.widget.RecyclerView
@@ -122,7 +191,7 @@
         android:layout_marginStart="32dp"
         android:layout_marginTop="4dp"
         android:text="—— Xem thêm phản hồi ——"
-        android:textColor="#2196F3"
+        android:textColor="#FFB77D"
         android:textSize="13sp"
         android:textStyle="bold"
         android:padding="4dp"
@@ -131,7 +200,6 @@
     <View
         android:layout_width="match_parent"
         android:layout_height="0.5dp"
-        android:background="#DDDDDD"
+        android:background="#33FFFFFF"
         android:layout_marginTop="8dp"/>
-
 </LinearLayout>

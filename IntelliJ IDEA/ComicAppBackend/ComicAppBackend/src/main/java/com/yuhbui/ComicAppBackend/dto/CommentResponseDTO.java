@@ -18,8 +18,13 @@ public class CommentResponseDTO {
     private Boolean isDeleted;
     private LocalDateTime createdAt;
 
-    // --- CÁC TRƯỜNG THÔNG TIN HIỂN THỊ MỚI ---
-    private String userDisplayName;  // Tên thật người dùng
-    private String userAvatarUrl;     // Link ảnh đại diện
-    private String chapterName;       // Tên chapter (VD: "Chương 1", "Chương 2.5")
+    private String userDisplayName;
+    private String userAvatarUrl;
+    private String chapterName;
+
+    @com.fasterxml.jackson.annotation.JsonProperty("isLiked")
+    private boolean isLiked;
+
+    @com.fasterxml.jackson.annotation.JsonProperty("isDisliked")
+    private boolean isDisliked;
 }

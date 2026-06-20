@@ -38,7 +38,8 @@ public class CommentController {
     @Autowired
     private ChapterRepository chapterRepository;
 
-    private CommentResponseDTO convertToDTO(Comment comment) {
+    // ĐÃ SỬA: Tiếp nhận 2 tham số để đối chiếu trạng thái Fill màu nút bấm cho từng User cụ thể
+    private CommentResponseDTO convertToDTO(Comment comment, Integer userId) {
         CommentResponseDTO dto = new CommentResponseDTO();
         dto.setCommentId(comment.getCommentId());
         dto.setUserId(comment.getUserId());
@@ -48,11 +49,8 @@ public class CommentController {
         dto.setContent(comment.getContent());
         dto.setLikeCount(comment.getLikeCount());
         dto.setDislikeCount(comment.getDislikeCount());
-
-        // ĐÃ BỔ SUNG: Gán dữ liệu số lượng phản hồi và báo cáo để đồng bộ giao diện
         dto.setReplyCount(comment.getReplyCount());
         dto.setReportCount(comment.getReportCount());
-
         dto.setIsDeleted(comment.getIsDeleted());
         dto.setCreatedAt(comment.getCreatedAt());
 
@@ -69,22 +67,33 @@ public class CommentController {
             dto.setChapterName("");
         }
 
+        // Kiểm tra xem User hiện tại đã từng Like hay Dislike bình luận này chưa để gửi cờ về kích hoạt Fill màu icon Android
+        if (userId != null) {
+            interactionRepository.findByUserIdAndCommentId(userId, comment.getCommentId()).ifPresent(interaction -> {
+                if (interaction.getInteractionType() == 1) {
+                    dto.setLiked(true);
+                } else if (interaction.getInteractionType() == -1) {
+                    dto.setDisliked(true);
+                }
+            });
+        }
+
         return dto;
     }
 
-    // 1. ĐÃ SỬA: API lấy danh sách bình luận gốc của bộ truyện kèm PHÂN TRANG (10 bản ghi/trang)
+    // 1. API lấy danh sách bình luận gốc của bộ truyện (Đã sửa cú pháp map Lambda)
     @GetMapping("/comic/{comicId}")
     public ResponseEntity<List<CommentResponseDTO>> getCommentsByComic(
             @PathVariable Integer comicId,
-            @RequestParam(defaultValue = "0") int page) {
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(required = false) Integer userId) { // Nhận thêm userId từ Android gửi lên
 
         List<Comment> rawList = commentRepository.findByComicIdAndParentCommentIdIsNullOrderByCreatedAtDesc(comicId);
         List<CommentResponseDTO> dtoList = rawList.stream()
                 .filter(c -> c.getIsDeleted() == null || !c.getIsDeleted())
-                .map(this::convertToDTO)
+                .map(c -> convertToDTO(c, userId)) // ĐÃ SỬA THÀNH LAMBDA ĐỂ HẾT LỖI GẠCH ĐỎ
                 .collect(Collectors.toList());
 
-        // Áp dụng cơ chế phân trang lũy tiến cắt mảng (subList) tương tự trang chủ truyện
         int start = page * 10;
         if (start >= dtoList.size()) {
             return ResponseEntity.ok(new java.util.ArrayList<>());
@@ -94,19 +103,19 @@ public class CommentController {
         return ResponseEntity.ok(dtoList.subList(start, end));
     }
 
-    // 2. ĐÃ SỬA: API lấy danh sách bình luận con (Phản hồi) kèm PHÂN TRANG (10 bản ghi/trang)
+    // 2. API lấy danh sách bình luận con / Phản hồi (Đã sửa cú pháp map Lambda)
     @GetMapping("/{parentCommentId}/replies")
     public ResponseEntity<List<CommentResponseDTO>> getReplies(
             @PathVariable Integer parentCommentId,
-            @RequestParam(defaultValue = "0") int page) {
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(required = false) Integer userId) {
 
         List<Comment> rawList = commentRepository.findByParentCommentIdOrderByCreatedAtAsc(parentCommentId);
         List<CommentResponseDTO> dtoList = rawList.stream()
                 .filter(c -> c.getIsDeleted() == null || !c.getIsDeleted())
-                .map(this::convertToDTO)
+                .map(c -> convertToDTO(c, userId)) // ĐÃ SỬA THÀNH LAMBDA ĐỂ HẾT LỖI GẠCH ĐỎ
                 .collect(Collectors.toList());
 
-        // Áp dụng cơ chế phân trang lũy tiến cắt mảng (subList) tương tự trang chủ truyện
         int start = page * 10;
         if (start >= dtoList.size()) {
             return ResponseEntity.ok(new java.util.ArrayList<>());
@@ -116,19 +125,19 @@ public class CommentController {
         return ResponseEntity.ok(dtoList.subList(start, end));
     }
 
-    // 3. ĐÃ SỬA: API lấy danh sách bình luận gốc của chương truyện kèm PHÂN TRANG (10 bản ghi/trang)
+    // 3. API lấy danh sách bình luận gốc của chương truyện (Đã sửa cú pháp map Lambda)
     @GetMapping("/chapter/{chapterId}")
     public ResponseEntity<List<CommentResponseDTO>> getCommentsByChapter(
             @PathVariable Integer chapterId,
-            @RequestParam(defaultValue = "0") int page) {
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(required = false) Integer userId) {
 
         List<Comment> rawList = commentRepository.findByChapterIdAndParentCommentIdIsNullOrderByCreatedAtDesc(chapterId);
         List<CommentResponseDTO> dtoList = rawList.stream()
                 .filter(c -> c.getIsDeleted() == null || !c.getIsDeleted())
-                .map(this::convertToDTO)
+                .map(c -> convertToDTO(c, userId)) // ĐÃ SỬA THÀNH LAMBDA ĐỂ HẾT LỖI GẠCH ĐỎ
                 .collect(Collectors.toList());
 
-        // Áp dụng cơ chế phân trang lũy tiến cắt mảng (subList) tương tự trang chủ truyện
         int start = page * 10;
         if (start >= dtoList.size()) {
             return ResponseEntity.ok(new java.util.ArrayList<>());
@@ -161,10 +170,10 @@ public class CommentController {
             });
         }
 
-        return ResponseEntity.ok(savedComment);
+        return ResponseEntity.ok(convertToDTO(savedComment, comment.getUserId()));
     }
 
-    // 5. API TƯƠNG TÁC LIKE/DISLIKE BÌNH LUẬN
+    // 5. API TƯƠNG TÁC LIKE/DISLIKE BÌNH LUẬN (Đã sửa trả về DTO chứa trạng thái fill màu)
     @PostMapping("/{commentId}/interact")
     public ResponseEntity<?> interactWithComment(
             @PathVariable Integer commentId,
@@ -211,7 +220,9 @@ public class CommentController {
         }
 
         commentRepository.save(comment);
-        return ResponseEntity.ok(comment);
+
+        // ĐÃ THAY ĐỔI: Trả về DTO kèm thông số đầy đủ thay vì đối tượng Entity thô cũ để Android đổi hình đặc
+        return ResponseEntity.ok(convertToDTO(comment, userId));
     }
 
     // 6. API BÁO CÁO BÌNH LUẬN XẤU
@@ -263,6 +274,6 @@ public class CommentController {
         comment.setIsDeleted(true);
         commentRepository.save(comment);
 
-        return ResponseEntity.ok(comment);
+        return ResponseEntity.ok(convertToDTO(comment, userId));
     }
 }

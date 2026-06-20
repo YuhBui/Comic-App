@@ -283,37 +283,49 @@ public class FollowActivity extends AppCompatActivity {
             startPage = Math.max(0, endPage - maxVisible + 1);
         }
 
-        int dpSize = dpToPx(34);
-        int marginDp = dpToPx(2);
+        // Định hình kích thước chuẩn 40dp x 40dp đồng bộ toàn hệ thống
+        int density = (int) getResources().getDisplayMetrics().density;
+        int size = 40 * density;
+        int margin = 4 * density;
 
         for (int i = startPage; i <= endPage; i++) {
             final int pageIndex = i;
-            TextView tvPage = new TextView(this);
-            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(dpSize, dpSize);
-            params.setMargins(marginDp, 0, marginDp, 0);
-            tvPage.setLayoutParams(params);
-            tvPage.setText(String.valueOf(i + 1));
-            tvPage.setGravity(Gravity.CENTER);
-            tvPage.setTextSize(13);
+            Button btnPage = new Button(this); // Chuyển từ TextView sang Button
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(size, size);
+            params.setMargins(margin, 0, margin, 0);
+            btnPage.setLayoutParams(params);
+            btnPage.setPadding(0, 0, 0, 0);
+            btnPage.setText(String.valueOf(i + 1));
+            btnPage.setTextSize(14);
+            btnPage.setAllCaps(false);
 
             if (i == currentPage) {
-                tvPage.setBackgroundResource(R.drawable.bg_page_btn);
-                tvPage.setBackgroundColor(Color.parseColor("#E91E63"));
-                tvPage.setTextColor(Color.WHITE);
-                tvPage.setTypeface(null, android.graphics.Typeface.BOLD);
+                // Trang hiện tại: Nền màu cam hổ phách (#FFB77D), chữ nâu đen (#4D2600)
+                btnPage.setBackgroundResource(R.drawable.bg_nav_btn);
+                btnPage.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.parseColor("#FFB77D")));
+                btnPage.setTextColor(Color.parseColor("#4D2600"));
+                btnPage.setTypeface(null, android.graphics.Typeface.BOLD);
             } else {
-                tvPage.setBackgroundResource(R.drawable.bg_page_btn);
-                tvPage.setBackgroundColor(Color.parseColor("#EEEEEE"));
-                tvPage.setTextColor(Color.parseColor("#333333"));
-                tvPage.setOnClickListener(v -> showPage(pageIndex));
+                // Các trang khác: Nền đen xám (#1E1E1E), chữ hạt dẻ mờ (#DBC2B0)
+                btnPage.setBackgroundResource(R.drawable.bg_nav_btn);
+                btnPage.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.parseColor("#1E1E1E")));
+                btnPage.setTextColor(Color.parseColor("#DBC2B0"));
+                btnPage.setOnClickListener(v -> showPage(pageIndex));
             }
-            layoutPageNumbersFavorites.addView(tvPage);
+            layoutPageNumbersFavorites.addView(btnPage);
         }
 
+        // Đồng bộ màu sắc 2 nút mũi tên điều hướng < và >
         btnPrevPageFavorites.setEnabled(currentPage > 0);
         btnNextPageFavorites.setEnabled(currentPage < totalPages - 1);
-        btnPrevPageFavorites.setAlpha(currentPage > 0 ? 1.0f : 0.4f);
-        btnNextPageFavorites.setAlpha(currentPage < totalPages - 1 ? 1.0f : 0.4f);
+
+        btnPrevPageFavorites.setBackgroundResource(R.drawable.bg_nav_btn);
+        btnPrevPageFavorites.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.parseColor("#1E1E1E")));
+        btnPrevPageFavorites.setTextColor(Color.parseColor(currentPage > 0 ? "#DBC2B0" : "#555555"));
+
+        btnNextPageFavorites.setBackgroundResource(R.drawable.bg_nav_btn);
+        btnNextPageFavorites.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.parseColor("#1E1E1E")));
+        btnNextPageFavorites.setTextColor(Color.parseColor(currentPage < totalPages - 1 ? "#DBC2B0" : "#555555"));
     }
 
     private int dpToPx(int dp) {

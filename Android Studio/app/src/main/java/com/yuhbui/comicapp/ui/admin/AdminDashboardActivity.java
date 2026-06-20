@@ -271,7 +271,10 @@ public class AdminDashboardActivity extends AppCompatActivity {
     }
 
     private void fetchTop10ComicsData(String type) {
-        ApiClient.getApiService().getTopRanking(type).enqueue(new Callback<List<Comic>>() {
+        int userId = SharedPrefsManager.getUserId(this);
+        Integer apiUserId = (userId != -1) ? userId : null;
+
+        ApiClient.getApiService().getTopRanking(type, apiUserId).enqueue(new Callback<List<Comic>>() {
             @Override
             public void onResponse(Call<List<Comic>> call, Response<List<Comic>> response) {
                 if (response.isSuccessful() && response.body() != null) {

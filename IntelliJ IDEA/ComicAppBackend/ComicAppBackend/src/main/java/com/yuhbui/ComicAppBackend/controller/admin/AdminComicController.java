@@ -270,7 +270,10 @@ public class AdminComicController {
     }
 
     @GetMapping("/{id}/comments")
-    public ResponseEntity<List<Map<String, Object>>> getComicCommentsForAdmin(@PathVariable Integer id) {
+    public ResponseEntity<List<Map<String, Object>>> getComicCommentsForAdmin(
+            @PathVariable Integer id,
+            @RequestParam(required = false) Integer userId) { // 1. SỬA DÒNG NÀY ĐỂ NHẬN userId
+
         String sql = "SELECT c.CommentID, u.DisplayName, u.AvatarUrl, c.Content, " +
                 "CAST(COALESCE(SUM(CASE WHEN ci.InteractionType = 1 THEN 1 ELSE 0 END), 0) AS SIGNED) as Likes, " +
                 "CAST(COALESCE(SUM(CASE WHEN ci.InteractionType = -1 THEN 1 ELSE 0 END), 0) AS SIGNED) as Dislikes, " +
@@ -280,7 +283,7 @@ public class AdminComicController {
                 "JOIN Users u ON c.UserID = u.UserID " +
                 "LEFT JOIN Comment_Interactions ci ON c.CommentID = ci.CommentID " +
                 "LEFT JOIN Comment_Reports cr ON c.CommentID = cr.CommentID " +
-                "WHERE c.ComicID = :comicId AND c.ParentCommentID IS NULL " + // Lọc bỏ bình luận con khỏi danh sách chính
+                "WHERE c.ComicID = :comicId AND c.ParentCommentID IS NULL " +
                 "GROUP BY c.CommentID, u.DisplayName, u.AvatarUrl, c.Content, c.CreatedAt, c.ReplyCount " +
                 "ORDER BY c.CreatedAt DESC";
         try {
@@ -289,14 +292,38 @@ public class AdminComicController {
             List<Map<String, Object>> responseList = new ArrayList<>();
             for (Object[] row : rawData) {
                 Map<String, Object> map = new HashMap<>();
-                map.put("commentId", row[0]);
+                Integer commentId = (Integer) row[0]; // Ép kiểu an toàn lấy ID
+                map.put("commentId", commentId);
                 map.put("username", row[1]);
                 map.put("avatarUrl", row[2]);
                 map.put("content", row[3]);
                 map.put("likes", row[4]);
                 map.put("dislikes", row[5]);
                 map.put("reports", row[6]);
-                map.put("replyCount", row[7]); // Thêm dòng này để truyền thông tin về app Admin
+                map.put("replyCount", row[7]);
+
+                // --- 2. THÊM ĐOẠN CHECK TRẠNG THÁI TƯƠNG TÁC TẠI ĐÂY ---
+                boolean isLiked = false;
+                boolean isDisliked = false;
+                if (userId != null) {
+                    try {
+                        String checkSql = "SELECT InteractionType FROM Comment_Interactions WHERE UserID = :userId AND CommentID = :commentId";
+                        List<?> interaction = entityManager.createNativeQuery(checkSql)
+                                .setParameter("userId", userId)
+                                .setParameter("commentId", commentId)
+                                .getResultList();
+                        if (!interaction.isEmpty()) {
+                            int type = ((Number) interaction.get(0)).intValue();
+                            if (type == 1) isLiked = true;
+                            else if (type == -1) isDisliked = true;
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+                map.put("isLiked", isLiked);
+                map.put("isDisliked", isDisliked);
+
                 responseList.add(map);
             }
             return ResponseEntity.ok(responseList);

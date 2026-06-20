@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.drawerlayout.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/drawerLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -8,159 +9,252 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#F5F5F5">
+        android:background="#2A2A2A">
+
+        <include
+            android:id="@+id/layoutHeaderReader"
+            layout="@layout/layout_header"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_alignParentTop="true" />
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cvFooterChaptersPopup"
+            android:layout_width="match_parent"
+            android:layout_height="280dp"
+            android:layout_above="@id/layoutReaderFooter"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="4dp"
+            app:cardBackgroundColor="#1E1E1E"
+            app:cardCornerRadius="8dp"
+            app:strokeColor="#A38C7C"
+            app:strokeWidth="1dp"
+            android:visibility="gone"
+            android:elevation="10dp">
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvFooterChaptersPopup"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:padding="8dp" />
+        </com.google.android.material.card.MaterialCardView>
 
         <LinearLayout
+            android:id="@+id/layoutReaderFooter"
+            android:layout_width="match_parent"
+            android:layout_height="66dp"
+            android:layout_alignParentBottom="true"
+            android:background="#000000"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:elevation="8dp">
+
+            <ImageButton
+                android:id="@+id/btnPrevChapter"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="#FFB77D"
+                android:src="@drawable/ic_chevron_left"
+                android:contentDescription="Chương trước"
+                android:scaleType="centerInside"
+                app:tint="#000000" />
+
+            <TextView
+                android:id="@+id/tvChapterSelector"
+                android:layout_width="200dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/bg_nav_btn"
+                android:backgroundTint="#2A2A2A"
+                android:gravity="center"
+                android:text="Chương 754"
+                android:textColor="#FFFFFF"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:clickable="true"
+                android:focusable="true" />
+
+            <ImageButton
+                android:id="@+id/btnNextChapter"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="#FFB77D"
+                android:src="@drawable/ic_chevron_right"
+                android:contentDescription="Chương sau"
+                android:scaleType="centerInside"
+                app:tint="#000000" />
+        </LinearLayout>
+
+        <androidx.core.widget.NestedScrollView
+            android:id="@+id/scrollReaderContainer"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:orientation="vertical">
+            android:layout_below="@id/layoutHeaderReader"
+            android:layout_above="@id/layoutReaderFooter"
+            android:fillViewport="true">
 
-            <include
-                android:id="@+id/layoutHeaderReader"
-                layout="@layout/layout_header"
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
 
-            <androidx.core.widget.NestedScrollView
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:fillViewport="false">
-
-                <LinearLayout
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recyclerViewReaderPages"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical">
+                    android:nestedScrollingEnabled="false" />
+
+                <LinearLayout
+                    android:id="@+id/layoutReaderInlineNav"
+                    android:layout_width="match_parent"
+                    android:layout_height="66dp"
+                    android:background="#000000"
+                    android:gravity="center"
+                    android:orientation="horizontal"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp">
+
+                    <ImageButton
+                        android:id="@+id/btnInlinePrevChapter"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:background="#FFB77D"
+                        android:src="@drawable/ic_chevron_left"
+                        android:contentDescription="Chương trước cố định"
+                        android:scaleType="centerInside"
+                        app:tint="#000000" />
+
+                    <TextView
+                        android:id="@+id/tvInlineChapterSelector"
+                        android:layout_width="200dp"
+                        android:layout_height="40dp"
+                        android:layout_marginStart="8dp"
+                        android:layout_marginEnd="8dp"
+                        android:background="@drawable/bg_nav_btn"
+                        android:backgroundTint="#2A2A2A"
+                        android:gravity="center"
+                        android:text="Chọn chương"
+                        android:textColor="#FFFFFF"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:clickable="true"
+                        android:focusable="true"/>
+
+                    <ImageButton
+                        android:id="@+id/btnInlineNextChapter"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:background="#FFB77D"
+                        android:src="@drawable/ic_chevron_right"
+                        android:contentDescription="Chương sau cố định"
+                        android:scaleType="centerInside"
+                        app:tint="#000000" />
+                </LinearLayout>
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvInlineChaptersDropdown"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="#1E1E1E"
+                    android:padding="8dp"
+                    android:visibility="gone" />
+
+                <LinearLayout
+                    android:id="@+id/layoutChapterCommentsMainBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="#1E1E1E"
+                    android:orientation="vertical"
+                    android:paddingTop="32dp"
+                    android:paddingBottom="32dp"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Bình luận"
+                        android:textColor="#FFB77D"
+                        android:textSize="20sp"
+                        android:textStyle="bold" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="#1A554326"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginBottom="16dp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:background="#2A2A2A"
+                        android:padding="4dp"
+                        android:layout_marginBottom="16dp">
+
+                        <EditText
+                            android:id="@+id/edtChapterCommentInput"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:background="@android:color/transparent"
+                            android:hint="Viết bình luận..."
+                            android:textColorHint="#80DBC2B0"
+                            android:textColor="#FFFFFF"
+                            android:textSize="14sp"
+                            android:padding="12dp"
+                            android:inputType="textShortMessage" />
+
+                        <Button
+                            android:id="@+id/btnChapterSendComment"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Gửi"
+                            android:textColor="#432100"
+                            android:backgroundTint="#FFB77D"
+                            android:textStyle="bold"
+                            app:cornerRadius="8dp" />
+                    </LinearLayout>
 
                     <androidx.recyclerview.widget.RecyclerView
-                        android:id="@+id/recyclerViewImages"
+                        android:id="@+id/recyclerViewChapterComments"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:nestedScrollingEnabled="false" />
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:background="#222222"
-                        android:gravity="center"
-                        android:orientation="horizontal"
-                        android:padding="8dp">
-
-                        <Button
-                            android:id="@+id/btnPrevChapter"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:backgroundTint="#444444"
-                            android:text="◀ Trước"
-                            android:textColor="#FFFFFF"
-                            android:textSize="12sp" />
-
-                        <Spinner
-                            android:id="@+id/spinnerChapters"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="8dp"
-                            android:layout_marginEnd="8dp"
-                            android:layout_weight="1"
-                            android:background="@android:drawable/btn_dropdown"
-                            android:gravity="center"
-                            android:spinnerMode="dialog" />
-
-                        <Button
-                            android:id="@+id/btnNextChapter"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:backgroundTint="#FF9800"
-                            android:text="Sau ▶"
-                            android:textColor="#FFFFFF"
-                            android:textSize="12sp" />
-                    </LinearLayout>
-
-                    <Button
-                        android:id="@+id/btnDeleteChapterReader"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginLeft="16dp"
-                        android:layout_marginRight="16dp"
-                        android:layout_marginTop="12dp"
-                        android:backgroundTint="#E53935"
-                        android:text="🗑 Xóa chương tải xuống này"
-                        android:textColor="#FFFFFF"
-                        android:textSize="14sp"
-                        android:textStyle="bold"
-                        android:visibility="gone" />
-
-                    <LinearLayout
-                        android:id="@+id/layoutCommentContainerReader"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="20dp"
-                        android:background="#FFFFFF"
-                        android:orientation="vertical"
-                        android:padding="16dp">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Bình luận chương này"
-                            android:textColor="#000000"
-                            android:textSize="16sp"
-                            android:textStyle="bold" />
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
-                            android:orientation="horizontal">
-
-                            <EditText
-                                android:id="@+id/edtCommentInputReader"
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:clickable="true"
-                                android:focusable="true"
-                                android:focusableInTouchMode="true"
-                                android:hint="Chia sẻ cảm xúc về chương này..."
-                                android:textColor="#000000"
-                                android:textColorHint="#888888" />
-
-                            <Button
-                                android:id="@+id/btnSendCommentReader"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Gửi" />
-                        </LinearLayout>
-
-                        <androidx.recyclerview.widget.RecyclerView
-                            android:id="@+id/recyclerViewCommentsReader"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="12dp"
-                            android:nestedScrollingEnabled="false" />
-                    </LinearLayout>
-
                 </LinearLayout>
-            </androidx.core.widget.NestedScrollView>
 
-        </LinearLayout>
+            </LinearLayout>
+        </androidx.core.widget.NestedScrollView>
 
-        <ImageButton
-            android:id="@+id/btnFloatingDownloadReader"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:layout_alignParentBottom="true"
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardFabDownload"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
             android:layout_alignParentEnd="true"
-            android:layout_margin="20dp"
-            android:background="#FF9800"
-            android:elevation="6dp"
-            android:padding="12dp"
-            android:scaleType="fitCenter"
-            android:src="@android:drawable/stat_sys_download"
-            android:contentDescription="Tải chương nhanh" />
+            android:layout_alignParentBottom="true"
+            android:layout_marginEnd="11dp"
+            android:layout_marginBottom="79dp"
+            app:cardBackgroundColor="#E6FFB77D"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="6dp"
+            app:strokeWidth="0dp">
+            <ImageView
+                android:id="@+id/btnFabDownloadChapter"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerInside"
+                android:src="@android:drawable/stat_sys_download"
+                app:tint="#000000"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackground"
+                android:contentDescription="Tải chương truyện ngoại tuyến" />
+        </com.google.android.material.card.MaterialCardView>
 
     </RelativeLayout>
-
-    <include layout="@layout/layout_side_menu" />
-
 </androidx.drawerlayout.widget.DrawerLayout>

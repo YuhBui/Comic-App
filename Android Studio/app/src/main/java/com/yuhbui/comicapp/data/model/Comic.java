@@ -1,6 +1,7 @@
 package com.yuhbui.comicapp.data.model;
 
 import com.google.gson.annotations.SerializedName;
+
 import java.io.Serializable;
 
 public class Comic implements Serializable {
@@ -48,6 +49,9 @@ public class Comic implements Serializable {
 
     @SerializedName("commentCount")
     private long commentCount;
+
+    @SerializedName("isFollowed")
+    private boolean isFollowed;
 
     public Comic() {
     }
@@ -133,7 +137,18 @@ public class Comic implements Serializable {
     }
 
     public String getLatestChapterNumber() {
-        return latestChapterNumber;
+        if (latestChapterNumber == null) {
+            return null;
+        }
+        String clean = latestChapterNumber.trim();
+        if (clean.toLowerCase().startsWith("chương")) {
+            if (clean.length() > 6) {
+                return clean.substring(6).trim();
+            } else {
+                return "";
+            }
+        }
+        return clean;
     }
 
     public void setLatestChapterNumber(String latestChapterNumber) {
@@ -148,13 +163,21 @@ public class Comic implements Serializable {
         this.timeUpdated = timeUpdated;
     }
 
-    public String getReleaseDate() { return releaseDate != null ? releaseDate : "Đang cập nhật"; }
+    public String getReleaseDate() {
+        return releaseDate != null ? releaseDate : "Đang cập nhật";
+    }
 
-    public void setReleaseDate(String releaseDate) { this.releaseDate = releaseDate; }
+    public void setReleaseDate(String releaseDate) {
+        this.releaseDate = releaseDate;
+    }
 
-    public Integer getFollowCount() { return followCount != null ? followCount : 0; }
+    public Integer getFollowCount() {
+        return followCount != null ? followCount : 0;
+    }
 
-    public void setFollowCount(Integer followCount) { this.followCount = followCount; }
+    public void setFollowCount(Integer followCount) {
+        this.followCount = followCount;
+    }
 
     public long getCommentCount() {
         return commentCount;
@@ -162,5 +185,13 @@ public class Comic implements Serializable {
 
     public void setCommentCount(long commentCount) {
         this.commentCount = commentCount;
+    }
+
+    public boolean isFollowed() {
+        return isFollowed;
+    }
+
+    public void setFollowed(boolean followed) {
+        isFollowed = followed;
     }
 }

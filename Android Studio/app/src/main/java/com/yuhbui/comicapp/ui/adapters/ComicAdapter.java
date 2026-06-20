@@ -1,6 +1,8 @@
 package com.yuhbui.comicapp.ui.adapters;
 
 import android.content.Intent;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,21 +17,11 @@ import com.yuhbui.comicapp.ui.ComicDetailActivity;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * ComicAdapter - Adapter đa năng cho danh sách truyện
- * Dùng layout item_comic_full_default: ảnh bìa + stats overlay + tiêu đề + chương + thời gian
- * Sử dụng cho phần Truyện Mới Cập Nhật (GridLayout 2 cột)
- */
 public class ComicAdapter extends RecyclerView.Adapter<ComicAdapter.ComicViewHolder> {
 
     private List<Comic> comicList = new ArrayList<>();
     private boolean isListView = false;
     private boolean isDownloadMode = false;
-
-    public void setDownloadMode(boolean isDownloadMode) {
-        this.isDownloadMode = isDownloadMode;
-        notifyDataSetChanged();
-    }
     private OnItemClickListener onItemClickListener;
 
     public interface OnItemClickListener {
@@ -38,6 +30,11 @@ public class ComicAdapter extends RecyclerView.Adapter<ComicAdapter.ComicViewHol
 
     public void setOnItemClickListener(OnItemClickListener listener) {
         this.onItemClickListener = listener;
+    }
+
+    public void setDownloadMode(boolean isDownloadMode) {
+        this.isDownloadMode = isDownloadMode;
+        notifyDataSetChanged();
     }
 
     public ComicAdapter() {
@@ -69,9 +66,19 @@ public class ComicAdapter extends RecyclerView.Adapter<ComicAdapter.ComicViewHol
         holder.tvLatestChapter.setText("Chương " + (comic.getLatestChapterNumber() != null ? comic.getLatestChapterNumber() : "0"));
         holder.tvTimeUpdate.setText(comic.getTimeUpdated() != null ? comic.getTimeUpdated() : "Vừa xong");
 
-        holder.tvViews.setText("👁 " + formatNumber(comic.getViewCount()));
-        holder.tvLikes.setText("❤ " + formatNumber(comic.getFollowCount()));
-        holder.tvComments.setText("💬 " + formatNumber(comic.getCommentCount()));
+        holder.tvViews.setText(formatNumber(comic.getViewCount()));
+        holder.tvLikes.setText(formatNumber(comic.getFollowCount()));
+        holder.tvComments.setText(formatNumber(comic.getCommentCount()));
+
+        if (holder.imgLikesIcon != null) {
+            if (comic.isFollowed()) {
+                holder.imgLikesIcon.setImageResource(R.drawable.ic_heart_filled);
+                holder.imgLikesIcon.setImageTintList(ColorStateList.valueOf(Color.parseColor("#CC003C")));
+            } else {
+                holder.imgLikesIcon.setImageResource(R.drawable.ic_heart_outline);
+                holder.imgLikesIcon.setImageTintList(ColorStateList.valueOf(Color.parseColor("#B2FFFFFF")));
+            }
+        }
 
         Glide.with(holder.itemView.getContext())
                 .load(comic.getCoverImageUrl())
@@ -90,18 +97,38 @@ public class ComicAdapter extends RecyclerView.Adapter<ComicAdapter.ComicViewHol
             }
         });
 
+        // XỬ LÝ ẨN/HIỆN THÔNG TIN TRUYỆN TRANH THEO CHẾ ĐỘ
         if (isDownloadMode) {
+            // Ẩn chương và thời gian cập nhật
             holder.tvLatestChapter.setVisibility(View.GONE);
             holder.tvTimeUpdate.setVisibility(View.GONE);
+
+            // Ẩn toàn bộ thanh container chứa thông số thống kê
+            if (holder.layoutItemStats != null) {
+                holder.layoutItemStats.setVisibility(View.GONE);
+            }
+
+            // Ẩn bồi thêm các thành phần con để tránh lỗi hiển thị sót biểu tượng
             holder.tvViews.setVisibility(View.GONE);
             holder.tvLikes.setVisibility(View.GONE);
             holder.tvComments.setVisibility(View.GONE);
+            if (holder.imgLikesIcon != null) {
+                holder.imgLikesIcon.setVisibility(View.GONE);
+            }
         } else {
-            holder.tvLatestChapter.setVisibility(View.VISIBLE);
+            // ĐÃ SỬA LỖI CÚ PHÁP: Thay View.getLatestChapterNumber() thành comic.getLatestChapterNumber()
+            holder.tvLatestChapter.setVisibility(comic.getLatestChapterNumber() != null ? View.VISIBLE : View.GONE);
             holder.tvTimeUpdate.setVisibility(View.VISIBLE);
+
+            if (holder.layoutItemStats != null) {
+                holder.layoutItemStats.setVisibility(View.VISIBLE);
+            }
             holder.tvViews.setVisibility(View.VISIBLE);
             holder.tvLikes.setVisibility(View.VISIBLE);
             holder.tvComments.setVisibility(View.VISIBLE);
+            if (holder.imgLikesIcon != null) {
+                holder.imgLikesIcon.setVisibility(View.VISIBLE);
+            }
         }
     }
 
@@ -117,19 +144,22 @@ public class ComicAdapter extends RecyclerView.Adapter<ComicAdapter.ComicViewHol
     }
 
     static class ComicViewHolder extends RecyclerView.ViewHolder {
-        ImageView imgCover;
+        ImageView imgCover, imgLikesIcon;
         TextView tvTitle, tvLatestChapter, tvTimeUpdate;
         TextView tvViews, tvLikes, tvComments;
+        View layoutItemStats;
 
         public ComicViewHolder(@NonNull View itemView) {
             super(itemView);
             imgCover        = itemView.findViewById(R.id.imgItemCover);
+            imgLikesIcon    = itemView.findViewById(R.id.imgItemLikesIcon);
             tvTitle         = itemView.findViewById(R.id.tvItemTitle);
             tvLatestChapter = itemView.findViewById(R.id.tvItemLatestChapter);
             tvTimeUpdate    = itemView.findViewById(R.id.tvItemTimeUpdate);
             tvViews         = itemView.findViewById(R.id.tvItemViews);
             tvLikes         = itemView.findViewById(R.id.tvItemLikes);
             tvComments      = itemView.findViewById(R.id.tvItemComments);
+            layoutItemStats = itemView.findViewById(R.id.layoutItemStats);
         }
     }
 }

@@ -213,60 +213,74 @@ public class ComicController {
     // TRÙNG KHỚP CÁC ENDPOINT MỚI BỔ SUNG CHO TRANG CHỦ (HOME NÂNG CẤP)
     // =========================================================================
 
-    // 6. API TRUYỆN ĐỀ CỬ HOT (Lấy top 6 bộ có điểm rating cao nhất kèm đầy đủ thông số)
+    // 6. API TRUYỆN ĐỀ CỬ HOT (Đã cập nhật nhận diện userId)
     @GetMapping("/home/recommended")
-    public ResponseEntity<List<ComicHomeResponseDTO>> getRecommendedComics() {
+    public ResponseEntity<List<ComicHomeResponseDTO>> getRecommendedComics(@RequestParam(required = false) Integer userId) {
         List<Object[]> rawData = comicRepository.getComicHomeDataRaw();
         List<ComicHomeResponseDTO> dtoList = rawData.stream()
                 .map(this::mapRowToDTO)
+                .peek(dto -> {
+                    if (userId != null) {
+                        dto.setFollowed(followRepository.existsByUserIdAndComicId(userId, dto.getComicId()));
+                    }
+                })
                 .sorted(Comparator.comparing(ComicHomeResponseDTO::getRating, Comparator.nullsLast(Comparator.reverseOrder())))
                 .limit(6)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(dtoList);
     }
 
-    // 7. API TRUYỆN MỚI CẬP NHẬT + TÍNH TOÁN ĐẦY ĐỦ THÔNG SỐ (PHÂN TRANG LŨY TIẾN 10 TRUYỆN)
+    // 7. API TRUYỆN MỚI CẬP NHẬT (Đã cập nhật nhận diện userId)
     @GetMapping("/home/updates")
-    public ResponseEntity<List<ComicHomeResponseDTO>> getHomeUpdates(@RequestParam(defaultValue = "0") int page) {
-        // Gọi câu lệnh Query vạn năng từ ComicRepository đã thiết kế ở bước trước
+    public ResponseEntity<List<ComicHomeResponseDTO>> getHomeUpdates(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(required = false) Integer userId) {
+
         List<Object[]> rawData = comicRepository.getComicHomeDataRaw();
 
-        // Ánh xạ dữ liệu thô (Object Array) sang định dạng đối tượng DTO chuyên biệt gửi cho Android
         List<ComicHomeResponseDTO> dtoList = rawData.stream()
                 .map(this::mapRowToDTO)
+                .peek(dto -> {
+                    if (userId != null) {
+                        dto.setFollowed(followRepository.existsByUserIdAndComicId(userId, dto.getComicId()));
+                    }
+                })
                 .collect(Collectors.toList());
 
-        // Phân đoạn phân trang (Cắt mảng 10 phần tử dựa theo tham số ?page=)
         int start = page * 10;
         if (start >= dtoList.size()) {
-            return ResponseEntity.ok(new java.util.ArrayList<>()); // Trả về list rỗng nếu lướt quá trang cuối cùng
+            return ResponseEntity.ok(new java.util.ArrayList<>());
         }
         int end = Math.min(start + 10, dtoList.size());
 
         return ResponseEntity.ok(dtoList.subList(start, end));
     }
 
-    // 8. API BẢNG XẾP HẠNG TOP 10 TRUYỆN (HỖ TRỢ THAY ĐỔI TAB: NGÀY / TUẦN / THÁNG)
+    // 8. API BẢNG XẾP HẠNG TOP 10 TRUYỆN (Đã cập nhật nhận diện userId)
     @GetMapping("/home/ranking")
-    public ResponseEntity<List<ComicHomeResponseDTO>> getTopRanking(@RequestParam(defaultValue = "day") String type) {
+    public ResponseEntity<List<ComicHomeResponseDTO>> getTopRanking(
+            @RequestParam(defaultValue = "day") String type,
+            @RequestParam(required = false) Integer userId) {
         List<Object[]> rawData = comicRepository.getComicHomeDataRaw();
         List<ComicHomeResponseDTO> dtoList = rawData.stream()
                 .map(this::mapRowToDTO)
+                .peek(dto -> {
+                    if (userId != null) {
+                        dto.setFollowed(followRepository.existsByUserIdAndComicId(userId, dto.getComicId()));
+                    }
+                })
                 .collect(Collectors.toList());
 
         // Phân biệt tiêu chí sắp xếp theo từng tab thời gian
         Comparator<ComicHomeResponseDTO> comparator;
         switch (type) {
             case "week":
-                // Tuần: Sắp xếp theo điểm Rating cao nhất
                 comparator = Comparator.comparing(ComicHomeResponseDTO::getRating, Comparator.nullsLast(Comparator.reverseOrder()));
                 break;
             case "month":
-                // Tháng: Sắp xếp theo số Follow nhiều nhất
                 comparator = Comparator.comparing(ComicHomeResponseDTO::getFollowCount, Comparator.nullsLast(Comparator.reverseOrder()));
                 break;
             default: // "day"
-                // Ngày: Sắp xếp theo ViewCount nhiều nhất
                 comparator = Comparator.comparing(ComicHomeResponseDTO::getViewCount, Comparator.nullsLast(Comparator.reverseOrder()));
                 break;
         }
@@ -279,84 +293,90 @@ public class ComicController {
         return ResponseEntity.ok(ranked);
     }
 
-    // 9. API BỘ LỌC TRUYỆN THEO THỂ LOẠI (Path variable version)
+    // 9. API BỘ LỌC TRUYỆN THEO THỂ LOẠI (Đã cập nhật nhận diện userId)
     @GetMapping("/filter/category/{catId}")
-    public ResponseEntity<List<ComicHomeResponseDTO>> filterComicsByCategory(@PathVariable Integer catId) {
+    public ResponseEntity<List<ComicHomeResponseDTO>> filterComicsByCategory(
+            @PathVariable Integer catId,
+            @RequestParam(required = false) Integer userId) {
         List<Object[]> rawData = comicRepository.getComicHomeDataByCategoriesRaw(java.util.List.of(catId), 1);
         List<ComicHomeResponseDTO> dtoList = rawData.stream()
                 .map(this::mapRowToDTO)
+                .peek(dto -> {
+                    if (userId != null) {
+                        dto.setFollowed(followRepository.existsByUserIdAndComicId(userId, dto.getComicId()));
+                    }
+                })
                 .collect(Collectors.toList());
         return ResponseEntity.ok(dtoList);
     }
 
-    // 10. ĐÃ SỬA: API BỘ LỌC TRUYỆN ĐA THỂ LOẠI (AND LOGIC) + PHÂN TRANG Y HỆT TRUYỆN MỚI CẬP NHẬT
+    // 10. API BỘ LỌC TRUYỆN ĐA THỂ LOẠI (Đã cập nhật nhận diện userId)
     @GetMapping("/filter")
     public ResponseEntity<List<ComicHomeResponseDTO>> filterByCat(
             @RequestParam List<Integer> categoryIds,
-            @RequestParam(defaultValue = "0") int page) {
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(required = false) Integer userId) {
 
-        // Gọi câu lệnh Query vạn năng nhận mảng ID và kích thước mảng để chạy logic AND
         List<Object[]> rawData = comicRepository.getComicHomeDataByCategoriesRaw(categoryIds, categoryIds.size());
 
-        // Ánh xạ dữ liệu thô (Object Array) sang định dạng đối tượng DTO chuyên biệt gửi cho Android
         List<ComicHomeResponseDTO> dtoList = rawData.stream()
                 .map(this::mapRowToDTO)
+                .peek(dto -> {
+                    if (userId != null) {
+                        dto.setFollowed(followRepository.existsByUserIdAndComicId(userId, dto.getComicId()));
+                    }
+                })
                 .collect(Collectors.toList());
 
-        // Cơ chế phân trang lũy tiến cắt mảng (Cắt cụm 10 phần tử dựa theo tham số ?page=) y hệt getHomeUpdates
         int start = page * 10;
         if (start >= dtoList.size()) {
-            return ResponseEntity.ok(new java.util.ArrayList<>()); // Trả về danh sách rỗng nếu lướt quá trang cuối
+            return ResponseEntity.ok(new java.util.ArrayList<>());
         }
         int end = Math.min(start + 10, dtoList.size());
 
         return ResponseEntity.ok(dtoList.subList(start, end));
     }
 
-    // 11. API LẤY DANH SÁCH TRUYỆN YÊU THÍCH CỦA NGƯỜI DÙNG (kèm đầy đủ thông số)
-    @GetMapping("/favorites/{userId}")
-    public ResponseEntity<List<ComicHomeResponseDTO>> getFavoriteComics(
-            @PathVariable Integer userId) {
-        List<Object[]> rawData = followRepository.findFavoriteComicsWithStatsByUserId(userId);
-        List<ComicHomeResponseDTO> dtoList = rawData.stream()
-                .map(this::mapRowToDTO)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(dtoList);
-    }
-
-    // =============================================
-    // HÀM PHỤ TRỢ: Chuyển đổi Object[] sang DTO ngoài trang chủ
-    // =============================================
-    private ComicHomeResponseDTO mapRowToDTO(Object[] row) {
-        return new ComicHomeResponseDTO(
-                (Integer) row[0],
-                (String) row[1],
-                (String) row[2],
-                (Integer) row[3],
-                (Float) row[4],
-                (String) row[5],
-                row[6] != null ? "Chương " + row[6].toString() : "Chương 0",
-                convertToRelativeTime(row[7]), // ĐÃ SỬA: Gọi hàm convert thời gian tương đối
-                row[8] != null ? ((Number) row[8]).longValue() : 0L,
-                row[9] != null ? ((Number) row[9]).longValue() : 0L
-        );
-    }
-
-    // 12. API TÌM KIẾM TRUYỆN THEO TỪ KHÓA (Kèm đầy đủ thông số tương tác cho danh sách dọc)
+    // 12. API TÌM KIẾM TRUYỆN THEO TỪ KHÓA (Đã cập nhật nhận diện userId)
     @GetMapping("/search")
-    public ResponseEntity<List<ComicHomeResponseDTO>> searchComics(@RequestParam String keyword) {
-        // Lấy toàn bộ danh sách dữ liệu thô kèm stats từ Repository
+    public ResponseEntity<List<ComicHomeResponseDTO>> searchComics(
+            @RequestParam String keyword,
+            @RequestParam(required = false) Integer userId) {
         List<Object[]> rawData = comicRepository.getComicHomeDataRaw();
 
-        // Chuyển đổi sang DTO và lọc các truyện có tiêu đề chứa từ khóa (không phân biệt chữ hoa/thường)
         List<ComicHomeResponseDTO> filteredList = rawData.stream()
                 .map(this::mapRowToDTO)
+                .peek(dto -> {
+                    if (userId != null) {
+                        dto.setFollowed(followRepository.existsByUserIdAndComicId(userId, dto.getComicId()));
+                    }
+                })
                 .filter(comic -> comic.getTitle() != null &&
                         comic.getTitle().toLowerCase().contains(keyword.toLowerCase()))
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(filteredList);
     }
+
+    // =========================================================================
+    // SỬA ĐỔI: Hàm phụ trợ map dữ liệu an toàn, tránh lỗi thay đổi constructor
+    // =========================================================================
+    private ComicHomeResponseDTO mapRowToDTO(Object[] row) {
+        ComicHomeResponseDTO dto = new ComicHomeResponseDTO();
+        dto.setComicId((Integer) row[0]);
+        dto.setTitle((String) row[1]);
+        dto.setCoverImageUrl((String) row[2]);
+        dto.setViewCount((Integer) row[3]);
+        dto.setRating((Float) row[4]);
+        dto.setStatus((String) row[5]);
+        dto.setLatestChapterNumber(row[6] != null ? "Chương " + row[6].toString() : "Chương 0");
+        dto.setTimeUpdated(convertToRelativeTime(row[7]));
+        dto.setFollowCount(row[8] != null ? ((Number) row[8]).longValue() : 0L);
+        dto.setCommentCount(row[9] != null ? ((Number) row[9]).longValue() : 0L);
+        dto.setFollowed(false); // Mặc định khởi tạo false, Peeking ở trên sẽ gán lại nếu có userId
+        return dto;
+    }
+
 
     // ĐÃ SỬA: API lấy danh sách truyện Yêu thích có tích hợp bộ lọc đa chọn AND Logic (NÂNG CẤP ĐẦY ĐỦ THÔNG SỐ)
     @GetMapping("/user-favorites/{userId}")

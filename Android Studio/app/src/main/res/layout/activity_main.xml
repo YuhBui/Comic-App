@@ -9,7 +9,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#F0F0F0"
+        android:background="#2A2A2A"
         android:orientation="vertical">
 
         <include
@@ -27,26 +27,38 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:descendantFocusability="blocksDescendants"
-                android:orientation="vertical">
+                android:orientation="vertical"
+                android:paddingTop="16dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:background="#FFFFFF"
                     android:orientation="vertical"
-                    android:paddingTop="12dp"
-                    android:paddingBottom="12dp">
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:paddingBottom="32dp">
 
-                    <TextView
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:paddingStart="14dp"
-                        android:paddingEnd="14dp"
-                        android:paddingBottom="8dp"
-                        android:text="⭐  TRUYỆN ĐỀ CỬ"
-                        android:textColor="#FF9800"
-                        android:textSize="15sp"
-                        android:textStyle="bold" />
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingBottom="12dp">
+
+                        <View
+                            android:layout_width="4dp"
+                            android:layout_height="24dp"
+                            android:background="#D97707" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:text="TRUYỆN ĐỀ CỬ"
+                            android:textColor="#FFFFFF"
+                            android:textSize="20sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
 
                     <RelativeLayout
                         android:layout_width="match_parent"
@@ -55,18 +67,16 @@
                         <androidx.viewpager2.widget.ViewPager2
                             android:id="@+id/vpRecommended"
                             android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:layout_marginStart="14dp"
-                            android:layout_marginEnd="14dp" />
+                            android:layout_height="match_parent" />
 
                         <ImageButton
                             android:id="@+id/btnSliderPrev"
-                            android:layout_width="36dp"
-                            android:layout_height="36dp"
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
                             android:layout_alignParentStart="true"
                             android:layout_centerVertical="true"
-                            android:layout_marginStart="18dp"
-                            android:background="@drawable/bg_slider_btn"
+                            android:layout_marginStart="8dp"
+                            android:background="#66000000"
                             android:contentDescription="Truyện trước"
                             android:scaleType="centerInside"
                             android:src="@drawable/ic_chevron_left"
@@ -74,12 +84,12 @@
 
                         <ImageButton
                             android:id="@+id/btnSliderNext"
-                            android:layout_width="36dp"
-                            android:layout_height="36dp"
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
                             android:layout_alignParentEnd="true"
                             android:layout_centerVertical="true"
-                            android:layout_marginEnd="18dp"
-                            android:background="@drawable/bg_slider_btn"
+                            android:layout_marginEnd="8dp"
+                            android:background="#66000000"
                             android:contentDescription="Truyện sau"
                             android:scaleType="centerInside"
                             android:src="@drawable/ic_chevron_right"
@@ -99,28 +109,32 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:background="#FFFFFF"
                     android:orientation="vertical"
-                    android:paddingStart="10dp"
-                    android:paddingTop="12dp"
-                    android:paddingEnd="10dp"
-                    android:paddingBottom="12dp">
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:paddingBottom="32dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginBottom="10dp"
+                        android:layout_marginBottom="16dp"
                         android:gravity="center_vertical"
                         android:orientation="horizontal">
+
+                        <View
+                            android:width="4dp"
+                            android:layout_width="4dp"
+                            android:layout_height="24dp"
+                            android:background="#CC003C" />
 
                         <TextView
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="🆕  TRUYỆN MỚI CẬP NHẬT"
-                            android:textColor="#2196F3"
-                            android:textSize="15sp"
+                            android:layout_marginStart="8dp"
+                            android:text="TRUYỆN MỚI CẬP NHẬT"
+                            android:textColor="#FFFFFF"
+                            android:textSize="20sp"
                             android:textStyle="bold" />
 
                         <ImageView
@@ -133,7 +147,8 @@
                             android:focusable="true"
                             android:padding="2dp"
                             android:scaleType="centerInside"
-                            android:src="@drawable/ic_filter" />
+                            android:src="@drawable/ic_filter"
+                            app:tint="#DBC2B0" />
                     </LinearLayout>
 
                     <TextView
@@ -142,7 +157,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="6dp"
                         android:text=""
-                        android:textColor="#FF9800"
+                        android:textColor="#D97707"
                         android:textSize="12sp"
                         android:textStyle="italic"
                         android:visibility="gone" />
@@ -157,18 +172,18 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="16dp"
-                        android:layout_marginBottom="8dp"
                         android:gravity="center"
                         android:orientation="horizontal">
 
                         <Button
                             android:id="@+id/btnPrevPage"
                             android:layout_width="40dp"
-                            android:layout_height="36dp"
+                            android:layout_height="40dp"
                             android:background="@drawable/bg_nav_btn"
+                            android:backgroundTint="#1E1E1E"
                             android:padding="0dp"
                             android:text="&lt;"
-                            android:textColor="#FFFFFF"
+                            android:textColor="#DBC2B0"
                             android:textSize="14sp"
                             android:textStyle="bold" />
 
@@ -176,19 +191,20 @@
                             android:id="@+id/layoutPageNumbers"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="6dp"
-                            android:layout_marginEnd="6dp"
+                            android:layout_marginStart="8dp"
+                            android:layout_marginEnd="8dp"
                             android:gravity="center_vertical"
                             android:orientation="horizontal" />
 
                         <Button
                             android:id="@+id/btnNextPage"
                             android:layout_width="40dp"
-                            android:layout_height="36dp"
+                            android:layout_height="40dp"
                             android:background="@drawable/bg_nav_btn"
+                            android:backgroundTint="#1E1E1E"
                             android:padding="0dp"
                             android:text="&gt;"
-                            android:textColor="#FFFFFF"
+                            android:textColor="#DBC2B0"
                             android:textSize="14sp"
                             android:textStyle="bold" />
                     </LinearLayout>
@@ -197,77 +213,89 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:background="#FFFFFF"
                     android:orientation="vertical"
-                    android:paddingStart="10dp"
-                    android:paddingTop="12dp"
-                    android:paddingEnd="10dp"
-                    android:paddingBottom="16dp">
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:paddingBottom="32dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginBottom="12dp"
+                        android:layout_marginBottom="16dp"
                         android:gravity="center_vertical"
                         android:orientation="horizontal">
+
+                        <View
+                            android:layout_width="4dp"
+                            android:layout_height="24dp"
+                            android:background="#D97707" />
 
                         <TextView
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="📊  BẢNG XẾP HẠNG TOP 10"
-                            android:textColor="#E91E63"
-                            android:textSize="15sp"
+                            android:layout_marginStart="8dp"
+                            android:text="BẢNG XẾP HẠNG TOP 10"
+                            android:textColor="#FFFFFF"
+                            android:textSize="20sp"
                             android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="#1E1E1E"
+                        android:padding="4dp"
+                        android:layout_marginBottom="16dp"
+                        android:gravity="center">
 
                         <RadioGroup
                             android:id="@+id/rgRankFilter"
-                            android:layout_width="wrap_content"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:orientation="horizontal">
 
                             <RadioButton
                                 android:id="@+id/rbDay"
-                                android:layout_width="wrap_content"
-                                android:layout_height="30dp"
+                                android:layout_width="0dp"
+                                android:layout_height="32dp"
+                                android:layout_weight="1"
                                 android:background="@drawable/radio_tab_bg"
                                 android:button="@null"
                                 android:checked="true"
                                 android:gravity="center"
-                                android:paddingStart="10dp"
-                                android:paddingEnd="10dp"
                                 android:text="Ngày"
                                 android:textColor="@drawable/radio_text_color"
-                                android:textSize="12sp" />
+                                android:textSize="12sp"
+                                android:textStyle="bold" />
 
                             <RadioButton
                                 android:id="@+id/rbWeek"
-                                android:layout_width="wrap_content"
-                                android:layout_height="30dp"
-                                android:layout_marginStart="4dp"
+                                android:layout_width="0dp"
+                                android:layout_height="32dp"
+                                android:layout_weight="1"
+                                android:layout_marginStart="8dp"
                                 android:background="@drawable/radio_tab_bg"
                                 android:button="@null"
                                 android:gravity="center"
-                                android:paddingStart="10dp"
-                                android:paddingEnd="10dp"
                                 android:text="Tuần"
                                 android:textColor="@drawable/radio_text_color"
-                                android:textSize="12sp" />
+                                android:textSize="12sp"
+                                android:textStyle="bold" />
 
                             <RadioButton
                                 android:id="@+id/rbMonth"
-                                android:layout_width="wrap_content"
-                                android:layout_height="30dp"
-                                android:layout_marginStart="4dp"
+                                android:layout_width="0dp"
+                                android:layout_height="32dp"
+                                android:layout_weight="1"
+                                android:layout_marginStart="8dp"
                                 android:background="@drawable/radio_tab_bg"
                                 android:button="@null"
                                 android:gravity="center"
-                                android:paddingStart="10dp"
-                                android:paddingEnd="10dp"
                                 android:text="Tháng"
                                 android:textColor="@drawable/radio_text_color"
-                                android:textSize="12sp" />
+                                android:textSize="12sp"
+                                android:textStyle="bold" />
                         </RadioGroup>
                     </LinearLayout>
 
@@ -286,7 +314,7 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:background="#FFFFFF"
+            android:background="#2A2A2A"
             android:orientation="vertical"
             android:visibility="gone">
 
@@ -295,7 +323,7 @@
                 android:layout_height="wrap_content"
                 android:padding="16dp"
                 android:text="🔍 KẾT QUẢ TÌM KIẾM TRUYỆN"
-                android:textColor="#000000"
+                android:textColor="#FFFFFF"
                 android:textSize="16sp"
                 android:textStyle="bold" />
 
@@ -303,8 +331,8 @@
                 android:id="@+id/recyclerViewSearchResults"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:paddingStart="8dp"
-                android:paddingEnd="8dp"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
                 android:scrollbars="vertical" />
         </LinearLayout>
 

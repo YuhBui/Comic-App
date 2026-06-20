@@ -42,12 +42,24 @@ public class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapte
         holder.tvMessage.setText(notif.getMessage());
         holder.tvTime.setText(notif.getCreatedAt() != null ? notif.getCreatedAt().substring(0, 10) : "");
 
+        holder.tvTitle.setTextColor(Color.parseColor("#FFFFFF"));    // Tiêu đề màu trắng rõ nét
+        holder.tvMessage.setTextColor(Color.parseColor("#DBC2B0"));  // Nội dung màu nâu hạt dẻ mờ
+        holder.itemView.setBackgroundColor(Color.parseColor("#1E1E1E")); // Nền hộp thông báo tối cao cấp
+
         if (!notif.isRead()) {
-            holder.viewDot.setVisibility(View.VISIBLE);
-            holder.itemView.setBackgroundColor(Color.parseColor("#F5F9FF")); // Nền xanh nhạt nếu chưa đọc
+            holder.itemView.setAlpha(1.0f);
+            holder.tvTime.setTextColor(Color.parseColor("#FFB77D"));
+
+            if (holder.viewDot != null) {
+                holder.viewDot.setVisibility(View.VISIBLE);
+            }
         } else {
-            holder.viewDot.setVisibility(View.GONE);
-            holder.itemView.setBackgroundColor(Color.parseColor("#FFFFFF"));
+            holder.itemView.setAlpha(0.8f);
+            holder.tvTime.setTextColor(Color.parseColor("#DBC2B0"));
+
+            if (holder.viewDot != null) {
+                holder.viewDot.setVisibility(View.GONE);
+            }
         }
 
         holder.itemView.setOnClickListener(v -> {

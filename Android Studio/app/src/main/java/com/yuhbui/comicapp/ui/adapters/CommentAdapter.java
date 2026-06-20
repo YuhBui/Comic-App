@@ -2,6 +2,7 @@ package com.yuhbui.comicapp.ui.adapters;
 
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -82,11 +83,15 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
 
         holder.tvCommentContent.setText(comment.getContent());
 
-        holder.btnLike.setText("👍 Thích (" + comment.getLikeCount() + ")");
-        holder.btnDislike.setText("👎 Ghét (" + comment.getDislikeCount() + ")");
-        holder.btnReply.setText("💬 Phản hồi (" + comment.getReplyCount() + ")");
+        holder.tvLikeCount.setText("(" + comment.getLikeCount() + ")");
+        holder.tvDislikeCount.setText("(" + comment.getDislikeCount() + ")");
+        holder.tvReplyCount.setText("Phản hồi (" + comment.getReplyCount() + ")");
 
-        // Đã lấy lại adapter đã tạo sẵn từ ViewHolder, loại bỏ việc khởi tạo mới liên tục gây lag ứng dụng
+        updateCommentLikeDislikeUI(holder, comment);
+
+        // Cập nhật trạng thái hiển thị đổi hình Fill màu cho Icon Vector thời gian thực
+        updateLikeDislikeIcons(holder, comment);
+
         ReplyAdapter replyAdapter = holder.replyAdapter;
 
         if (!repliesCache.containsKey(commentId)) {
@@ -114,7 +119,6 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
             holder.rvReplies.setVisibility(View.GONE);
             replyAdapter.setReplies(new ArrayList<>());
 
-            // CHUẨN ĐỊNH DẠNG: Chỉ hiện dòng chữ xem phản hồi nếu có phản hồi con thực tế (> 0)
             if (totalRepliesCount > 0) {
                 holder.tvLoadMoreReplies.setVisibility(View.VISIBLE);
                 holder.tvLoadMoreReplies.setText("—— Xem phản hồi (" + totalRepliesCount + ") ——");
@@ -123,7 +127,6 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
             }
         }
 
-        // Bắt sự kiện phản hồi của bình luận con (Cháu) -> Truyền thêm tên để chèn `@tên_user`
         replyAdapter.setOnReplyToReplyClickListener(childComment -> {
             if (replyListener != null) {
                 Comment ghostComment = new Comment();
@@ -140,41 +143,61 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
 
         int currentUserId = SharedPrefsManager.getUserId(context);
 
-        holder.btnLike.setOnClickListener(v -> {
-            if (currentUserId == -1) {
-                Toast.makeText(context, "Vui lòng đăng nhập để tương tác!", Toast.LENGTH_SHORT).show();
-                return;
-            }
-            executeInteraction(holder, comment.getCommentId(), currentUserId, 1);
-        });
-
-        holder.btnDislike.setOnClickListener(v -> {
-            if (currentUserId == -1) {
-                Toast.makeText(context, "Vui lòng đăng nhập để tương tác!", Toast.LENGTH_SHORT).show();
-                return;
-            }
-            executeInteraction(holder, comment.getCommentId(), currentUserId, -1);
-        });
-
-        holder.btnReply.setOnClickListener(v -> {
-            if (replyListener != null) {
-                replyListener.onReplyClick(comment);
-            }
-        });
-
+        // ========================================================
+        // LOGIC KIỂM TRA CHÍNH CHỦ: KHÔNG ẨN NÚT - CHẶN CLICK TỰ LIKE
+        // ========================================================
         if (comment.getUserId() == currentUserId && currentUserId != -1) {
-            holder.btnReport.setText("🗑️ Xóa");
-            holder.btnReport.setTextColor(Color.parseColor("#F44336"));
-            holder.btnReport.setOnClickListener(v -> new AlertDialog.Builder(context)
+            holder.layoutLike.setVisibility(View.VISIBLE);
+            holder.layoutDislike.setVisibility(View.VISIBLE);
+
+//            // Bấm vào chính mình sẽ hiện Toast thông báo thay vì gọi API gửi lên Server
+//            holder.layoutLike.setOnClickListener(v ->
+//                    Toast.makeText(context, "Bạn không thể tự thích bình luận của chính mình!", Toast.LENGTH_SHORT).show()
+//            );
+//
+//            holder.layoutDislike.setOnClickListener(v ->
+//                    Toast.makeText(context, "Bạn không thể tự ghét bình luận của chính mình!", Toast.LENGTH_SHORT).show()
+//            );
+
+            // Biến nút Báo cáo thành nút Xóa
+            holder.tvReportText.setText("Xóa");
+            holder.imgReport.setImageResource(android.R.drawable.ic_menu_delete);
+            holder.imgReport.setImageTintList(ColorStateList.valueOf(Color.parseColor("#F44336")));
+            holder.tvReportText.setTextColor(Color.parseColor("#F44336"));
+
+            holder.layoutReport.setOnClickListener(v -> new AlertDialog.Builder(context)
                     .setTitle("Xóa bình luận")
                     .setMessage("Bạn có chắc chắn muốn xóa bình luận này không?")
                     .setPositiveButton("Xóa", (dialog, which) -> executeDeleteComment(comment.getCommentId(), currentUserId, context, holder.getAdapterPosition()))
                     .setNegativeButton("Hủy", null)
                     .show());
         } else {
-            holder.btnReport.setText("⚠️ Báo cáo");
-            holder.btnReport.setTextColor(Color.parseColor("#E91E63"));
-            holder.btnReport.setOnClickListener(v -> {
+            // Bình luận của người khác -> Hoạt động tương tác bình thường
+            holder.layoutLike.setVisibility(View.VISIBLE);
+            holder.layoutDislike.setVisibility(View.VISIBLE);
+
+            holder.tvReportText.setText("Báo cáo");
+            holder.imgReport.setImageResource(android.R.drawable.ic_menu_report_image);
+            holder.imgReport.setImageTintList(ColorStateList.valueOf(Color.parseColor("#E91E63")));
+            holder.tvReportText.setTextColor(Color.parseColor("#E91E63"));
+
+            holder.layoutLike.setOnClickListener(v -> {
+                if (currentUserId == -1) {
+                    Toast.makeText(context, "Vui lòng đăng nhập để tương tác!", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                executeInteraction(holder, comment, currentUserId, 1);
+            });
+
+            holder.layoutDislike.setOnClickListener(v -> {
+                if (currentUserId == -1) {
+                    Toast.makeText(context, "Vui lòng đăng nhập để tương tác!", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                executeInteraction(holder, comment, currentUserId, -1);
+            });
+
+            holder.layoutReport.setOnClickListener(v -> {
                 if (currentUserId == -1) {
                     Toast.makeText(context, "Vui lòng đăng nhập để báo cáo!", Toast.LENGTH_SHORT).show();
                     return;
@@ -197,31 +220,31 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
             });
         }
 
+        holder.layoutReply.setOnClickListener(v -> {
+            if (replyListener != null) {
+                replyListener.onReplyClick(comment);
+            }
+        });
+
         holder.tvLoadMoreReplies.setOnClickListener(v -> {
             List<Comment> currentList = repliesCache.get(commentId);
             if (currentList == null || currentList.isEmpty()) {
-                ApiClient.getApiService().getRepliesByParentId(commentId)
+                ApiClient.getApiService().getRepliesByParentId(commentId, currentUserId != -1 ? currentUserId : null)
                         .enqueue(new Callback<List<Comment>>() {
                             @Override
                             public void onResponse(Call<List<Comment>> call, Response<List<Comment>> response) {
                                 if (response.isSuccessful() && response.body() != null) {
                                     List<Comment> serverReplies = response.body();
-
-                                    // SẮP XẾP: Hiển thị từ CŨ đến MỚI từ trên xuống dưới (Tăng dần theo ID thời gian)
                                     Collections.sort(serverReplies, (c1, c2) -> Integer.compare(c1.getCommentId(), c2.getCommentId()));
 
-                                    // THUẬT TOÁN GẮN TAG: Quét tìm comment cháu để bổ sung chuỗi @tên_user
                                     Map<Integer, Comment> lookupMap = new HashMap<>();
-                                    for (Comment r : serverReplies) {
-                                        lookupMap.put(r.getCommentId(), r);
-                                    }
+                                    for (Comment r : serverReplies) { lookupMap.put(r.getCommentId(), r); }
                                     for (Comment r : serverReplies) {
                                         if (r.getParentCommentId() != null && r.getParentCommentId() != commentId) {
                                             Comment immediateParent = lookupMap.get(r.getParentCommentId());
                                             if (immediateParent != null) {
                                                 String parentName = (immediateParent.getUserDisplayName() != null && !immediateParent.getUserDisplayName().isEmpty())
                                                         ? immediateParent.getUserDisplayName() : "Thành viên #" + immediateParent.getUserId();
-
                                                 if (r.getContent() != null && !r.getContent().trim().startsWith("@")) {
                                                     r.setContent("@" + parentName + " " + r.getContent());
                                                 }
@@ -254,9 +277,7 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
         }
 
         currentCount += 10;
-        if (currentCount > fullList.size()) {
-            currentCount = fullList.size();
-        }
+        if (currentCount > fullList.size()) currentCount = fullList.size();
         displayedCountCache.put(commentId, currentCount);
 
         holder.rvReplies.setVisibility(View.VISIBLE);
@@ -270,19 +291,48 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
         }
     }
 
-    private void executeInteraction(CommentViewHolder holder, int commentId, int userId, int type) {
-        ApiClient.getApiService().interactWithComment(commentId, userId, type)
+    private void executeInteraction(CommentViewHolder holder, Comment comment, int userId, int type) {
+        ApiClient.getApiService().interactWithComment(comment.getCommentId(), userId, type)
                 .enqueue(new Callback<Comment>() {
                     @Override
                     public void onResponse(Call<Comment> call, Response<Comment> response) {
                         if (response.isSuccessful() && response.body() != null) {
                             Comment updatedComment = response.body();
-                            holder.btnLike.setText("👍 Thích (" + updatedComment.getLikeCount() + ")");
-                            holder.btnDislike.setText("👎 Ghét (" + updatedComment.getDislikeCount() + ")");
+
+                            // 1. Đồng bộ model cục bộ để tránh crash
+                            comment.setLikeCount(updatedComment.getLikeCount());
+                            comment.setDislikeCount(updatedComment.getDislikeCount());
+                            comment.setLiked(updatedComment.isLiked());
+                            comment.setDisliked(updatedComment.isDisliked());
+
+                            // 2. Cập nhật số liệu chữ
+                            holder.tvLikeCount.setText("(" + comment.getLikeCount() + ")");
+                            holder.tvDislikeCount.setText("(" + comment.getDislikeCount() + ")");
+
+                            // 3. --- CHUYỂN TIM FILL MÀU NGAY TẠI CHỖ ---
+                            updateCommentLikeDislikeUI(holder, comment); // Gọi hàm helper vẽ lại
                         }
                     }
                     @Override public void onFailure(Call<Comment> call, Throwable t) {}
                 });
+    }
+
+    private void updateLikeDislikeIcons(CommentViewHolder holder, Comment comment) {
+        if (comment.isLiked()) {
+            holder.imgLikeIcon.setImageResource(R.drawable.ic_thumb_up_filled);
+            holder.imgLikeIcon.setImageTintList(ColorStateList.valueOf(Color.parseColor("#FFB77D")));
+        } else {
+            holder.imgLikeIcon.setImageResource(R.drawable.ic_thumb_up_outline);
+            holder.imgLikeIcon.setImageTintList(ColorStateList.valueOf(Color.parseColor("#DBC2B0")));
+        }
+
+        if (comment.isDisliked()) {
+            holder.imgDislikeIcon.setImageResource(R.drawable.ic_thumb_down_filled);
+            holder.imgDislikeIcon.setImageTintList(ColorStateList.valueOf(Color.parseColor("#E91E63")));
+        } else {
+            holder.imgDislikeIcon.setImageResource(R.drawable.ic_thumb_down_outline);
+            holder.imgDislikeIcon.setImageTintList(ColorStateList.valueOf(Color.parseColor("#DBC2B0")));
+        }
     }
 
     private void executeDeleteComment(int commentId, int userId, Context context, int position) {
@@ -316,41 +366,11 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
                 });
     }
 
-    @Override
-    public int getItemCount() {
-        return commentList != null ? commentList.size() : 0;
-    }
-
-    static class CommentViewHolder extends RecyclerView.ViewHolder {
-        TextView tvUserComment, tvCommentContent, btnLike, btnDislike, btnReply, btnReport, tvCommentChapterTag, tvLoadMoreReplies;
-        ImageView imgUserAvatar;
-        RecyclerView rvReplies;
-        ReplyAdapter replyAdapter;
-
-        public CommentViewHolder(@NonNull View itemView) {
-            super(itemView);
-            tvUserComment = itemView.findViewById(R.id.tvUserComment);
-            tvCommentContent = itemView.findViewById(R.id.tvCommentContent);
-            btnLike = itemView.findViewById(R.id.btnLikeComment);
-            btnDislike = itemView.findViewById(R.id.btnDislikeComment);
-            btnReply = itemView.findViewById(R.id.btnReplyComment);
-            btnReport = itemView.findViewById(R.id.btnReportComment);
-            imgUserAvatar = itemView.findViewById(R.id.imgUserAvatar);
-            tvCommentChapterTag = itemView.findViewById(R.id.tvCommentChapterTag);
-            rvReplies = itemView.findViewById(R.id.recyclerViewReplies);
-            tvLoadMoreReplies = itemView.findViewById(R.id.tvLoadMoreReplies);
-
-            rvReplies.setLayoutManager(new LinearLayoutManager(itemView.getContext()));
-
-            // ĐÃ THÊM FIX QUAN TRỌNG: Ngăn chặn cuộn lồng nhau giúp RecyclerView con tự động nở ra theo bọc chiều cao nội dung
-            rvReplies.setNestedScrollingEnabled(false);
-
-            replyAdapter = new ReplyAdapter();
-            rvReplies.setAdapter(replyAdapter);
-        }
-    }
-
-    public void resetRepliesCache(int parentCommentId) {
+    // ========================================================
+    // ⚙️ ĐÃ SỬA THÀNH CÔNG: Tiếp nhận tham số kiểu đối tượng Integer an toàn
+    // ========================================================
+    public void resetRepliesCache(Integer parentCommentId) {
+        if (parentCommentId == null) return;
         repliesCache.remove(parentCommentId);
         displayedCountCache.put(parentCommentId, 0);
         for (int i = 0; i < commentList.size(); i++) {
@@ -358,6 +378,72 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
                 notifyItemChanged(i);
                 break;
             }
+        }
+    }
+
+    @Override
+    public int getItemCount() { return commentList != null ? commentList.size() : 0; }
+
+    static class CommentViewHolder extends RecyclerView.ViewHolder {
+        TextView tvUserComment, tvCommentContent, tvCommentChapterTag, tvLoadMoreReplies;
+        TextView tvLikeCount, tvDislikeCount, tvReplyCount, tvReportText;
+        View layoutLike, layoutDislike, layoutReply, layoutReport;
+        ImageView imgUserAvatar, imgReport, imgLikeIcon, imgDislikeIcon;
+        RecyclerView rvReplies;
+        ReplyAdapter replyAdapter;
+
+        public CommentViewHolder(@NonNull View itemView) {
+            super(itemView);
+            tvUserComment = itemView.findViewById(R.id.tvUserComment);
+            tvCommentContent = itemView.findViewById(R.id.tvCommentContent);
+            tvCommentChapterTag = itemView.findViewById(R.id.tvCommentChapterTag);
+            tvLoadMoreReplies = itemView.findViewById(R.id.tvLoadMoreReplies);
+            imgUserAvatar = itemView.findViewById(R.id.imgUserAvatar);
+            rvReplies = itemView.findViewById(R.id.recyclerViewReplies);
+
+            layoutLike = itemView.findViewById(R.id.layoutLikeComment);
+            layoutDislike = itemView.findViewById(R.id.layoutDislikeComment);
+            layoutReply = itemView.findViewById(R.id.layoutReplyComment);
+            layoutReport = itemView.findViewById(R.id.layoutReportComment);
+
+            tvLikeCount = itemView.findViewById(R.id.tvLikeCommentCount);
+            tvDislikeCount = itemView.findViewById(R.id.tvDislikeCommentCount);
+            tvReplyCount = itemView.findViewById(R.id.tvReplyCommentCount);
+            tvReportText = itemView.findViewById(R.id.tvReportCommentText);
+            imgReport = itemView.findViewById(R.id.imgReportComment);
+
+            imgLikeIcon = itemView.findViewById(R.id.imgLikeCommentIcon);
+            imgDislikeIcon = itemView.findViewById(R.id.imgDislikeCommentIcon);
+
+            rvReplies.setLayoutManager(new LinearLayoutManager(itemView.getContext()));
+            rvReplies.setNestedScrollingEnabled(false);
+            replyAdapter = new ReplyAdapter();
+            rvReplies.setAdapter(replyAdapter);
+        }
+    }
+
+    // --- HÀM HELPER: CẬP NHẬT GIAO DIỆN TIM FILL MÀU THEO TRẠNG THÁI ---
+    private void updateCommentLikeDislikeUI(CommentViewHolder holder, Comment comment) {
+        // Xử lý nút LIKE: Nếu đã Thích -> Fill Tim đậm (FFB77D), Chưa thích -> Tim rỗng mờ
+        if (comment.isLiked()) {
+            holder.imgLikeIcon.setImageResource(R.drawable.ic_thumb_up_filled); // Đổi sang hình fill đậm
+            holder.imgLikeIcon.setImageTintList(ColorStateList.valueOf(Color.parseColor("#FFB77D")));
+            holder.tvLikeCount.setTextColor(Color.parseColor("#FFB77D"));
+        } else {
+            holder.imgLikeIcon.setImageResource(R.drawable.ic_thumb_up_outline); // Trả về hình viền rỗng
+            holder.imgLikeIcon.setImageTintList(ColorStateList.valueOf(Color.parseColor("#DBC2B0")));
+            holder.tvLikeCount.setTextColor(Color.parseColor("#DBC2B0"));
+        }
+
+        // Xử lý nút DISLIKE: Nếu đã Ghét -> Fill Đỏ rực rỡ (E91E63), Chưa ghét -> Viền rỗng mờ
+        if (comment.isDisliked()) {
+            holder.imgDislikeIcon.setImageResource(R.drawable.ic_thumb_down_filled); // Đổi sang hình fill đậm
+            holder.imgDislikeIcon.setImageTintList(ColorStateList.valueOf(Color.parseColor("#E91E63")));
+            holder.tvDislikeCount.setTextColor(Color.parseColor("#E91E63"));
+        } else {
+            holder.imgDislikeIcon.setImageResource(R.drawable.ic_thumb_down_outline); // Trả về hình viền rỗng
+            holder.imgDislikeIcon.setImageTintList(ColorStateList.valueOf(Color.parseColor("#DBC2B0")));
+            holder.tvDislikeCount.setTextColor(Color.parseColor("#DBC2B0"));
         }
     }
 }

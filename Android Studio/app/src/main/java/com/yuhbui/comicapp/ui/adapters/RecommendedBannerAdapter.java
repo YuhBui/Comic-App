@@ -1,6 +1,8 @@
 package com.yuhbui.comicapp.ui.adapters;
 
 import android.content.Intent;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,10 +17,6 @@ import com.yuhbui.comicapp.ui.ComicDetailActivity;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Adapter dùng cho ViewPager2 hiển thị banner truyện đề cử
- * Mỗi item là 1 ảnh lớn với thông tin truyện chồng phía dưới (gradient overlay)
- */
 public class RecommendedBannerAdapter extends RecyclerView.Adapter<RecommendedBannerAdapter.BannerViewHolder> {
 
     private List<Comic> comicList = new ArrayList<>();
@@ -44,28 +42,33 @@ public class RecommendedBannerAdapter extends RecyclerView.Adapter<RecommendedBa
     public void onBindViewHolder(@NonNull BannerViewHolder holder, int position) {
         Comic comic = comicList.get(position);
 
-        // Tiêu đề
         holder.tvTitle.setText(comic.getTitle());
 
-        // Chương mới nhất
         String chapter = comic.getLatestChapterNumber() != null
                 ? "Chương " + comic.getLatestChapterNumber()
                 : "Chương -";
         holder.tvChapter.setText(chapter);
 
-        // Thống kê tương tác
-        holder.tvViews.setText("👁 " + formatNumber(comic.getViewCount()));
-        holder.tvLikes.setText("❤ " + formatNumber(comic.getFollowCount()));
-        holder.tvComments.setText("💬 " + formatNumber(comic.getCommentCount()));
+        holder.tvViews.setText(formatNumber(comic.getViewCount()));
+        holder.tvLikes.setText(formatNumber(comic.getFollowCount()));
+        holder.tvComments.setText(formatNumber(comic.getCommentCount()));
 
-        // Tải ảnh bìa
+        if (holder.imgBannerLikesIcon != null) {
+            if (comic.isFollowed()) {
+                holder.imgBannerLikesIcon.setImageResource(R.drawable.ic_heart_filled);
+                holder.imgBannerLikesIcon.setImageTintList(ColorStateList.valueOf(Color.parseColor("#EEEEEE")));
+            } else {
+                holder.imgBannerLikesIcon.setImageResource(R.drawable.ic_heart_outline);
+                holder.imgBannerLikesIcon.setImageTintList(ColorStateList.valueOf(Color.parseColor("#EEEEEE")));
+            }
+        }
+
         Glide.with(holder.itemView.getContext())
                 .load(comic.getCoverImageUrl())
                 .placeholder(R.drawable.ic_launcher_background)
                 .centerCrop()
                 .into(holder.imgCover);
 
-        // Click chuyển sang chi tiết
         holder.itemView.setOnClickListener(v -> {
             Intent intent = new Intent(holder.itemView.getContext(), ComicDetailActivity.class);
             intent.putExtra("COMIC_ID", comic.getComicId());
@@ -85,17 +88,18 @@ public class RecommendedBannerAdapter extends RecyclerView.Adapter<RecommendedBa
     }
 
     static class BannerViewHolder extends RecyclerView.ViewHolder {
-        ImageView imgCover;
+        ImageView imgCover, imgBannerLikesIcon;
         TextView tvTitle, tvChapter, tvViews, tvLikes, tvComments;
 
         public BannerViewHolder(@NonNull View itemView) {
             super(itemView);
-            imgCover    = itemView.findViewById(R.id.imgBannerCover);
-            tvTitle     = itemView.findViewById(R.id.tvBannerTitle);
-            tvChapter   = itemView.findViewById(R.id.tvBannerChapter);
-            tvViews     = itemView.findViewById(R.id.tvBannerViews);
-            tvLikes     = itemView.findViewById(R.id.tvBannerLikes);
-            tvComments  = itemView.findViewById(R.id.tvBannerComments);
+            imgCover             = itemView.findViewById(R.id.imgBannerCover);
+            imgBannerLikesIcon   = itemView.findViewById(R.id.imgBannerLikesIcon);
+            tvTitle              = itemView.findViewById(R.id.tvBannerTitle);
+            tvChapter            = itemView.findViewById(R.id.tvBannerChapter);
+            tvViews              = itemView.findViewById(R.id.tvBannerViews);
+            tvLikes              = itemView.findViewById(R.id.tvBannerLikes);
+            tvComments           = itemView.findViewById(R.id.tvBannerComments);
         }
     }
 }

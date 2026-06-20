@@ -1,4 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
 <androidx.drawerlayout.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/drawerLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -7,7 +9,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#F5F5F5"
+        android:background="#2A2A2A"
         android:orientation="vertical">
 
         <include
@@ -25,251 +27,317 @@
                 android:layout_height="wrap_content"
                 android:descendantFocusability="afterDescendants"
                 android:orientation="vertical"
-                android:padding="16dp">
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingTop="16dp"
+                android:paddingBottom="105dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:background="#FFFFFF"
                     android:orientation="horizontal"
-                    android:padding="12dp">
+                    android:gravity="top">
 
-                    <ImageView
-                        android:id="@+id/imgComicCover"
-                        android:layout_width="110dp"
-                        android:layout_height="160dp"
-                        android:background="#EEEEEE"
-                        android:scaleType="centerCrop" />
+                    <androidx.cardview.widget.CardView
+                        android:layout_width="119dp"
+                        android:layout_height="179dp"
+                        app:cardCornerRadius="4dp"
+                        app:cardElevation="6dp"
+                        app:cardBackgroundColor="#1E1E1E">
+                        <ImageView
+                            android:id="@+id/imgComicCover"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="#2E3545"
+                            android:scaleType="centerCrop" />
+                    </androidx.cardview.widget.CardView>
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="12dp"
+                        android:layout_marginStart="16dp"
                         android:orientation="vertical">
 
                         <TextView
                             android:id="@+id/tvComicTitle"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:textColor="#000"
+                            android:textColor="#FFFFFF"
                             android:textSize="20sp"
-                            android:textStyle="bold" />
+                            android:textStyle="bold"
+                            android:layout_marginBottom="4dp"/>
 
                         <TextView
                             android:id="@+id/tvComicAuthor"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="6dp"
-                            android:text="Tác giả: Đang cập nhật"
-                            android:textColor="#555555"
-                            android:textSize="14sp" />
+                            android:text="Tác giả: Hara Yasuhisa"
+                            android:textColor="#DBC2B0"
+                            android:alpha="0.7"
+                            android:textSize="12sp"
+                            android:layout_marginBottom="2dp"/>
 
                         <TextView
                             android:id="@+id/tvComicGenre"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:text="Thể loại: Đang cập nhật"
-                            android:textColor="#555555"
-                            android:textSize="14sp" />
+                            android:text="Thể loại: Action, Adventure"
+                            android:textColor="#DBC2B0"
+                            android:alpha="0.7"
+                            android:textSize="12sp"
+                            android:layout_marginBottom="2dp"/>
 
                         <TextView
                             android:id="@+id/tvComicRelease"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
                             android:text="Phát hành: --"
-                            android:textColor="#555555"
-                            android:textSize="14sp" />
+                            android:textColor="#DBC2B0"
+                            android:alpha="0.7"
+                            android:textSize="12sp"
+                            android:layout_marginBottom="2dp"/>
 
                         <TextView
                             android:id="@+id/tvComicStatus"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:text="Tình trạng: Đang tiến hành"
-                            android:textColor="#4CAF50"
-                            android:textSize="14sp"
-                            android:textStyle="bold" />
+                            android:text="Tình trạng: Ongoing"
+                            android:textColor="#DBC2B0"
+                            android:alpha="0.7"
+                            android:textSize="12sp"
+                            android:layout_marginBottom="2dp"/>
+
+                        <TextView
+                            android:id="@+id/tvComicViews"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Lượt xem: 1.2M"
+                            android:textColor="#DBC2B0"
+                            android:alpha="0.7"
+                            android:textSize="12sp"
+                            android:layout_marginBottom="2dp"/>
+
+                        <TextView
+                            android:id="@+id/tvComicFavorites"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Yêu thích: 45k"
+                            android:textColor="#DBC2B0"
+                            android:alpha="0.7"
+                            android:textSize="12sp"
+                            android:layout_marginBottom="4dp"/>
 
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="6dp"
-                            android:gravity="center_vertical"
-                            android:orientation="horizontal">
-
+                            android:orientation="horizontal"
+                            android:gravity="center_vertical">
                             <TextView
-                                android:id="@+id/tvComicViews"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="👁️ 0"
-                                android:textColor="#666666"
-                                android:textSize="13sp" />
-
-                            <View
-                                android:layout_width="14dp"
-                                android:layout_height="1dp" />
-
-                            <TextView
-                                android:id="@+id/tvComicFavorites"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="❤️ 0"
-                                android:textColor="#E91E63"
-                                android:textSize="13sp" />
-
-                            <View
-                                android:layout_width="14dp"
-                                android:layout_height="1dp" />
-
+                                android:text="Đánh giá: "
+                                android:textColor="#DBC2B0"
+                                android:alpha="0.7"
+                                android:textSize="12sp" />
                             <TextView
                                 android:id="@+id/tvComicRatingAverage"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="⭐ 0.0/5"
-                                android:textColor="#FF9800"
-                                android:textSize="13sp"
-                                android:textStyle="bold" />
+                                android:text="4.8"
+                                android:textColor="#FFB77D"
+                                android:textStyle="bold"
+                                android:textSize="12sp" />
+                            <ImageView
+                                android:layout_width="12dp"
+                                android:layout_height="12dp"
+                                android:layout_marginStart="2dp"
+                                android:src="@android:drawable/btn_star_big_on"
+                                app:tint="#FFB77D"/>
                         </LinearLayout>
                     </LinearLayout>
                 </LinearLayout>
 
+                <TextView
+                    android:id="@+id/tvComicDescription"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="15dp"
+                    android:text="Nội dung tóm tắt của truyện..."
+                    android:textColor="#DBC2B0"
+                    android:alpha="0.9"
+                    android:textSize="14sp"
+                    android:lineHeight="23dp" />
+
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:background="#FFFFFF"
-                    android:orientation="vertical"
-                    android:padding="12dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Đánh giá của bạn: "
-                            android:textColor="#000000"
-                            android:textSize="14sp"
-                            android:textStyle="bold" />
-
-                        <RatingBar
-                            android:id="@+id/ratingBarUser"
-                            style="?android:attr/ratingBarStyle"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:isIndicator="false"
-                            android:numStars="5"
-                            android:rating="0"
-                            android:stepSize="1.0" />
-                    </LinearLayout>
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
-                        android:text="Mô tả nội dung:"
-                        android:textColor="#000000"
-                        android:textSize="14sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/tvComicDescription"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:text="Nội dung tóm tắt của truyện..."
-                        android:textColor="#333333"
-                        android:textSize="14sp" />
+                    android:orientation="horizontal"
+                    android:layout_marginTop="16dp"
+                    android:gravity="center_vertical">
 
                     <Button
                         android:id="@+id/btnStartReading"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
-                        android:backgroundTint="#FF9800"
-                        android:text="📖 Đọc từ chương đầu"
-                        android:textColor="#FFFFFF"
-                        android:textStyle="bold" />
+                        android:layout_width="0dp"
+                        android:layout_height="48dp"
+                        android:layout_weight="1"
+                        android:backgroundTint="#D97707"
+                        android:text="ĐỌC TỪ CHƯƠNG ĐẦU"
+                        android:textColor="#432100"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        app:cornerRadius="8dp" />
 
-                    <TextView
-                        android:id="@+id/btnToggleFavorite"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:background="?android:attr/selectableItemBackground"
-                        android:padding="4dp"
-                        android:text="❤️ Yêu thích"
-                        android:textColor="#FF5722"
-                        android:textSize="13sp"
-                        android:textStyle="bold" />
+                    <com.google.android.material.card.MaterialCardView
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:layout_marginStart="8dp"
+                        app:cardBackgroundColor="#1E1E1E"
+                        app:cardCornerRadius="8dp"
+                        app:strokeColor="#A38C7C"
+                        app:strokeWidth="1dp"
+                        app:cardElevation="0dp">
+                        <ImageView
+                            android:id="@+id/btnToggleFavorite"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:scaleType="centerInside"
+                            android:src="@drawable/ic_heart_outline"
+                            app:tint="#FFB77D"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:background="?attr/selectableItemBackground"/>
+                    </com.google.android.material.card.MaterialCardView>
                 </LinearLayout>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:text="Danh sách chương:"
-                    android:textColor="#000"
-                    android:textSize="15sp"
-                    android:textStyle="bold" />
-
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/recyclerViewChapters"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:nestedScrollingEnabled="false" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="24dp"
-                    android:text="Bình luận cộng đồng:"
-                    android:textColor="#000"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:orientation="horizontal">
+                    android:layout_marginTop="16dp"
+                    android:background="#1E1E1E"
+                    android:orientation="vertical"
+                    android:padding="16dp"
+                    app:cornerRadius="8dp">
 
-                    <EditText
-                        android:id="@+id/edtCommentInput"
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Danh sách chương"
+                        android:textColor="#FFB77D"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="16dp"/>
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/recyclerViewChapters"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:maxHeight="280dp"
+                        android:nestedScrollingEnabled="false" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/layoutUserRatingBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:layout_marginTop="16dp"
+                    android:background="#1E1E1E"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:clipToPadding="false"
+                    app:cornerRadius="8dp">
+                    <TextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:clickable="true"
-                        android:enabled="true"
-                        android:focusable="true"
-                        android:focusableInTouchMode="true"
-                        android:hint="Viết bình luận..."
-                        android:inputType="textShortMessage" />
-
-                    <Button
-                        android:id="@+id/btnSendComment"
+                        android:text="ĐÁNH GIÁ CỦA BẠN"
+                        android:textColor="#DBC2B0"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+                    <RatingBar
+                        android:id="@+id/ratingBarUser"
+                        style="?android:attr/ratingBarStyleSmall"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Gửi" />
+                        android:numStars="5"
+                        android:rating="0"
+                        android:stepSize="1.0"
+                        android:progressTint="#FFB77D"
+                        android:secondaryProgressTint="#2A2A2A"/>
                 </LinearLayout>
 
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/recyclerViewComments"
+                <LinearLayout
+                    android:id="@+id/layoutCommentsMainBox"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:nestedScrollingEnabled="false" />
+                    android:layout_marginTop="16dp"
+                    android:background="#1E1E1E"
+                    android:orientation="vertical"
+                    android:paddingTop="32dp"
+                    android:paddingBottom="32dp"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Bình luận"
+                        android:textColor="#FFB77D"
+                        android:textSize="20sp"
+                        android:textStyle="bold"/>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="#1A554326"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginBottom="16dp"/>
+
+                    <LinearLayout
+                        android:id="@+id/layoutCommentInputArea"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:background="#2A2A2A"
+                        android:padding="4dp"
+                        android:layout_marginBottom="16dp">
+
+                        <EditText
+                            android:id="@+id/edtCommentInput"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:background="@android:color/transparent"
+                            android:hint="Viết bình luận..."
+                            android:textColorHint="#80DBC2B0"
+                            android:textColor="#FFFFFF"
+                            android:textSize="14sp"
+                            android:padding="12dp"
+                            android:inputType="textShortMessage" />
+
+                        <Button
+                            android:id="@+id/btnSendComment"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Gửi"
+                            android:textColor="#432100"
+                            android:backgroundTint="#FFB77D"
+                            android:textStyle="bold"
+                            app:cornerRadius="8dp"/>
+                    </LinearLayout>
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/recyclerViewComments"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:nestedScrollingEnabled="false" />
+                </LinearLayout>
 
             </LinearLayout>
         </androidx.core.widget.NestedScrollView>
     </LinearLayout>
-
 
     <include layout="@layout/layout_side_menu" />
 

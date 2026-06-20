@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.drawerlayout.widget.DrawerLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/drawerLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -10,11 +11,9 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:background="#F5F5F5">
-
-        <include
-            android:id="@+id/layoutHeaderDownload"
-            layout="@layout/layout_header" />
+        android:background="#2A2A2A"> <include
+        android:id="@+id/layoutHeaderDownload"
+        layout="@layout/layout_header" />
 
         <androidx.core.widget.NestedScrollView
             android:layout_width="match_parent"
@@ -26,37 +25,82 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:background="#FFFFFF"
-                android:paddingBottom="16dp">
+                android:background="#2A2A2A"
+                android:paddingBottom="24dp">
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:padding="16dp"
-                    android:text="📥 TRUYỆN ĐÃ TẢI XUỐNG (OFFLINE)"
+                    android:paddingTop="24dp"
+                    android:paddingBottom="16dp"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:text="Truyện tải xuống"
                     android:textStyle="bold"
-                    android:textColor="#FF9800"
-                    android:textSize="16sp" />
+                    android:textColor="#FFFFFF"
+                    android:textSize="30sp"
+                    android:letterSpacing="-0.02"/>
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/recyclerViewDownloads"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:paddingStart="8dp"
-                    android:paddingEnd="8dp"
-                    android:nestedScrollingEnabled="false"
-                    android:scrollbars="vertical"/>
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:nestedScrollingEnabled="false" />
 
                 <TextView
                     android:id="@+id/tvEmptyDownload"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center"
-                    android:layout_marginTop="60dp"
+                    android:layout_marginTop="80dp"
                     android:text="Thư mục trống. Bạn chưa tải xuống chương truyện nào!"
-                    android:textColor="#888888"
+                    android:textColor="#DBC2B0"
                     android:textSize="14sp"
                     android:visibility="gone"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center"
+                    android:layout_marginTop="24dp"
+                    android:layout_marginBottom="8dp">
+
+                    <Button
+                        android:id="@+id/btnPrevPageDownload"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:text="&lt;"
+                        android:textColor="#DBC2B0"
+                        android:textStyle="bold"
+                        android:textSize="14sp"
+                        android:background="@drawable/bg_nav_btn"
+                        android:backgroundTint="#1E1E1E"
+                        android:padding="0dp"/>
+
+                    <LinearLayout
+                        android:id="@+id/layoutPageNumbersDownload"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:layout_marginStart="8dp"
+                        android:layout_marginEnd="8dp"
+                        android:gravity="center_vertical"/>
+
+                    <Button
+                        android:id="@+id/btnNextPageDownload"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:text="&gt;"
+                        android:textColor="#DBC2B0"
+                        android:textStyle="bold"
+                        android:textSize="14sp"
+                        android:background="@drawable/bg_nav_btn"
+                        android:backgroundTint="#1E1E1E"
+                        android:padding="0dp"/>
+                </LinearLayout>
 
             </LinearLayout>
         </androidx.core.widget.NestedScrollView>
