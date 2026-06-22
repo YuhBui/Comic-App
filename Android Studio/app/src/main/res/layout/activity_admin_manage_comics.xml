@@ -8,110 +8,162 @@
 
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
-
-        <include
-            android:id="@+id/layoutHeaderManageComics"
-            layout="@layout/layout_header" />
+        android:layout_height="match_parent"
+        android:background="#2A2A2A">
 
         <LinearLayout
-            android:id="@+id/layoutSearchBox"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/layoutHeaderManageComics"
-            android:background="#FFFFFF"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:padding="12dp">
-
-            <EditText
-                android:id="@+id/edtComicSearch"
-                android:layout_width="0dp"
-                android:layout_height="40dp"
-                android:layout_weight="1"
-                android:background="@android:drawable/edit_text"
-                android:hint="Tìm tên truyện, tên tác giả..."
-                android:paddingStart="12dp"
-                android:paddingEnd="12dp"
-                android:textSize="14sp" />
-
-            <ImageView
-                android:id="@+id/imgAdminComicFilter"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_marginStart="8dp"
-                android:background="?android:attr/selectableItemBackground"
-                android:contentDescription="Bộ lọc thể loại"
-                android:padding="8dp"
-                android:src="@drawable/ic_filter" />
-        </LinearLayout>
-
-        <androidx.core.widget.NestedScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_below="@id/layoutSearchBox"
-            android:fillViewport="true">
+            android:orientation="vertical">
+
+            <include
+                android:id="@+id/layoutHeaderManageComics"
+                layout="@layout/layout_header" />
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:orientation="vertical"
-                android:paddingBottom="80dp">
+                android:padding="16dp">
 
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/rvAdminManageComics"
+                <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:nestedScrollingEnabled="false"
-                    android:padding="6dp" />
+                    android:text="Quản lý truyện"
+                    android:textColor="#FFB77D"
+                    android:textSize="30sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="16dp"/>
 
                 <LinearLayout
-                    android:id="@+id/layoutComicPaginationBar"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:layout_marginBottom="16dp"
-                    android:gravity="center"
-                    android:orientation="horizontal">
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="16dp">
 
-                    <Button
-                        android:id="@+id/btnComicPrevPage"
-                        android:layout_width="40dp"
-                        android:layout_height="36dp"
-                        android:background="@drawable/bg_nav_btn"
-                        android:text="&lt;"
-                        android:textColor="#FFFFFF" />
+                    <FrameLayout
+                        android:layout_width="0dp"
+                        android:layout_height="46dp"
+                        android:layout_weight="1"
+                        android:background="#1E1E1E">
+
+                        <EditText
+                            android:id="@+id/edtComicSearch"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@null"
+                            android:hint="Tìm tên truyện, tên tác giả..."
+                            android:textColorHint="#DBC2B0"
+                            android:textColor="#DCE2F7"
+                            android:textSize="14sp"
+                            android:paddingStart="42dp"
+                            android:paddingEnd="16dp"
+                            android:singleLine="true" />
+
+                        <ImageView
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            android:layout_gravity="start|center_vertical"
+                            android:layout_marginStart="14dp"
+                            android:src="@android:drawable/ic_menu_search"
+                            app:tint="#DBC2B0" />
+                    </FrameLayout>
+
+                    <ImageView
+                        android:id="@+id/imgAdminComicFilter"
+                        android:layout_width="46dp"
+                        android:layout_height="46dp"
+                        android:layout_marginStart="8dp"
+                        android:background="#1E1E1E"
+                        android:contentDescription="Bộ lọc thể loại"
+                        android:padding="12dp"
+                        android:src="@drawable/ic_filter"
+                        app:tint="#DBC2B0" />
+                </LinearLayout>
+
+                <androidx.core.widget.NestedScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:fillViewport="true">
 
                     <LinearLayout
-                        android:id="@+id/layoutComicPageNumbersContainer"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
-                        android:layout_marginEnd="8dp"
-                        android:gravity="center"
-                        android:orientation="horizontal" />
+                        android:orientation="vertical"
+                        android:paddingBottom="80dp">
 
-                    <Button
-                        android:id="@+id/btnComicNextPage"
-                        android:layout_width="40dp"
-                        android:layout_height="36dp"
-                        android:background="@drawable/bg_nav_btn"
-                        android:text="&gt;"
-                        android:textColor="#FFFFFF" />
-                </LinearLayout>
+                        <androidx.recyclerview.widget.RecyclerView
+                            android:id="@+id/rvAdminManageComics"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:nestedScrollingEnabled="false"
+                            android:cacheColorHint="#00000000" />
+
+                        <LinearLayout
+                            android:id="@+id/layoutComicPaginationBar"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="24dp"
+                            android:gravity="center"
+                            android:orientation="horizontal">
+
+                            <Button
+                                android:id="@+id/btnComicPrevPage"
+                                android:layout_width="40dp"
+                                android:layout_height="40dp"
+                                android:backgroundTint="#1E1E1E"
+                                android:text="&lt;"
+                                android:textColor="#DCE2F7"
+                                android:textStyle="bold" />
+
+                            <LinearLayout
+                                android:id="@+id/layoutComicPageNumbersContainer"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="8dp"
+                                android:layout_marginEnd="8dp"
+                                android:gravity="center"
+                                android:orientation="horizontal" />
+
+                            <Button
+                                android:id="@+id/btnComicNextPage"
+                                android:layout_width="40dp"
+                                android:layout_height="40dp"
+                                android:backgroundTint="#1E1E1E"
+                                android:text="&gt;"
+                                android:textColor="#DCE2F7"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </androidx.core.widget.NestedScrollView>
+
             </LinearLayout>
-        </androidx.core.widget.NestedScrollView>
+        </LinearLayout>
 
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
+        <androidx.cardview.widget.CardView
             android:id="@+id/fabAddComic"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
             android:layout_alignParentEnd="true"
             android:layout_alignParentBottom="true"
-            android:layout_margin="20dp"
-            android:src="@android:drawable/ic_input_add"
-            app:backgroundTint="#2196F3"
-            app:tint="#FFFFFF" />
+            android:layout_marginEnd="24dp"
+            android:layout_marginBottom="24dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            app:cardBackgroundColor="#D97707"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="6dp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_gravity="center"
+                android:src="@android:drawable/ic_input_add"
+                app:tint="#432100" />
+        </androidx.cardview.widget.CardView>
 
     </RelativeLayout>
 

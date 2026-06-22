@@ -46,7 +46,7 @@ public class AdminManageComicsActivity extends AppCompatActivity implements Admi
 
     private RecyclerView rvAdminManageComics;
     private AdminComicAdapter adapter;
-    private FloatingActionButton fabAddComic;
+    private View fabAddComic;
 
     private ImageView imgComicFilter;
     private CategoryFilterAdapter filterAdapter;

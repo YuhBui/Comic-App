@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:background="#FFFFFF"
+    android:background="#2A2A2A"
     android:padding="16dp">
 
     <!-- Tiêu đề popup -->
@@ -21,7 +21,7 @@
             android:layout_weight="1"
             android:text="Lọc theo thể loại"
             android:textStyle="bold"
-            android:textColor="#111111"
+            android:textColor="#FFFFFF"
             android:textSize="16sp"/>
 
         <TextView

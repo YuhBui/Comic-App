@@ -33,6 +33,7 @@ import com.yuhbui.comicapp.ui.adapters.CategoryFilterAdapter;
 import com.yuhbui.comicapp.ui.adapters.ComicAdapter;
 import com.yuhbui.comicapp.ui.adapters.RankingAdapter;
 import com.yuhbui.comicapp.ui.adapters.RecommendedBannerAdapter;
+import com.yuhbui.comicapp.utils.MenuUtils;
 import com.yuhbui.comicapp.utils.SharedPrefsManager;
 
 import java.util.ArrayList;
@@ -276,88 +277,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setupHeader() {
-        // Sự kiện khi nhấn nút Menu trên thanh tiêu đề header -> Mở/Đóng Menu Trượt Sườn Trái
-        headerMenu.setOnClickListener(v -> {
-            if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
-                drawerLayout.closeDrawer(GravityCompat.START);
-            } else {
-                drawerLayout.openDrawer(GravityCompat.START);
-            }
-        });
+        // ĐÃ SỬA: Gọi MenuUtils quản lý tập trung toàn bộ sự kiện click và nhuộm màu highlight động
+        MenuUtils.setupSideMenu(this, drawerLayout, headerMenu);
 
-        // Đăng ký sự kiện Click cho các danh mục chức năng trong `layout_side_menu.xml`
-        findViewById(R.id.menuHome).setOnClickListener(v -> {
-            drawerLayout.closeDrawer(GravityCompat.START);
-        });
-
-        findViewById(R.id.menuHistory).setOnClickListener(v -> {
-            drawerLayout.closeDrawer(GravityCompat.START);
-            startActivity(new Intent(MainActivity.this, HistoryActivity.class));
-        });
-
-        findViewById(R.id.menuFavorites).setOnClickListener(v -> {
-            drawerLayout.closeDrawer(GravityCompat.START);
-            startActivity(new Intent(MainActivity.this, FollowActivity.class));
-        });
-
-        findViewById(R.id.menuProfile).setOnClickListener(v -> {
-            drawerLayout.closeDrawer(GravityCompat.START);
-            startActivity(new Intent(MainActivity.this, ProfileActivity.class));
-        });
-
-        // ĐĂNG KÝ: Sự kiện click cho danh mục Truyện tải xuống offline mới bổ sung
-        findViewById(R.id.menuDownloads).setOnClickListener(v -> {
-            drawerLayout.closeDrawer(GravityCompat.START);
-            startActivity(new Intent(MainActivity.this, DownloadListActivity.class));
-        });
-
-        findViewById(R.id.menuLogout).setOnClickListener(v -> {
-            drawerLayout.closeDrawer(GravityCompat.START);
-            performLogout();
-        });
-
+        // Giữ nguyên các logic xử lý Avatar cá nhân và thông báo của Trang chủ ở phía dưới
         headerAvatar.setOnClickListener(v -> showAvatarMenu(v));
 
         headerNotification.setOnClickListener(v -> {
             Intent intent = new Intent(MainActivity.this, NotificationListActivity.class);
             startActivity(intent);
-        });
-
-        headerSearch.setOnClickListener(v -> {
-            if (edtHeaderSearch.getVisibility() == View.GONE) {
-                headerLogo.setVisibility(View.GONE);
-                edtHeaderSearch.setVisibility(View.VISIBLE);
-                edtHeaderSearch.requestFocus();
-                InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
-                if (imm != null) imm.showSoftInput(edtHeaderSearch, InputMethodManager.SHOW_IMPLICIT);
-                headerSearch.setImageResource(android.R.drawable.ic_menu_close_clear_cancel); // Đổi thành nút X
-            } else {
-                String keyword = edtHeaderSearch.getText().toString().trim();
-                if (!keyword.isEmpty()) {
-                    edtHeaderSearch.setText("");
-                    if (suggestionPopup.isShowing()) suggestionPopup.dismiss();
-                    if (searchResultAdapter != null) {
-                        searchResultAdapter.setComics(new java.util.ArrayList<>());
-                    }
-                    edtHeaderSearch.requestFocus();
-                    InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
-                    if (imm != null) imm.showSoftInput(edtHeaderSearch, InputMethodManager.SHOW_IMPLICIT);
-                } else {
-                    closeSearch();
-                }
-            }
-        });
-
-        edtHeaderSearch.setOnEditorActionListener((v, actionId, event) -> {
-            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
-                String keyword = edtHeaderSearch.getText().toString().trim();
-                if (!keyword.isEmpty()) {
-                    if (suggestionPopup.isShowing()) suggestionPopup.dismiss();
-                    performSearch(keyword);
-                }
-                return true;
-            }
-            return false;
         });
     }
 

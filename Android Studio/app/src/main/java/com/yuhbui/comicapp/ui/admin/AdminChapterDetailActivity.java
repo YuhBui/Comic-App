@@ -5,11 +5,17 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.webkit.MimeTypeMap;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
@@ -51,6 +57,7 @@ public class AdminChapterDetailActivity extends AppCompatActivity implements Adm
     private DrawerLayout drawerLayout; // THÊM: Thành phần quản lý Menu trượt trái đè màn hình
 
     private int chapterId;
+    private int comicId; // THÊM: comicId để điều hướng chuyển chương truyện
     private RecyclerView rvPages;
     private AdminChapterImageAdapter adapter;
     private Button btnUploadPage;
@@ -59,6 +66,16 @@ public class AdminChapterDetailActivity extends AppCompatActivity implements Adm
     private AdminCommentAdapter commentAdapter;
     private EditText edtCommentInput;
     private Button btnSendComment;
+
+    // --- CÁC BIẾN ĐIỀU HƯỚNG CHUYỂN CHƯƠNG ---
+    private LinearLayout layoutReaderFooter;
+    private LinearLayout layoutReaderInlineNav;
+    private ImageButton btnPrevChapter, btnNextChapter;
+    private TextView tvChapterSelector;
+    private ImageButton btnInlinePrevChapter, btnInlineNextChapter;
+    private TextView tvInlineChapterSelector;
+    private List<Map<String, Object>> allChaptersInComic = new ArrayList<>();
+    private int currentChapterIndex = -1;
 
     // Mảng lưu danh sách dữ liệu trang truyện phục vụ kéo thả reorder vị trí
     private List<Map<String, Object>> pageList = new ArrayList<>();
@@ -69,6 +86,7 @@ public class AdminChapterDetailActivity extends AppCompatActivity implements Adm
         setContentView(R.layout.activity_admin_chapter_detail);
 
         chapterId = getIntent().getIntExtra("CHAPTER_ID", -1);
+        comicId = getIntent().getIntExtra("COMIC_ID", -1);
 
         // 1. Ánh xạ DrawerLayout Root mới
         drawerLayout = findViewById(R.id.drawerLayout);
@@ -85,6 +103,17 @@ public class AdminChapterDetailActivity extends AppCompatActivity implements Adm
         rvComments = findViewById(R.id.rvAdminChapterComments);
         edtCommentInput = findViewById(R.id.edtAdminChapterCommentInput);
         btnSendComment = findViewById(R.id.btnAdminChapterSendComment);
+
+        // Ánh xạ các nút chuyển chương
+        layoutReaderFooter = findViewById(R.id.layoutReaderFooter);
+        layoutReaderInlineNav = findViewById(R.id.layoutReaderInlineNav);
+        btnPrevChapter = findViewById(R.id.btnPrevChapter);
+        btnNextChapter = findViewById(R.id.btnNextChapter);
+        tvChapterSelector = findViewById(R.id.tvChapterSelector);
+
+        btnInlinePrevChapter = findViewById(R.id.btnInlinePrevChapter);
+        btnInlineNextChapter = findViewById(R.id.btnInlineNextChapter);
+        tvInlineChapterSelector = findViewById(R.id.tvInlineChapterSelector);
 
         // Cấu hình LayoutManager cuộn dọc cho trang truyện
         rvPages.setLayoutManager(new LinearLayoutManager(this));
@@ -168,6 +197,50 @@ public class AdminChapterDetailActivity extends AppCompatActivity implements Adm
                 }
             }
         });
+
+        ImageView btnBackChapterDetail = findViewById(R.id.btnBackChapterDetail);
+        if (btnBackChapterDetail != null) {
+            btnBackChapterDetail.setOnClickListener(v -> finish());
+        }
+
+        // Tải danh sách chương phục vụ chuyển chương nếu có comicId hợp lệ
+        if (comicId != -1) {
+            loadChaptersNavigation();
+        }
+
+        // Đăng ký sự kiện nút chuyển chương (Đồng bộ)
+        View.OnClickListener prevClick = v -> {
+            if (currentChapterIndex < allChaptersInComic.size() - 1) {
+                navigateToChapter(currentChapterIndex + 1);
+            }
+        };
+        btnPrevChapter.setOnClickListener(prevClick);
+        btnInlinePrevChapter.setOnClickListener(prevClick);
+
+        View.OnClickListener nextClick = v -> {
+            if (currentChapterIndex > 0) {
+                navigateToChapter(currentChapterIndex - 1);
+            }
+        };
+        btnNextChapter.setOnClickListener(nextClick);
+        btnInlineNextChapter.setOnClickListener(nextClick);
+
+        // LOGIC LẮNG NGHE CUỘN MÀN HÌNH ĐỂ ẨN/HIỆN FOOTER THÔNG MINH
+        if (nestedScrollView != null && layoutReaderInlineNav != null) {
+            nestedScrollView.setOnScrollChangeListener((NestedScrollView.OnScrollChangeListener) (v, scrollX, scrollY, oldScrollX, oldScrollY) -> {
+                int[] location = new int[2];
+                layoutReaderInlineNav.getLocationOnScreen(location);
+                int inlineNavY = location[1];
+                int screenHeight = v.getContext().getResources().getDisplayMetrics().heightPixels;
+
+                // Nếu thanh Inline Nav đã lọt vào màn hình -> Ẩn thanh Footer dưới đáy
+                if (inlineNavY < screenHeight - 50) {
+                    layoutReaderFooter.setVisibility(View.GONE);
+                } else {
+                    layoutReaderFooter.setVisibility(View.VISIBLE);
+                }
+            });
+        }
     }
 
     @Override
@@ -215,7 +288,114 @@ public class AdminChapterDetailActivity extends AppCompatActivity implements Adm
         }
     }
 
+    private void loadChaptersNavigation() {
+        ApiClient.getApiService().adminGetChapters(comicId).enqueue(new Callback<List<Map<String, Object>>>() {
+            @Override
+            public void onResponse(Call<List<Map<String, Object>>> call, Response<List<Map<String, Object>>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    allChaptersInComic = response.body();
+                    setupChapterSelectorNavigation();
+                }
+            }
+            @Override
+            public void onFailure(Call<List<Map<String, Object>>> call, Throwable t) {
+                Log.e("YUH_TEST", "Lỗi tải danh sách chương quản lý: " + t.getMessage());
+            }
+        });
+    }
+
+    private void setupChapterSelectorNavigation() {
+        if (allChaptersInComic == null || allChaptersInComic.isEmpty()) return;
+
+        for (int i = 0; i < allChaptersInComic.size(); i++) {
+            Map<String, Object> ch = allChaptersInComic.get(i);
+            Number chIdNum = (Number) ch.get("chapterId");
+            int chId = chIdNum != null ? chIdNum.intValue() : -1;
+            if (chId == chapterId) {
+                currentChapterIndex = i;
+                break;
+            }
+        }
+
+        if (currentChapterIndex != -1) {
+            Map<String, Object> currentCh = allChaptersInComic.get(currentChapterIndex);
+            String chText = "Chương " + currentCh.get("chapterNumber");
+            tvChapterSelector.setText(chText);
+            tvInlineChapterSelector.setText(chText);
+            updateButtonNavigationUI();
+        }
+
+        View.OnClickListener showDropdownMenuAction = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                View popupView = LayoutInflater.from(AdminChapterDetailActivity.this).inflate(R.layout.layout_chapter_dropdown, null);
+                RecyclerView rvDropdownChapters = popupView.findViewById(R.id.rvDropdownChapters);
+                rvDropdownChapters.setLayoutManager(new LinearLayoutManager(AdminChapterDetailActivity.this));
+
+                popupView.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
+                int popupWidth = v.getWidth();
+                int popupHeight = (int) (280 * getResources().getDisplayMetrics().density);
+
+                final PopupWindow popupWindow = new PopupWindow(popupView, popupWidth, popupHeight, true);
+                popupWindow.setOutsideTouchable(true);
+                popupWindow.setFocusable(true);
+                popupWindow.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(Color.TRANSPARENT));
+
+                InlineChapterDropdownAdapter dropdownAdapter = new InlineChapterDropdownAdapter(allChaptersInComic, currentChapterIndex, index -> {
+                    navigateToChapter(index);
+                    popupWindow.dismiss();
+                });
+                rvDropdownChapters.setAdapter(dropdownAdapter);
+
+                if (v.getId() == R.id.tvChapterSelector) {
+                    popupWindow.showAsDropDown(v, 0, -(popupHeight + v.getHeight() + 8));
+                } else if (v.getId() == R.id.tvInlineChapterSelector) {
+                    popupWindow.showAsDropDown(v, 0, 4);
+                }
+            }
+        };
+
+        tvChapterSelector.setOnClickListener(showDropdownMenuAction);
+        tvInlineChapterSelector.setOnClickListener(showDropdownMenuAction);
+    }
+
+    private void navigateToChapter(int targetIndex) {
+        if (targetIndex >= 0 && targetIndex < allChaptersInComic.size()) {
+            Map<String, Object> targetChapter = allChaptersInComic.get(targetIndex);
+            Number chIdNum = (Number) targetChapter.get("chapterId");
+            chapterId = chIdNum != null ? chIdNum.intValue() : -1;
+            currentChapterIndex = targetIndex;
+
+            // Load data cho chương mới
+            loadChapterPages();
+            loadChapterComments();
+
+            Map<String, Object> currentCh = allChaptersInComic.get(currentChapterIndex);
+            String chText = "Chương " + currentCh.get("chapterNumber");
+            tvChapterSelector.setText(chText);
+            tvInlineChapterSelector.setText(chText);
+            updateButtonNavigationUI();
+        }
+    }
+
+    private void updateButtonNavigationUI() {
+        boolean hasPrev = currentChapterIndex < allChaptersInComic.size() - 1;
+        btnPrevChapter.setEnabled(hasPrev);
+        btnPrevChapter.setAlpha(hasPrev ? 1.0f : 0.4f);
+        btnInlinePrevChapter.setEnabled(hasPrev);
+        btnInlinePrevChapter.setAlpha(hasPrev ? 1.0f : 0.4f);
+
+        boolean hasNext = currentChapterIndex > 0;
+        btnNextChapter.setEnabled(hasNext);
+        btnNextChapter.setAlpha(hasNext ? 1.0f : 0.4f);
+        btnInlineNextChapter.setEnabled(hasNext);
+        btnInlineNextChapter.setAlpha(hasNext ? 1.0f : 0.4f);
+    }
+
     private void loadChapterPages() {
+        pageList.clear();
+        adapter.setData(pageList);
+
         ApiClient.getApiService().adminGetChapterPages(chapterId).enqueue(new Callback<List<Map<String, Object>>>() {
             @Override
             public void onResponse(Call<List<Map<String, Object>>> call, Response<List<Map<String, Object>>> response) {
@@ -229,6 +409,8 @@ public class AdminChapterDetailActivity extends AppCompatActivity implements Adm
     }
 
     private void loadChapterComments() {
+        commentAdapter.setData(new ArrayList<>());
+
         ApiClient.getApiService().adminGetChapterComments(chapterId).enqueue(new Callback<List<Map<String, Object>>>() {
             @Override
             public void onResponse(Call<List<Map<String, Object>>> call, Response<List<Map<String, Object>>> response) {
@@ -429,5 +611,65 @@ public class AdminChapterDetailActivity extends AppCompatActivity implements Adm
             }
             @Override public void onFailure(Call<Comment> call, Throwable t) {}
         });
+    }
+
+    // =========================================================================
+    // ⚙️ LỚP ADAPTER NỘI BỘ: Quản lý danh sách thả xuống mượt mà hợp tone Manga Noir
+    // =========================================================================
+    private static class InlineChapterDropdownAdapter extends RecyclerView.Adapter<InlineChapterDropdownAdapter.ViewHolder> {
+        private final List<Map<String, Object>> chapters;
+        private final int selectedIndex;
+        private final OnItemClickListener listener;
+
+        interface OnItemClickListener {
+            void onItemClick(int index);
+        }
+
+        InlineChapterDropdownAdapter(List<Map<String, Object>> chapters, int selectedIndex, OnItemClickListener listener) {
+            this.chapters = chapters;
+            this.selectedIndex = selectedIndex;
+            this.listener = listener;
+        }
+
+        @NonNull
+        @Override
+        public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            View view = LayoutInflater.from(parent.getContext()).inflate(android.R.layout.simple_list_item_1, parent, false);
+            return new ViewHolder(view);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+            Map<String, Object> ch = chapters.get(position);
+            Object chNumObj = ch.get("chapterNumber");
+            String title = (String) ch.get("title");
+            String titleText = "Chương " + chNumObj + (title != null && !title.isEmpty() ? ": " + title : "");
+            holder.textView.setText(titleText);
+
+            holder.textView.setTextSize(14);
+            holder.itemView.setPadding(32, 24, 32, 24);
+
+            if (position == selectedIndex) {
+                holder.textView.setTextColor(Color.parseColor("#FFB77D"));
+                holder.textView.setTypeface(null, android.graphics.Typeface.BOLD);
+            } else {
+                holder.textView.setTextColor(Color.parseColor("#DBC2B0"));
+            }
+
+            holder.itemView.setOnClickListener(v -> listener.onItemClick(position));
+        }
+
+        @Override
+        public int getItemCount() {
+            return chapters != null ? chapters.size() : 0;
+        }
+
+        static class ViewHolder extends RecyclerView.ViewHolder {
+            TextView textView;
+            ViewHolder(@NonNull View itemView) {
+                super(itemView);
+                textView = itemView.findViewById(android.R.id.text1);
+            }
+        }
     }
 }

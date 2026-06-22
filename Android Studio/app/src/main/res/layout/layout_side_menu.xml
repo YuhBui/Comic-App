@@ -52,8 +52,7 @@
                 android:id="@+id/menuHome"
                 android:layout_width="match_parent"
                 android:layout_height="44dp"
-                android:background="@drawable/bg_nav_btn"
-                android:backgroundTint="#1AFFB77D"
+                android:background="?attr/selectableItemBackground"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
                 android:paddingStart="16dp"
@@ -62,18 +61,17 @@
                 android:clickable="true"
                 android:focusable="true">
                 <ImageView
-                    android:layout_width="16dp"
+                    android:layout_width="18dp"
                     android:layout_height="18dp"
                     android:src="@drawable/ic_menu_home"
-                    app:tint="#FFB77D" />
+                    app:tint="#DBC2B0" />
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="16dp"
                     android:text="Trang chủ"
-                    android:textColor="#FFB77D"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
+                    android:textColor="#DBC2B0"
+                    android:textSize="14sp" />
             </LinearLayout>
 
             <LinearLayout

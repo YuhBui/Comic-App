@@ -92,10 +92,18 @@ public class AdminEditComicActivity extends AppCompatActivity {
         // Đăng ký sự kiện mở danh sách chọn nhiều thể loại truyện
         tvComicCategoriesSelect.setOnClickListener(v -> showMultiSelectCategoryDialog());
 
+        // ĐẶT MẶC ĐỊNH CHO LUỒNG THÊM MỚI
+        tvFormTitle.setText("Thêm truyện mới");
+        btnSaveComicForm.setText("Thêm truyện mới");
+
         // Kiểm tra xử lý nạp dữ liệu nếu là luồng SỬA BỘ TRUYỆN HỆ THỐNG
         if (getIntent() != null && getIntent().hasExtra("EDIT_COMIC_ID")) {
             editComicId = getIntent().getIntExtra("EDIT_COMIC_ID", -1);
-            tvFormTitle.setText("CHỈNH SỬA THÔNG TIN TRUYỆN");
+
+            // ĐÃ SỬA: Cập nhật chữ động chuẩn xác theo yêu cầu thiết kế CSS mới
+            tvFormTitle.setText("Cập nhật truyện");
+            btnSaveComicForm.setText("Cập nhật");
+
             edtComicTitle.setText(getIntent().getStringExtra("TITLE"));
             edtComicAuthor.setText(getIntent().getStringExtra("AUTHOR"));
             edtComicDescription.setText(getIntent().getStringExtra("DESC"));
@@ -401,5 +409,10 @@ public class AdminEditComicActivity extends AppCompatActivity {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    // Phương thức xử lý đóng nhanh activity khi chạm mũi tên quay lại
+    public void finishActivity(View view) {
+        finish();
     }
 }

@@ -9,17 +9,51 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#F5F5F5"
+        android:background="#2A2A2A"
         android:orientation="vertical">
 
         <include
             android:id="@+id/layoutHeaderChapterDetail"
             layout="@layout/layout_header" />
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:background="#1E1E1E"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="16dp">
+
+            <ImageView
+                android:id="@+id/btnBackChapterDetail"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_chevron_left"
+                app:tint="#FFFFFF"
+                android:clickable="true"
+                android:focusable="true"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:text="Quản lý chương truyện"
+                android:textColor="#FFFFFF"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:fontFamily="sans-serif-medium" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#4D554336" />
+
         <androidx.core.widget.NestedScrollView
             android:id="@+id/nestedScrollViewChapterDetail"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
             android:fillViewport="true">
 
             <LinearLayout
@@ -31,7 +65,7 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp"
+                    android:layout_marginBottom="16dp"
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
@@ -39,17 +73,22 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="🖼️ QUẢN LÝ TRANG TRUYỆN"
-                        android:textColor="#2196F3"
+                        android:text="Quản lý trang truyện"
+                        android:textColor="#FFB77D"
+                        android:textSize="16sp"
                         android:textStyle="bold" />
 
                     <Button
                         android:id="@+id/btnAdminUploadPage"
                         android:layout_width="wrap_content"
-                        android:layout_height="36dp"
-                        android:backgroundTint="#4CAF50"
+                        android:layout_height="32dp"
+                        android:backgroundTint="#33FFB77D"
                         android:text="+ Thêm Trang"
-                        android:textSize="11sp" />
+                        android:textColor="#FFB77D"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        app:cornerRadius="4dp"
+                        android:paddingHorizontal="12dp"/>
                 </LinearLayout>
 
                 <androidx.recyclerview.widget.RecyclerView
@@ -59,49 +98,158 @@
                     android:layout_marginBottom="24dp"
                     android:nestedScrollingEnabled="false" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="💬 BÌNH LUẬN TRONG CHƯƠNG"
-                    android:textColor="#000000"
-                    android:textSize="15sp"
-                    android:textStyle="bold" />
+                <!-- Cụm chuyển chương Cố định (Inline Nav) giữa trang truyện và bình luận -->
+                <LinearLayout
+                    android:id="@+id/layoutReaderInlineNav"
+                    android:layout_width="match_parent"
+                    android:layout_height="60dp"
+                    android:background="#1E1E1E"
+                    android:gravity="center"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="24dp">
+
+                    <ImageButton
+                        android:id="@+id/btnInlinePrevChapter"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:background="#FFB77D"
+                        android:src="@drawable/ic_chevron_left"
+                        android:contentDescription="Chương trước cố định"
+                        android:scaleType="centerInside"
+                        app:tint="#000000" />
+
+                    <TextView
+                        android:id="@+id/tvInlineChapterSelector"
+                        android:layout_width="200dp"
+                        android:layout_height="40dp"
+                        android:layout_marginStart="8dp"
+                        android:layout_marginEnd="8dp"
+                        android:background="@drawable/bg_nav_btn"
+                        android:backgroundTint="#2A2A2A"
+                        android:gravity="center"
+                        android:text="Chọn chương"
+                        android:textColor="#FFFFFF"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:clickable="true"
+                        android:focusable="true"/>
+
+                    <ImageButton
+                        android:id="@+id/btnInlineNextChapter"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:background="#FFB77D"
+                        android:src="@drawable/ic_chevron_right"
+                        android:contentDescription="Chương sau cố định"
+                        android:scaleType="centerInside"
+                        app:tint="#000000" />
+                </LinearLayout>
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:background="@android:drawable/edit_text"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:padding="4dp">
+                    android:background="#1E1E1E"
+                    android:orientation="vertical"
+                    android:padding="16dp">
 
-                    <EditText
-                        android:id="@+id/edtAdminChapterCommentInput"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:background="@null"
-                        android:hint="Viết phản hồi về chương này..."
-                        android:padding="8dp"
-                        android:textSize="14sp" />
-
-                    <Button
-                        android:id="@+id/btnAdminChapterSendComment"
+                    <TextView
                         android:layout_width="wrap_content"
-                        android:layout_height="36dp"
-                        android:text="Gửi"
-                        android:textSize="11sp" />
+                        android:layout_height="wrap_content"
+                        android:text="Bình luận"
+                        android:textColor="#FFB77D"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="12dp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:layout_marginBottom="12dp">
+
+                        <EditText
+                            android:id="@+id/edtAdminChapterCommentInput"
+                            android:layout_width="0dp"
+                            android:layout_height="44dp"
+                            android:layout_weight="1"
+                            android:background="#2A2A2A"
+                            android:hint="Viết phản hồi về chương này..."
+                            android:textColorHint="#80DBC2B0"
+                            android:textColor="#DCE2F7"
+                            android:paddingHorizontal="12dp"
+                            android:textSize="14sp"
+                            android:singleLine="true"/>
+
+                        <Button
+                            android:id="@+id/btnAdminChapterSendComment"
+                            android:layout_width="wrap_content"
+                            android:layout_height="44dp"
+                            android:layout_marginStart="8dp"
+                            android:backgroundTint="#FFB77D"
+                            android:text="Gửi"
+                            android:textColor="#4D2600"
+                            android:textStyle="bold"
+                            app:cornerRadius="8dp"/>
+                    </LinearLayout>
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rvAdminChapterComments"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:nestedScrollingEnabled="false" />
                 </LinearLayout>
 
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/rvAdminChapterComments"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:nestedScrollingEnabled="false" />
             </LinearLayout>
         </androidx.core.widget.NestedScrollView>
+
+        <LinearLayout
+            android:id="@+id/layoutReaderFooter"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:background="#1E1E1E"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:elevation="8dp">
+
+            <ImageButton
+                android:id="@+id/btnPrevChapter"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="#FFB77D"
+                android:src="@drawable/ic_chevron_left"
+                android:contentDescription="Chương trước"
+                android:scaleType="centerInside"
+                app:tint="#000000" />
+
+            <TextView
+                android:id="@+id/tvChapterSelector"
+                android:layout_width="200dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/bg_nav_btn"
+                android:backgroundTint="#2A2A2A"
+                android:gravity="center"
+                android:text="Chọn chương"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:clickable="true"
+                android:focusable="true" />
+
+            <ImageButton
+                android:id="@+id/btnNextChapter"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="#FFB77D"
+                android:src="@drawable/ic_chevron_right"
+                android:contentDescription="Chương sau"
+                android:scaleType="centerInside"
+                app:tint="#000000" />
+        </LinearLayout>
     </LinearLayout>
 
     <include layout="@layout/layout_admin_side_menu" />

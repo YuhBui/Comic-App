@@ -40,7 +40,8 @@ public class AdminUserDetailActivity extends AppCompatActivity {
 
     private int userId;
     private ImageView imgAvatar;
-    private Button btnChooseAvatar, btnSave, btnBan, btnDelete;
+    private Button btnChooseAvatar, btnSave, btnDelete;
+    private com.google.android.material.button.MaterialButton btnBan;
     private EditText edtName, edtEmail, edtPassword, edtConfirmPassword;
     private Spinner spinnerRole;
     private TextView tvCreatedAt;
@@ -133,6 +134,11 @@ public class AdminUserDetailActivity extends AppCompatActivity {
         btnBan.setOnClickListener(v -> executeToggleBan());
         btnDelete.setOnClickListener(v -> executeDeleteUser());
 
+        ImageView btnBackUserDetail = findViewById(R.id.btnBackUserDetail);
+        if (btnBackUserDetail != null) {
+            btnBackUserDetail.setOnClickListener(v -> finish());
+        }
+
         loadUserProfileData();
     }
 
@@ -147,14 +153,18 @@ public class AdminUserDetailActivity extends AppCompatActivity {
                     edtEmail.setText(currentUser.getEmail());
                     spinnerRole.setSelection("Admin".equalsIgnoreCase(currentUser.getRole()) ? 1 : 0);
 
-                    tvCreatedAt.setText("📅 Ngày tạo tài khoản: " + (currentUser.getCreatedAt() != null ? formatToDateOnly(currentUser.getCreatedAt()) : "Chưa cập nhật"));
+                    tvCreatedAt.setText("Ngày tạo tài khoản: " + (currentUser.getCreatedAt() != null ? formatToDateOnly(currentUser.getCreatedAt()) : "Chưa cập nhật"));
 
                     if ("Banned".equalsIgnoreCase(currentUser.getStatus())) {
-                        btnBan.setText("✅ UNBAN");
-                        btnBan.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.parseColor("#4CAF50")));
+                        btnBan.setText("Unban");
+                        btnBan.setTextColor(Color.RED);
+                        btnBan.setIconTint(android.content.res.ColorStateList.valueOf(Color.RED));
+                        btnBan.setStrokeColor(android.content.res.ColorStateList.valueOf(Color.parseColor("#554336")));
                     } else {
-                        btnBan.setText("🚷 BAN");
-                        btnBan.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.parseColor("#E91E63")));
+                        btnBan.setText("Ban");
+                        btnBan.setTextColor(Color.WHITE);
+                        btnBan.setIconTint(android.content.res.ColorStateList.valueOf(Color.WHITE));
+                        btnBan.setStrokeColor(android.content.res.ColorStateList.valueOf(Color.parseColor("#554336")));
                     }
 
                     if (localImageUri == null && !AdminUserDetailActivity.this.isDestroyed()) {

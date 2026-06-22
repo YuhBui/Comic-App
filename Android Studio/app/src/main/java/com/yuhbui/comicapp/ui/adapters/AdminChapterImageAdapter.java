@@ -63,10 +63,11 @@ public class AdminChapterImageAdapter extends RecyclerView.Adapter<AdminChapterI
     }
 
     @Override
-    public int getItemCount() { return list.size(); }
+    public int getItemCount() { return list != null ? list.size() : 0; }
 
     static class ImageViewHolder extends RecyclerView.ViewHolder {
-        ImageView imgPreview, btnDelete;
+        ImageView imgPreview;
+        View btnDelete;
         TextView tvPageNum;
 
         public ImageViewHolder(@NonNull View itemView) {

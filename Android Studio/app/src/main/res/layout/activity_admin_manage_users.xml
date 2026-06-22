@@ -6,90 +6,112 @@
     android:layout_height="match_parent"
     android:fitsSystemWindows="true">
 
-    <LinearLayout
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#F5F5F5"
-        android:orientation="vertical">
-
-        <include
-            android:id="@+id/layoutHeaderManageUsers"
-            layout="@layout/layout_header" />
+        android:background="#2A2A2A">
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="#FFFFFF"
-            android:gravity="center_vertical"
-            android:orientation="horizontal"
-            android:padding="12dp">
+            android:layout_height="match_parent"
+            android:orientation="vertical">
 
-            <EditText
-                android:id="@+id/edtUserSearch"
-                android:layout_width="0dp"
-                android:layout_height="40dp"
-                android:layout_weight="1.5"
-                android:background="@android:drawable/edit_text"
-                android:hint="Tìm tên, email..."
-                android:paddingStart="10dp"
-                android:paddingEnd="10dp"
-                android:textSize="14sp" />
-
-            <Spinner
-                android:id="@+id/spinnerRoleFilter"
-                android:layout_width="0dp"
-                android:layout_height="40dp"
-                android:layout_marginStart="6dp"
-                android:layout_weight="1" />
-
-            <Button
-                android:id="@+id/btnAdminAddUser"
-                android:layout_width="wrap_content"
-                android:layout_height="40dp"
-                android:layout_marginStart="6dp"
-                android:backgroundTint="#4CAF50"
-                android:text="+ Thêm"
-                android:textColor="#FFFFFF"
-                android:textSize="12sp" />
-        </LinearLayout>
-
-        <androidx.core.widget.NestedScrollView
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:fillViewport="true">
+            <include
+                android:id="@+id/layoutHeaderManageUsers"
+                layout="@layout/layout_header" />
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:orientation="vertical"
-                android:paddingBottom="24dp">
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Quản lý người dùng"
+                    android:textColor="#FFB77D"
+                    android:textSize="30sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="16dp"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="16dp">
+
+                    <FrameLayout
+                        android:layout_width="0dp"
+                        android:layout_height="46dp"
+                        android:layout_weight="1"
+                        android:background="#1E1E1E">
+
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@drawable/bg_top_line_border"
+                            android:visibility="gone" />
+
+                        <EditText
+                            android:id="@+id/edtUserSearch"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="@null"
+                            android:hint="Search by name or email..."
+                            android:textColorHint="#DBC2B0"
+                            android:textColor="#DCE2F7"
+                            android:textSize="14sp"
+                            android:paddingStart="42dp"
+                            android:paddingEnd="16dp"
+                            android:singleLine="true" />
+
+                        <ImageView
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            android:layout_gravity="start|center_vertical"
+                            android:layout_marginStart="16dp"
+                            android:src="@android:drawable/ic_menu_search"
+                            app:tint="#DBC2B0" />
+                    </FrameLayout>
+
+                    <Spinner
+                        android:id="@+id/spinnerRoleFilter"
+                        android:layout_width="110dp"
+                        android:layout_height="46dp"
+                        android:layout_marginStart="8dp"
+                        android:background="#1E1E1E"
+                        android:popupBackground="#1E1E1E"
+                        android:theme="@style/ThemeOverlay.AppCompat.Dark"/>
+                </LinearLayout>
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/rvAdminManageUsers"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:nestedScrollingEnabled="false"
-                    android:padding="8dp"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:cacheColorHint="#00000000"
+                    android:divider="@null"
                     android:scrollbars="vertical" />
 
                 <LinearLayout
-                    android:id="@+id/layoutPaginationBar"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="20dp"
-                    android:layout_marginBottom="8dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="4dp"
                     android:gravity="center"
                     android:orientation="horizontal">
 
                     <Button
                         android:id="@+id/btnPrevPage"
                         android:layout_width="40dp"
-                        android:layout_height="36dp"
+                        android:layout_height="40dp"
                         android:background="@drawable/bg_nav_btn"
+                        android:backgroundTint="#1E1E1E"
                         android:padding="0dp"
                         android:text="&lt;"
-                        android:textColor="#FFFFFF"
+                        android:textColor="#DBC2B0"
                         android:textSize="14sp"
                         android:textStyle="bold" />
 
@@ -97,27 +119,51 @@
                         android:id="@+id/layoutPageNumbersContainer"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="6dp"
-                        android:layout_marginEnd="6dp"
+                        android:layout_marginStart="8dp"
+                        android:layout_marginEnd="8dp"
                         android:gravity="center_vertical"
                         android:orientation="horizontal" />
 
                     <Button
                         android:id="@+id/btnNextPage"
                         android:layout_width="40dp"
-                        android:layout_height="36dp"
+                        android:layout_height="40dp"
                         android:background="@drawable/bg_nav_btn"
+                        android:backgroundTint="#1E1E1E"
                         android:padding="0dp"
                         android:text="&gt;"
-                        android:textColor="#FFFFFF"
+                        android:textColor="#DBC2B0"
                         android:textSize="14sp"
                         android:textStyle="bold" />
                 </LinearLayout>
 
             </LinearLayout>
-        </androidx.core.widget.NestedScrollView>
+        </LinearLayout>
 
-    </LinearLayout>
+        <androidx.cardview.widget.CardView
+            android:id="@+id/btnAdminAddUser"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginEnd="24dp"
+            android:layout_marginBottom="24dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            app:cardBackgroundColor="#D97707"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="6dp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_gravity="center"
+                android:src="@android:drawable/ic_input_add"
+                app:tint="#432100" />
+        </androidx.cardview.widget.CardView>
+
+    </RelativeLayout>
 
     <include layout="@layout/layout_admin_side_menu" />
 

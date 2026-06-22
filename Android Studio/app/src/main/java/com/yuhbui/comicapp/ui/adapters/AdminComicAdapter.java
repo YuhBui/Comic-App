@@ -1,10 +1,11 @@
 package com.yuhbui.comicapp.ui.adapters;
 
 import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ImageView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -46,7 +47,6 @@ public class AdminComicAdapter extends RecyclerView.Adapter<AdminComicAdapter.Ad
     public void onBindViewHolder(@NonNull AdminViewHolder holder, int position) {
         Comic comic = list.get(position);
 
-        // 1. Đổ dữ liệu tiêu đề và chương truyện từ Model Comic vào TextView
         holder.tvTitle.setText(comic.getTitle());
 
         String latestChapter = comic.getLatestChapterNumber();
@@ -56,29 +56,34 @@ public class AdminComicAdapter extends RecyclerView.Adapter<AdminComicAdapter.Ad
             holder.tvLatestChapter.setText("Chưa có chương");
         }
 
-        // 2. Đổ dữ liệu thời gian cập nhật chỉ lấy Ngày/Tháng/Năm
         String timeUpdate = comic.getTimeUpdated();
         holder.tvTimeUpdate.setText(timeUpdate != null ? formatToDateOnly(timeUpdate) : "Đang cập nhật");
 
-        // 3. Định dạng chuỗi thông số tương tác (👁️ Lượt xem, ❤️ Yêu thích, 💬 Bình luận)
-        holder.tvViews.setText("👁️ " + formatNumber(comic.getViewCount()));
-        holder.tvLikes.setText("❤️ " + formatNumber(comic.getFollowCount()));
-        holder.tvComments.setText("💬 " + formatNumber(comic.getCommentCount()));
+        // ĐÃ SỬA: Chỉ truyền giá trị số đã format (K, M), bỏ đi emoji unicode vì giao diện đã có cụm Icon riêng biệt
+        holder.tvViews.setText(formatNumber(comic.getViewCount()));
+        holder.tvLikes.setText(formatNumber(comic.getFollowCount()));
+        holder.tvComments.setText(formatNumber(comic.getCommentCount()));
 
-        // 4. Tải ảnh bìa truyện bằng Glide
+        // Bo viền l lót nền tối Bento tinh tế theo CSS hệ thống
+        float density = holder.itemView.getContext().getResources().getDisplayMetrics().density;
+        GradientDrawable itemBg = new GradientDrawable();
+        itemBg.setShape(GradientDrawable.RECTANGLE);
+        itemBg.setColor(Color.parseColor("#1E1E1E"));
+        itemBg.setCornerRadius(4 * density);
+        itemBg.setStroke(Math.round(1 * density), Color.argb(76, 85, 67, 54)); // border: 1px solid rgba(85,67,54,0.3)
+        holder.itemView.setBackground(itemBg);
+
         Glide.with(holder.itemView.getContext())
                 .load(comic.getCoverImageUrl())
                 .placeholder(R.drawable.ic_launcher_background)
                 .into(holder.imgCover);
 
-        // Sự kiện nhấp chuột vào ô dòng truyện xem chi tiết quản lý
         holder.itemView.setOnClickListener(v -> {
             Intent intent = new Intent(holder.itemView.getContext(), AdminComicDetailActivity.class);
             intent.putExtra("COMIC_ID", comic.getComicId());
             holder.itemView.getContext().startActivity(intent);
         });
 
-        // Sự kiện nhấp nút hành động điều phối
         holder.btnEdit.setOnClickListener(v -> listener.onEdit(comic));
         holder.btnDelete.setOnClickListener(v -> listener.onDelete(comic, position));
     }
@@ -88,11 +93,10 @@ public class AdminComicAdapter extends RecyclerView.Adapter<AdminComicAdapter.Ad
             return "Đang cập nhật";
         }
         try {
-            // Tách lấy cụm ngày yyyy-MM-dd trước khoảng trắng hoặc chữ T
             String datePart = rawDateTime.contains("T") ? rawDateTime.split("T")[0] : rawDateTime.split(" ")[0];
             String[] parts = datePart.split("-");
             if (parts.length == 3) {
-                return parts[2] + "/" + parts[1] + "/" + parts[0]; // Trả về dd/MM/yyyy
+                return parts[2] + "/" + parts[1] + "/" + parts[0];
             }
             return datePart;
         } catch (Exception e) {
@@ -101,13 +105,8 @@ public class AdminComicAdapter extends RecyclerView.Adapter<AdminComicAdapter.Ad
     }
 
     @Override
-    public int getItemCount() {
-        return list != null ? list.size() : 0;
-    }
+    public int getItemCount() { return list != null ? list.size() : 0; }
 
-    /**
-     * Hàm trợ giúp rút gọn định dạng số hiển thị tương thích phong cách Top 10 (Ví dụ: 1200 -> 1.2K)
-     */
     private String formatNumber(long number) {
         if (number >= 1_000_000) {
             return String.format("%.1fM", (double) number / 1_000_000).replace(".0", "");
@@ -121,7 +120,7 @@ public class AdminComicAdapter extends RecyclerView.Adapter<AdminComicAdapter.Ad
         ImageView imgCover;
         TextView tvTitle, tvLatestChapter, tvTimeUpdate;
         TextView tvViews, tvLikes, tvComments;
-        Button btnEdit, btnDelete;
+        ImageView btnEdit, btnDelete;
 
         public AdminViewHolder(@NonNull View itemView) {
             super(itemView);

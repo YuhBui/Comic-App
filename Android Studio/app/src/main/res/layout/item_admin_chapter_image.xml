@@ -1,38 +1,50 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="8dp"
-    android:background="#F5F5F5">
+    android:layout_marginBottom="12dp"
+    android:background="#2A2A2A">
 
-<ImageView
-    android:id="@+id/imgAdminPagePreview"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:adjustViewBounds="true"
-    android:scaleType="fitCenter" />
+    <ImageView
+        android:id="@+id/imgAdminPagePreview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:adjustViewBounds="true"
+        android:scaleType="fitCenter" />
 
-<TextView
-    android:id="@+id/tvAdminPageNumber"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:background="#80000000"
-    android:textColor="#FFFFFF"
-    android:padding="4dp"
-    android:textSize="11sp"
-    android:text="Trang 1"
-    android:layout_gravity="top|start"/>
+    <TextView
+        android:id="@+id/tvAdminPageNumber"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="#99000000"
+        android:textColor="#FFFFFF"
+        android:paddingHorizontal="8dp"
+        android:paddingVertical="4dp"
+        android:textSize="11sp"
+        android:text="Trang 1"
+        android:layout_gravity="top|start" />
 
-<ImageView
-    android:id="@+id/btnAdminDeletePage"
-    android:layout_width="32dp"
-    android:layout_height="32dp"
-    android:layout_gravity="top|end"
-    android:layout_margin="4dp"
-    android:background="#D9E74C3C"
-    android:src="@android:drawable/ic_menu_delete"
-    android:padding="6dp"
-    android:contentDescription="Xóa trang"
-    android:clickable="true"
-    android:focusable="true" />
+    <androidx.cardview.widget.CardView
+        android:id="@+id/btnAdminDeletePage"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_gravity="top|end"
+        android:layout_margin="8dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:foreground="?attr/selectableItemBackground"
+        app:cardBackgroundColor="#CC003C"
+        app:cardCornerRadius="4dp"
+        app:cardElevation="3dp">
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:src="@android:drawable/ic_menu_delete"
+            android:padding="7dp"
+            app:tint="#FFDAD6"
+            android:contentDescription="Xóa trang truyện" />
+    </androidx.cardview.widget.CardView>
+
 </FrameLayout>

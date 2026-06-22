@@ -9,7 +9,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#F5F6FA"
+        android:background="#2A2A2A"
         android:orientation="vertical">
 
         <include
@@ -20,7 +20,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_margin="12dp"
-            app:cardBackgroundColor="#FFFFFF"
+            app:cardBackgroundColor="#1E1E1E"
             app:cardCornerRadius="8dp"
             app:cardElevation="3dp">
 
@@ -33,62 +33,58 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
+                    android:orientation="vertical">
 
                     <TextView
-                        android:layout_width="0dp"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
                         android:text="Thời gian thống kê:"
-                        android:textColor="#333333"
+                        android:textColor="#FFFFFF"
                         android:textSize="14sp"
-                        android:textStyle="bold" />
+                        android:textStyle="bold"
+                        android:layout_marginBottom="8dp" />
 
                     <RadioGroup
                         android:id="@+id/rgDashboardFilter"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal">
 
                         <RadioButton
                             android:id="@+id/rbDashDay"
-                            android:layout_width="wrap_content"
+                            android:layout_width="0dp"
                             android:layout_height="32dp"
+                            android:layout_weight="1"
                             android:background="@drawable/radio_tab_bg"
                             android:button="@null"
                             android:checked="true"
                             android:gravity="center"
-                            android:paddingStart="12dp"
-                            android:paddingEnd="12dp"
                             android:text="Ngày"
                             android:textColor="@drawable/radio_text_color"
                             android:textSize="13sp" />
 
                         <RadioButton
                             android:id="@+id/rbDashWeek"
-                            android:layout_width="wrap_content"
+                            android:layout_width="0dp"
                             android:layout_height="32dp"
+                            android:layout_weight="1"
                             android:layout_marginStart="4dp"
                             android:background="@drawable/radio_tab_bg"
                             android:button="@null"
                             android:gravity="center"
-                            android:paddingStart="12dp"
-                            android:paddingEnd="12dp"
                             android:text="Tuần"
                             android:textColor="@drawable/radio_text_color"
                             android:textSize="13sp" />
 
                         <RadioButton
                             android:id="@+id/rbDashMonth"
-                            android:layout_width="wrap_content"
+                            android:layout_width="0dp"
                             android:layout_height="32dp"
+                            android:layout_weight="1"
                             android:layout_marginStart="4dp"
                             android:background="@drawable/radio_tab_bg"
                             android:button="@null"
                             android:gravity="center"
-                            android:paddingStart="12dp"
-                            android:paddingEnd="12dp"
                             android:text="Tháng"
                             android:textColor="@drawable/radio_text_color"
                             android:textSize="13sp" />
@@ -109,7 +105,7 @@
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:padding="6dp"
                         android:src="@drawable/ic_chevron_left"
-                        app:tint="#2C3E50" />
+                        app:tint="#DBC2B0" />
 
                     <TextView
                         android:id="@+id/tvCurrentPeriod"
@@ -117,7 +113,7 @@
                         android:layout_height="wrap_content"
                         android:gravity="center"
                         android:text="dd/MM/yyyy"
-                        android:textColor="#2C3E50"
+                        android:textColor="#DCE2F7"
                         android:textSize="14sp"
                         android:textStyle="bold" />
 
@@ -128,9 +124,47 @@
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:padding="6dp"
                         android:src="@drawable/ic_chevron_right"
-                        app:tint="#2C3E50" />
+                        app:tint="#DBC2B0" />
                 </LinearLayout>
 
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardTotalUsers"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="12dp"
+            android:layout_marginBottom="12dp"
+            app:cardBackgroundColor="#1E1E1E"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="3dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="TỔNG SỐ NGƯỜI DÙNG"
+                    android:textColor="#E6FFFFFF"
+                    android:textSize="12sp"
+                    android:letterSpacing="0.05"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvTotalUsersValue"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:text="--"
+                    android:textColor="#E6FFFFFF"
+                    android:textSize="30sp"
+                    android:textStyle="bold" />
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
@@ -151,7 +185,7 @@
                     android:layout_marginStart="12dp"
                     android:layout_marginEnd="12dp"
                     android:layout_marginBottom="12dp"
-                    app:cardBackgroundColor="#FFFFFF"
+                    app:cardBackgroundColor="#1E1E1E"
                     app:cardCornerRadius="8dp"
                     app:cardElevation="2dp">
 
@@ -165,8 +199,8 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginBottom="16dp"
-                            android:text="📈 Biểu đồ xu hướng lượt truy cập ứng dụng"
-                            android:textColor="#2C3E50"
+                            android:text="THỐNG KÊ SỐ LƯỢT TRUY CẬP"
+                            android:textColor="#FFFFFF"
                             android:textSize="15sp"
                             android:textStyle="bold" />
 
@@ -183,7 +217,7 @@
                     android:layout_marginStart="12dp"
                     android:layout_marginEnd="12dp"
                     android:layout_marginBottom="24dp"
-                    app:cardBackgroundColor="#FFFFFF"
+                    app:cardBackgroundColor="#1E1E1E"
                     app:cardCornerRadius="8dp"
                     app:cardElevation="2dp">
 
@@ -197,8 +231,8 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginBottom="16dp"
-                            android:text="🏆 TOP 10 TRUYỆN XẾP HẠNG CAO"
-                            android:textColor="#E74C3C"
+                            android:text="BẢNG XẾP HẠNG TOP 10"
+                            android:textColor="#FFFFFF"
                             android:textSize="15sp"
                             android:textStyle="bold" />
 

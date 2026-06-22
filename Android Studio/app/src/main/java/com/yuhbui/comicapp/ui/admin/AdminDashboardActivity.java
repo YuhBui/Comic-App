@@ -48,11 +48,13 @@ public class AdminDashboardActivity extends AppCompatActivity {
     private RecyclerView rvAdminTopComic;
     private RankingAdapter rankingAdapter;
 
-    // Các thành phần điều hướng thời gian mới thêm
+    // Thành phần điều hướng thời gian
     private ImageView btnPrevPeriod, btnNextPeriod;
     private TextView tvCurrentPeriod;
 
-    // Các biến lưu trạng thái bộ lọc và thời gian neo hiện tại
+    // Đã thêm: TextView hiển thị tổng số người dùng thực tế
+    private TextView tvTotalUsersValue;
+
     private String currentType = "day";
     private Calendar currentCalendar = Calendar.getInstance();
 
@@ -70,10 +72,12 @@ public class AdminDashboardActivity extends AppCompatActivity {
         lineChartAccess = findViewById(R.id.lineChartAccess);
         rvAdminTopComic = findViewById(R.id.rvAdminTopComic);
 
-        // Ánh xạ các nút tiến lùi mới
         btnPrevPeriod = findViewById(R.id.btnPrevPeriod);
         btnNextPeriod = findViewById(R.id.btnNextPeriod);
         tvCurrentPeriod = findViewById(R.id.tvCurrentPeriod);
+
+        // Ánh xạ TextView giá trị tổng số người dùng mới
+        tvTotalUsersValue = findViewById(R.id.tvTotalUsersValue);
 
         setupAdminHeaderView();
 
@@ -81,7 +85,6 @@ public class AdminDashboardActivity extends AppCompatActivity {
         rankingAdapter = new RankingAdapter(true);
         rvAdminTopComic.setAdapter(rankingAdapter);
 
-        // 1. Lắng nghe sự kiện đổi bộ lọc RadioGroup
         rgDashboardFilter.setOnCheckedChangeListener((group, checkedId) -> {
             if (checkedId == R.id.rbDashWeek) {
                 currentType = "week";
@@ -90,12 +93,10 @@ public class AdminDashboardActivity extends AppCompatActivity {
             } else {
                 currentType = "day";
             }
-            // Đặt lại thời gian về mốc hôm nay khi chuyển bộ lọc
             currentCalendar = Calendar.getInstance();
             updatePeriodDisplayAndLoad();
         });
 
-        // 2. Click mũi tên trái (<) để lùi thời gian
         btnPrevPeriod.setOnClickListener(v -> {
             if ("day".equals(currentType)) {
                 currentCalendar.add(Calendar.DAY_OF_MONTH, -1);
@@ -107,7 +108,6 @@ public class AdminDashboardActivity extends AppCompatActivity {
             updatePeriodDisplayAndLoad();
         });
 
-        // 3. Click mũi tên phải (>) để tiến thời gian
         btnNextPeriod.setOnClickListener(v -> {
             if ("day".equals(currentType)) {
                 currentCalendar.add(Calendar.DAY_OF_MONTH, 1);
@@ -132,7 +132,6 @@ public class AdminDashboardActivity extends AppCompatActivity {
             }
         });
 
-        // Tải dữ liệu ban đầu lần đầu vào màn hình
         updatePeriodDisplayAndLoad();
     }
 
@@ -144,9 +143,6 @@ public class AdminDashboardActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     * Hàm tự động cập nhật định dạng chữ hiển thị trên thanh điều hướng và gọi API dữ liệu
-     */
     private void updatePeriodDisplayAndLoad() {
         SimpleDateFormat displayFormat;
 
@@ -157,7 +153,6 @@ public class AdminDashboardActivity extends AppCompatActivity {
             Calendar cloneCal = (Calendar) currentCalendar.clone();
             int dayOfWeek = cloneCal.get(Calendar.DAY_OF_WEEK);
 
-            // Đưa lịch về Thứ 2 của tuần hiện tại
             int daysToMonday = (dayOfWeek == Calendar.SUNDAY) ? -6 : (Calendar.MONDAY - dayOfWeek);
             cloneCal.add(Calendar.DAY_OF_MONTH, daysToMonday);
 
@@ -173,7 +168,6 @@ public class AdminDashboardActivity extends AppCompatActivity {
             tvCurrentPeriod.setText(displayFormat.format(currentCalendar.getTime()));
         }
 
-        // Tạo chuỗi ngày dạng yyyy-MM-dd gửi lên API Server
         SimpleDateFormat apiFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
         String targetDateStr = apiFormat.format(currentCalendar.getTime());
 
@@ -183,6 +177,40 @@ public class AdminDashboardActivity extends AppCompatActivity {
     private void loadDashboardData(String type, String targetDate) {
         fetchAccessChartData(type, targetDate);
         fetchTop10ComicsData(type);
+        fetchTotalUsersCount(); // Đã thêm: Tải số lượng tài khoản thực tế từ server
+    }
+
+    /**
+     * Đã thêm: Hàm gọi API bất đồng bộ lấy số lượng tổng người dùng thật từ Server Spring Boot
+     */
+    private void fetchTotalUsersCount() {
+        ApiClient.getApiService().adminGetUsers("", "Tất cả", 0, 1).enqueue(new Callback<Map<String, Object>>() {
+            @Override
+            public void onResponse(Call<Map<String, Object>> call, Response<Map<String, Object>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    Map<String, Object> result = response.body();
+
+                    // ĐÃ SỬA: Thay thế "totalElements" bằng "totalItems" cho khớp 100% với Spring Boot
+                    if (result.containsKey("totalItems")) {
+                        Number totalItemsNum = (Number) result.get("totalItems");
+                        if (totalItemsNum != null) {
+                            int total = totalItemsNum.intValue();
+                            // Định dạng rút gọn nếu dữ liệu người dùng lớn
+                            if (total >= 1000) {
+                                tvTotalUsersValue.setText(String.format(Locale.getDefault(), "%.1fk", total / 1000.0));
+                            } else {
+                                tvTotalUsersValue.setText(String.valueOf(total));
+                            }
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Map<String, Object>> call, Throwable t) {
+                tvTotalUsersValue.setText("0");
+            }
+        });
     }
 
     private void setupAdminHeaderView() {
@@ -246,7 +274,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
                     dataSet.setCircleRadius(4f);
                     dataSet.setDrawValues(true);
                     dataSet.setValueTextSize(10f);
-                    dataSet.setValueTextColor(Color.parseColor("#333333"));
+                    dataSet.setValueTextColor(Color.parseColor("#FFFFFF"));
 
                     LineData lineData = new LineData(dataSet);
                     lineChartAccess.setData(lineData);

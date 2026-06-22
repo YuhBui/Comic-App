@@ -37,7 +37,7 @@ public class AdminManageUsersActivity extends AppCompatActivity {
 
     private EditText edtSearch;
     private Spinner spinnerRole;
-    private Button btnAdd;
+    private View btnAdd;
     private RecyclerView rvUsers;
     private AdminUserAdapter adapter;
 

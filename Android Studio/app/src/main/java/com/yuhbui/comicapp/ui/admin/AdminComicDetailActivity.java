@@ -137,6 +137,7 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
 
                 Intent intent = new Intent(AdminComicDetailActivity.this, AdminChapterDetailActivity.class);
                 intent.putExtra("CHAPTER_ID", id);
+                intent.putExtra("COMIC_ID", comicId);
                 intent.putExtra("CHAPTER_TITLE", "Chương " + chapter.get("chapterNumber"));
                 startActivity(intent);
             }
@@ -221,6 +222,11 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
                     })
                     .setNegativeButton("Hủy", null).show();
         });
+
+        ImageView btnBackComicDetail = findViewById(R.id.btnBackComicDetail);
+        if (btnBackComicDetail != null) {
+            btnBackComicDetail.setOnClickListener(v -> finish());
+        }
     }
 
     @Override

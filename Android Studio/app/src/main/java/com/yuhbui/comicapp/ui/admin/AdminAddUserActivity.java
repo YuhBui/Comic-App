@@ -231,4 +231,8 @@ public class AdminAddUserActivity extends AppCompatActivity {
             return tempFile;
         } catch (Exception e) { return null; }
     }
+
+    public void finishActivity(View view) {
+        finish();
+    }
 }
