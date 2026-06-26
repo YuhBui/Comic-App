@@ -437,15 +437,28 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
 
     @Override
     public void onReply(Map<String, Object> comment) {
-        // ĐÃ SỬA: Lưu lại commentId được nhận diện từ map phản hồi để gán làm ID gốc cho comment con
+        // 1. Lưu ID comment cha để gán parentCommentId khi gửi
         Number idNum = (Number) comment.get("commentId");
         targetParentCommentId = idNum != null ? idNum.intValue() : null;
 
+        // 2. Điền @tên_user vào ô nhập liệu
         String username = (String) comment.get("username");
-        if (username != null) {
-            edtAdminCommentInput.setText("@" + username + " ");
-            edtAdminCommentInput.requestFocus();
-            edtAdminCommentInput.setSelection(edtAdminCommentInput.getText().length());
+        if (username != null && !username.isEmpty()) {
+            String tagText = "@" + username + " ";
+            edtAdminCommentInput.setText(tagText);
+            edtAdminCommentInput.setSelection(tagText.length());
+            edtAdminCommentInput.setHint("Đang trả lời " + username + "...");
+        } else {
+            edtAdminCommentInput.setText("");
+            edtAdminCommentInput.setHint("Viết phản hồi...");
+        }
+
+        // 3. Focus và mở bàn phím tự động
+        edtAdminCommentInput.requestFocus();
+        android.view.inputmethod.InputMethodManager imm =
+                (android.view.inputmethod.InputMethodManager) getSystemService(android.content.Context.INPUT_METHOD_SERVICE);
+        if (imm != null) {
+            imm.showSoftInput(edtAdminCommentInput, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);
         }
     }
 

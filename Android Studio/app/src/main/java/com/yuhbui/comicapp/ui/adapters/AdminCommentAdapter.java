@@ -77,7 +77,7 @@ public class AdminCommentAdapter extends RecyclerView.Adapter<AdminCommentAdapte
 
         holder.rvReplies.setLayoutManager(new LinearLayoutManager(holder.itemView.getContext()));
         holder.rvReplies.setNestedScrollingEnabled(false);
-        ReplyAdapter replyAdapter = new ReplyAdapter();
+        AdminReplyAdapter replyAdapter = new AdminReplyAdapter(commentId, listener);
         holder.rvReplies.setAdapter(replyAdapter);
 
         int totalReplies = 0;
@@ -115,21 +115,6 @@ public class AdminCommentAdapter extends RecyclerView.Adapter<AdminCommentAdapte
                 holder.tvLoadMoreReplies.setVisibility(View.GONE);
             }
         }
-
-        // ĐÃ SỬA: Lắng nghe sự kiện click nút Phản hồi từ danh sách con lồng nhau giống bên User
-        replyAdapter.setOnReplyToReplyClickListener(childComment -> {
-            if (listener != null) {
-                Map<String, Object> ghostCommentMap = new HashMap<>();
-                ghostCommentMap.put("commentId", commentId); // Giữ ID comment gốc làm cha
-                ghostCommentMap.put("userId", childComment.getUserId());
-
-                String validName = (childComment.getUserDisplayName() != null && !childComment.getUserDisplayName().isEmpty())
-                        ? childComment.getUserDisplayName() : "Thành viên #" + childComment.getUserId();
-                ghostCommentMap.put("username", validName);
-
-                listener.onReply(ghostCommentMap);
-            }
-        });
 
         int currentUserId = SharedPrefsManager.getUserId(holder.itemView.getContext());
         int commentUserId = getSafeInt(comment.get("userId"));
@@ -220,7 +205,7 @@ public class AdminCommentAdapter extends RecyclerView.Adapter<AdminCommentAdapte
         }
     }
 
-    private void paginateAdminReplies(int commentId, CommentViewHolder holder, ReplyAdapter replyAdapter, int totalReplies) {
+    private void paginateAdminReplies(int commentId, CommentViewHolder holder, AdminReplyAdapter replyAdapter, int totalReplies) {
         List<Comment> fullList = repliesCache.get(commentId);
         int currentCount = displayedCountCache.get(commentId);
 

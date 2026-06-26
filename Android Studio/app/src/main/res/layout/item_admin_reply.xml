@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="10dp"
+    android:layout_marginStart="20dp"
+    android:layout_marginTop="4dp"
+    android:layout_marginBottom="4dp"
+    android:background="#161616">
+
+    <!-- Row: Avatar + Tên -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="4dp">
+
+        <ImageView
+            android:id="@+id/imgAdminReplyAvatar"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_marginEnd="8dp"
+            android:scaleType="centerCrop"
+            android:src="@drawable/ic_launcher_background"/>
+
+        <TextView
+            android:id="@+id/tvAdminReplyUsername"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Tên người dùng"
+            android:textStyle="bold"
+            android:textColor="#FFB77D"
+            android:textSize="12sp"/>
+    </LinearLayout>
+
+    <!-- Nội dung phản hồi -->
+    <TextView
+        android:id="@+id/tvAdminReplyContent"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="36dp"
+        android:text="Nội dung phản hồi..."
+        android:textColor="#DBC2B0"
+        android:textSize="13sp"
+        android:lineSpacingExtra="2dp"/>
+
+    <!-- Hàng nút hành động -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="6dp"
+        android:layout_marginStart="36dp"
+        android:gravity="center_vertical">
+
+        <!-- Like -->
+        <LinearLayout
+            android:id="@+id/layoutAdminReplyLike"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:clickable="true"
+            android:focusable="true"
+            android:padding="4dp"
+            android:layout_marginEnd="12dp">
+            <ImageView
+                android:id="@+id/imgAdminReplyLikeIcon"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:src="@drawable/ic_thumb_up_outline"
+                app:tint="#DBC2B0"/>
+            <TextView
+                android:id="@+id/tvAdminReplyLikeCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:text="0"
+                android:textColor="#DBC2B0"
+                android:textSize="12sp"/>
+        </LinearLayout>
+
+        <!-- Dislike -->
+        <LinearLayout
+            android:id="@+id/layoutAdminReplyDislike"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:clickable="true"
+            android:focusable="true"
+            android:padding="4dp"
+            android:layout_marginEnd="12dp">
+            <ImageView
+                android:id="@+id/imgAdminReplyDislikeIcon"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:src="@drawable/ic_thumb_down_outline"
+                app:tint="#DBC2B0"/>
+            <TextView
+                android:id="@+id/tvAdminReplyDislikeCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:text="0"
+                android:textColor="#DBC2B0"
+                android:textSize="12sp"/>
+        </LinearLayout>
+
+        <!-- Phản hồi (icon only) -->
+        <LinearLayout
+            android:id="@+id/layoutAdminReplyReply"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:clickable="true"
+            android:focusable="true"
+            android:padding="4dp"
+            android:layout_marginEnd="12dp">
+            <ImageView
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:src="@drawable/ic_comment"
+                app:tint="#FF9800"/>
+        </LinearLayout>
+
+        <!-- Report (icon + badge số) -->
+        <LinearLayout
+            android:id="@+id/layoutAdminReplyReport"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:clickable="true"
+            android:focusable="true"
+            android:padding="4dp"
+            android:layout_marginEnd="4dp">
+            <ImageView
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:src="@drawable/ic_report"
+                app:tint="#E91E63"/>
+            <TextView
+                android:id="@+id/tvAdminReplyReportCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="3dp"
+                android:text="0"
+                android:textColor="#E91E63"
+                android:textStyle="bold"
+                android:textSize="12sp"
+                android:visibility="gone"/>
+        </LinearLayout>
+
+        <!-- Spacer -->
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1"/>
+
+        <!-- Xóa -->
+        <LinearLayout
+            android:id="@+id/layoutAdminReplyDelete"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:clickable="true"
+            android:focusable="true"
+            android:padding="4dp">
+            <ImageView
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:src="@drawable/ic_delete"
+                app:tint="#E74C3C"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="3dp"
+                android:text="Xóa"
+                android:textColor="#E74C3C"
+                android:textStyle="bold"
+                android:textSize="12sp"/>
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>
