@@ -64,7 +64,6 @@ public class AdminCommentAdapter extends RecyclerView.Adapter<AdminCommentAdapte
         holder.tvLikes.setText("(" + getSafeLong(comment.get("likes")) + ")");
         holder.tvDislikes.setText("(" + getSafeLong(comment.get("dislikes")) + ")");
 
-        // ĐÃ SỬA: Hiển thị số lượng báo cáo vào ô đếm bên cạnh icon
         long reportCount = getSafeLong(comment.get("reports"));
         holder.tvReportsCount.setText(String.valueOf(reportCount));
 
@@ -117,6 +116,21 @@ public class AdminCommentAdapter extends RecyclerView.Adapter<AdminCommentAdapte
             }
         }
 
+        // ĐÃ SỬA: Lắng nghe sự kiện click nút Phản hồi từ danh sách con lồng nhau giống bên User
+        replyAdapter.setOnReplyToReplyClickListener(childComment -> {
+            if (listener != null) {
+                Map<String, Object> ghostCommentMap = new HashMap<>();
+                ghostCommentMap.put("commentId", commentId); // Giữ ID comment gốc làm cha
+                ghostCommentMap.put("userId", childComment.getUserId());
+
+                String validName = (childComment.getUserDisplayName() != null && !childComment.getUserDisplayName().isEmpty())
+                        ? childComment.getUserDisplayName() : "Thành viên #" + childComment.getUserId();
+                ghostCommentMap.put("username", validName);
+
+                listener.onReply(ghostCommentMap);
+            }
+        });
+
         int currentUserId = SharedPrefsManager.getUserId(holder.itemView.getContext());
         int commentUserId = getSafeInt(comment.get("userId"));
 
@@ -153,14 +167,30 @@ public class AdminCommentAdapter extends RecyclerView.Adapter<AdminCommentAdapte
                                 if (response.isSuccessful() && response.body() != null) {
                                     List<Comment> serverReplies = response.body();
                                     Collections.sort(serverReplies, (c1, c2) -> Integer.compare(c1.getCommentId(), c2.getCommentId()));
+
+                                    Map<Integer, Comment> lookupMap = new HashMap<>();
+                                    for (Comment r : serverReplies) { lookupMap.put(r.getCommentId(), r); }
+                                    for (Comment r : serverReplies) {
+                                        if (r.getParentCommentId() != null && r.getParentCommentId() != commentId) {
+                                            Comment immediateParent = lookupMap.get(r.getParentCommentId());
+                                            if (immediateParent != null) {
+                                                String parentName = (immediateParent.getUserDisplayName() != null && !immediateParent.getUserDisplayName().isEmpty())
+                                                        ? immediateParent.getUserDisplayName() : "Thành viên #" + immediateParent.getUserId();
+                                                if (r.getContent() != null && !r.getContent().trim().startsWith("@")) {
+                                                    r.setContent("@" + parentName + " " + r.getContent());
+                                                }
+                                            }
+                                        }
+                                    }
+
                                     repliesCache.put(commentId, serverReplies);
-                                    paginateAdminReplies(commentId, holder, replyAdapter, finalTotalReplies);
+                                    paginateAdminReplies(commentId, holder, replyAdapter, Math.max(finalTotalReplies, serverReplies.size()));
                                 }
                             }
                             @Override public void onFailure(Call<List<Comment>> call, Throwable t) {}
                         });
             } else {
-                paginateAdminReplies(commentId, holder, replyAdapter, finalTotalReplies);
+                paginateAdminReplies(commentId, holder, replyAdapter, Math.max(finalTotalReplies, currentList.size()));
             }
         });
     }
@@ -227,6 +257,19 @@ public class AdminCommentAdapter extends RecyclerView.Adapter<AdminCommentAdapte
         }
     }
 
+    // ĐÃ THÊM: Hỗ trợ xóa bộ nhớ đệm cache câu trả lời con để làm mới thời gian thực khi đăng bình luận phản hồi thành công
+    public void resetRepliesCache(Integer parentCommentId) {
+        if (parentCommentId == null) return;
+        repliesCache.remove(parentCommentId);
+        displayedCountCache.put(parentCommentId, 0);
+        for (int i = 0; i < commentList.size(); i++) {
+            if (getSafeInt(commentList.get(i).get("commentId")) == parentCommentId) {
+                notifyItemChanged(i);
+                break;
+            }
+        }
+    }
+
     private long getSafeLong(Object obj) {
         if (obj instanceof Number) return ((Number) obj).longValue();
         return 0L;
@@ -248,7 +291,7 @@ public class AdminCommentAdapter extends RecyclerView.Adapter<AdminCommentAdapte
 
     static class CommentViewHolder extends RecyclerView.ViewHolder {
         ImageView imgAvatar, imgLikeIcon, imgDislikeIcon;
-        TextView tvUser, tvContent, tvLikes, tvDislikes, tvReportsCount, btnDelete, tvLoadMoreReplies; // ĐÃ XÓA tvReports, btnReply cũ để chống crash
+        TextView tvUser, tvContent, tvLikes, tvDislikes, tvReportsCount, btnDelete, tvLoadMoreReplies;
         View layoutLike, layoutDislike, layoutReply, layoutReport, layoutDelete;
         RecyclerView rvReplies;
 

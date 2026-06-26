@@ -282,15 +282,31 @@ public class AdminChapterController {
         }
     }
 
-    // 10. API LẤY TOÀN BỘ NỘI DUNG LỜI BÁO CÁO CỦA MỘT BÌNH LUẬN TRUYỆN
+
+
+    // 10. API LẤY TOÀN BỘ NỘI DUNG LỜI BÁO CÁO CỦA MỘT BÌNH LUẬN TRUYỆN (kèm thông tin người báo cáo)
     @GetMapping("/comments/{commentId}/reports")
-    public ResponseEntity<List<String>> getCommentReportReasons(@PathVariable Integer commentId) {
+    public ResponseEntity<List<Map<String, Object>>> getCommentReportReasons(@PathVariable Integer commentId) {
         try {
+            String sql = "SELECT u.DisplayName, u.AvatarUrl, cr.Reason, cr.CreatedAt " +
+                    "FROM Comment_Reports cr " +
+                    "JOIN Users u ON cr.UserID = u.UserID " +
+                    "WHERE cr.CommentID = :commentId " +
+                    "ORDER BY cr.CreatedAt DESC";
             @SuppressWarnings("unchecked")
-            List<String> reasons = entityManager.createNativeQuery("SELECT Reason FROM Comment_Reports WHERE CommentID = :commentId")
+            List<Object[]> rawData = entityManager.createNativeQuery(sql)
                     .setParameter("commentId", commentId)
                     .getResultList();
-            return ResponseEntity.ok(reasons);
+            List<Map<String, Object>> result = new ArrayList<>();
+            for (Object[] row : rawData) {
+                Map<String, Object> map = new HashMap<>();
+                map.put("displayName", row[0]);
+                map.put("avatarUrl", row[1]);
+                map.put("reason", row[2]);
+                map.put("createdAt", row[3] != null ? row[3].toString() : "");
+                result.add(map);
+            }
+            return ResponseEntity.ok(result);
         } catch (Exception e) {
             return ResponseEntity.internalServerError().build();
         }

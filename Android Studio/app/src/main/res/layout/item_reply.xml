@@ -80,20 +80,20 @@
             android:gravity="center_vertical"
             android:clickable="true"
             android:focusable="true"
-            android:padding="2dp">
+            android:padding="4dp">
             <ImageView
                 android:id="@+id/imgLikeReplyIcon"
-                android:layout_width="12dp"
-                android:layout_height="12dp"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
                 android:src="@drawable/ic_thumb_up_outline"
                 app:tint="#666666"/>
             <TextView
                 android:id="@+id/tvLikeReplyCount"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="2dp"
+                android:layout_marginStart="4dp"
                 android:text="(0)"
-                android:textSize="11sp"
+                android:textSize="12sp"
                 android:textColor="#666666"/>
         </LinearLayout>
 
@@ -107,20 +107,20 @@
             android:gravity="center_vertical"
             android:clickable="true"
             android:focusable="true"
-            android:padding="2dp">
+            android:padding="4dp">
             <ImageView
                 android:id="@+id/imgDislikeReplyIcon"
-                android:layout_width="12dp"
-                android:layout_height="12dp"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
                 android:src="@drawable/ic_thumb_down_outline"
                 app:tint="#666666"/>
             <TextView
                 android:id="@+id/tvDislikeReplyCount"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="2dp"
+                android:layout_marginStart="4dp"
                 android:text="(0)"
-                android:textSize="11sp"
+                android:textSize="12sp"
                 android:textColor="#666666"/>
         </LinearLayout>
 
@@ -134,19 +134,20 @@
             android:gravity="center_vertical"
             android:clickable="true"
             android:focusable="true"
-            android:padding="2dp">
+            android:padding="4dp">
             <ImageView
-                android:layout_width="12dp"
-                android:layout_height="12dp"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:src="@drawable/ic_comment"
                 app:tint="#FFB77D"/>
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="2dp"
+                android:layout_marginStart="4dp"
                 android:text="Phản hồi"
                 android:textColor="#FFB77D"
                 android:textStyle="bold"
-                android:textSize="11sp"/>
+                android:textSize="12sp"/>
         </LinearLayout>
 
         <View android:layout_width="0dp" android:layout_height="1dp" android:layout_weight="1"/>
@@ -159,21 +160,21 @@
             android:gravity="center_vertical"
             android:clickable="true"
             android:focusable="true"
-            android:padding="2dp">
+            android:padding="4dp">
             <ImageView
                 android:id="@+id/imgReportReply"
-                android:layout_width="12dp"
-                android:layout_height="12dp"
-                android:src="@android:drawable/ic_menu_report_image"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:src="@drawable/ic_report"
                 app:tint="#E91E63"/>
             <TextView
                 android:id="@+id/tvReportReplyText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="2dp"
+                android:layout_marginStart="4dp"
                 android:text="Báo cáo"
                 android:textColor="#E91E63"
-                android:textSize="11sp"/>
+                android:textSize="12sp"/>
         </LinearLayout>
     </LinearLayout>
 </LinearLayout>

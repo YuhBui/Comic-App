@@ -250,7 +250,7 @@ public interface ApiService {
     Call<Map<String, Object>> adminReorderPages(@Body List<Integer> imageIds);
 
     @GET("/api/admin/chapters/comments/{commentId}/reports")
-    Call<List<String>> adminGetCommentReports(@Path("commentId") Integer commentId);
+    Call<List<Map<String, Object>>> adminGetCommentReports(@Path("commentId") Integer commentId);
 
     @GET("/api/admin/chapters/{chapterId}/comments")
     Call<List<Map<String, Object>>> adminGetChapterComments(@Path("chapterId") Integer chapterId);

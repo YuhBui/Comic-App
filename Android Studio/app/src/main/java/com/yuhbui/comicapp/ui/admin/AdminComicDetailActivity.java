@@ -44,6 +44,7 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
     private DrawerLayout drawerLayout; // THÊM: Khai báo DrawerLayout toàn cục
 
     private int comicId;
+    private Integer targetParentCommentId = null; // ĐÃ THÊM: Quản lý ID comment cha đang được phản hồi giống phía User
     private ImageView imgCover;
     private TextView tvTitle, tvAuthor, tvStatus, tvDesc, tvGenre, tvRelease, tvViews, tvFavorites, tvRating;
     private Button btnEdit, btnDelete, btnAdminAddChapter;
@@ -75,7 +76,7 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
         // Gán sự kiện click nút Menu góc trái để đóng/mở Menu trượt Admin
         MenuUtils.setupAdminSideMenu(this, drawerLayout, headerMenu);
 
-        // YÊU CẦU: Khóa ẩn triệt để nút Tìm kiếm và Thông báo trên Header dành riêng cho Admin
+        // YÊU CẦU: Khóa ẩn triệt độ nút Tìm kiếm và Thông báo trên Header dành riêng cho Admin
         if (layoutHeader.findViewById(R.id.headerSearch) != null) {
             layoutHeader.findViewById(R.id.headerSearch).setVisibility(View.GONE);
         }
@@ -131,7 +132,7 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
 
         // Khởi tạo RecyclerView cấu hình Adapter Chương truyện
         rvChapters.setLayoutManager(new LinearLayoutManager(this));
-        // TÌM VÀ THAY THẾ PHƯƠNG THỨC ONDELETE BỊ TRỐNG TRONG HÀM ONCREATE():
+
         chapterAdapter = new AdminChapterAdapter(new AdminChapterAdapter.OnChapterAdminActionListener() {
             @Override
             public void onClick(Map<String, Object> chapter) {
@@ -152,7 +153,6 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
 
             @Override
             public void onDelete(int chapterId, int position) {
-                // ĐÃ SỬA: Bổ sung Dialog cảnh báo và gửi lệnh API xóa chương trực tiếp lên Server
                 new AlertDialog.Builder(AdminComicDetailActivity.this)
                         .setTitle("Xác nhận xóa chương")
                         .setMessage("Bạn có chắc chắn muốn xóa vĩnh viễn chương truyện này cùng toàn bộ các trang ảnh đính kèm không?")
@@ -162,7 +162,7 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
                                 public void onResponse(Call<Map<String, Object>> call, Response<Map<String, Object>> response) {
                                     if (response.isSuccessful()) {
                                         Toast.makeText(AdminComicDetailActivity.this, "Đã xóa chương truyện thành công!", Toast.LENGTH_SHORT).show();
-                                        loadChaptersData(); // Tải lại danh sách chương truyện mới nhất
+                                        loadChaptersData();
                                     } else {
                                         Toast.makeText(AdminComicDetailActivity.this, "Server từ chối yêu cầu xóa chương!", Toast.LENGTH_SHORT).show();
                                     }
@@ -203,6 +203,7 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
             adminComment.setComicId(comicId);
             adminComment.setUserId(currentUserId);
             adminComment.setContent(content);
+            adminComment.setParentCommentId(targetParentCommentId); // ĐÃ SỬA: Gửi kèm parent id khi gửi để phân luồng reply con lồng nhau chuẩn
 
             ApiClient.getApiService().postComment(adminComment).enqueue(new Callback<Comment>() {
                 @Override
@@ -210,6 +211,13 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
                     if (response.isSuccessful()) {
                         Toast.makeText(AdminComicDetailActivity.this, "Đăng bình luận thành công!", Toast.LENGTH_SHORT).show();
                         edtAdminCommentInput.setText("");
+
+                        // ĐÃ SỬA: Reset cache và yêu cầu cập nhật lại các nhánh trả lời con thời gian thực giống bên User
+                        if (targetParentCommentId != null) {
+                            commentAdapter.resetRepliesCache(targetParentCommentId);
+                        }
+                        targetParentCommentId = null;
+
                         loadCommentsData();
                     } else if (response.code() == 403) {
                         Toast.makeText(AdminComicDetailActivity.this, "Tài khoản đang bị khóa chức năng bình luận!", Toast.LENGTH_LONG).show();
@@ -413,11 +421,9 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
     }
 
     private void loadCommentsData() {
-        // Lấy ID tài khoản Admin đang đăng nhập hệ thống hiện tại
         int currentUserId = SharedPrefsManager.getUserId(this);
         Integer apiUserId = (currentUserId != -1) ? currentUserId : null;
 
-        // Bổ sung apiUserId vào tham số thứ hai của hàm gọi API
         ApiClient.getApiService().adminGetComicComments(comicId, apiUserId).enqueue(new Callback<List<Map<String, Object>>>() {
             @Override
             public void onResponse(Call<List<Map<String, Object>>> call, Response<List<Map<String, Object>>> response) {
@@ -431,6 +437,10 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
 
     @Override
     public void onReply(Map<String, Object> comment) {
+        // ĐÃ SỬA: Lưu lại commentId được nhận diện từ map phản hồi để gán làm ID gốc cho comment con
+        Number idNum = (Number) comment.get("commentId");
+        targetParentCommentId = idNum != null ? idNum.intValue() : null;
+
         String username = (String) comment.get("username");
         if (username != null) {
             edtAdminCommentInput.setText("@" + username + " ");
@@ -441,24 +451,76 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
 
     @Override
     public void onShowReports(int commentId) {
-        ApiClient.getApiService().adminGetCommentReports(commentId).enqueue(new Callback<List<String>>() {
+        ApiClient.getApiService().adminGetCommentReports(commentId).enqueue(new Callback<List<Map<String, Object>>>() {
             @Override
-            public void onResponse(Call<List<String>> call, Response<List<String>> response) {
+            public void onResponse(Call<List<Map<String, Object>>> call, Response<List<Map<String, Object>>> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    List<String> reports = response.body();
+                    List<Map<String, Object>> reports = response.body();
                     if (reports.isEmpty()) {
-                        Toast.makeText(AdminComicDetailActivity.this, "Bình luận này chưa có lượt báo cáo chi tiết nào!", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(AdminComicDetailActivity.this, "Bình luận này chưa có lượt báo cáo nào!", Toast.LENGTH_SHORT).show();
                         return;
                     }
-                    CharSequence[] items = reports.toArray(new CharSequence[0]);
-                    new AlertDialog.Builder(AdminComicDetailActivity.this)
-                            .setTitle("Nội dung người dùng báo cáo (" + reports.size() + ")")
-                            .setItems(items, null)
-                            .setPositiveButton("Đóng", null).show();
+                    showReportsDialog(reports);
                 }
             }
-            @Override public void onFailure(Call<List<String>> call, Throwable t) {}
+            @Override public void onFailure(Call<List<Map<String, Object>>> call, Throwable t) {}
         });
+    }
+
+    private void showReportsDialog(List<Map<String, Object>> reports) {
+        android.widget.LinearLayout container = new android.widget.LinearLayout(this);
+        container.setOrientation(android.widget.LinearLayout.VERTICAL);
+        container.setBackgroundColor(android.graphics.Color.parseColor("#1E1E1E"));
+
+        android.widget.ScrollView scrollView = new android.widget.ScrollView(this);
+        scrollView.addView(container);
+
+        for (Map<String, Object> report : reports) {
+            android.view.View row = android.view.LayoutInflater.from(this)
+                    .inflate(R.layout.item_report_entry, container, false);
+
+            android.widget.ImageView imgAvatar = row.findViewById(R.id.imgReporterAvatar);
+            android.widget.TextView tvName = row.findViewById(R.id.tvReporterName);
+            android.widget.TextView tvReason = row.findViewById(R.id.tvReportReason);
+            android.widget.TextView tvTime = row.findViewById(R.id.tvReportTime);
+
+            String avatarUrl = report.get("avatarUrl") != null ? (String) report.get("avatarUrl") : null;
+            String name = report.get("displayName") != null ? (String) report.get("displayName") : "Ẩn danh";
+            String reason = report.get("reason") != null ? (String) report.get("reason") : "";
+            String createdAt = report.get("createdAt") != null ? (String) report.get("createdAt") : "";
+
+            com.bumptech.glide.Glide.with(this)
+                    .load(avatarUrl)
+                    .placeholder(R.drawable.ic_launcher_background)
+                    .circleCrop()
+                    .into(imgAvatar);
+
+            tvName.setText(name);
+            tvReason.setText(reason);
+            if (!createdAt.isEmpty()) {
+                tvTime.setText(createdAt.length() > 16 ? createdAt.substring(0, 16) : createdAt);
+                tvTime.setVisibility(android.view.View.VISIBLE);
+            } else {
+                tvTime.setVisibility(android.view.View.GONE);
+            }
+
+            // Đường phân cách mỏng
+            android.view.View divider = new android.view.View(this);
+            android.widget.LinearLayout.LayoutParams dp = new android.widget.LinearLayout.LayoutParams(
+                    android.widget.LinearLayout.LayoutParams.MATCH_PARENT, 1);
+            dp.setMargins(12, 0, 12, 0);
+            divider.setLayoutParams(dp);
+            divider.setBackgroundColor(android.graphics.Color.parseColor("#33FFFFFF"));
+
+            container.addView(row);
+            container.addView(divider);
+        }
+
+        new AlertDialog.Builder(this)
+                .setTitle("Báo cáo bình luận (" + reports.size() + ")")
+                .setView(scrollView)
+                .setPositiveButton("Đóng", null)
+                .show();
     }
 
     @Override
