@@ -47,6 +47,28 @@ public class AdminCommentAdapter extends RecyclerView.Adapter<AdminCommentAdapte
         notifyDataSetChanged();
     }
 
+    /**
+     * Sau khi gửi reply thành công: xóa cache của comment cha để buộc fetch lại từ server,
+     * và giữ displayedCount hiện tại (không ẫn replies) để sau khi reload data reply mới hiện ngay.
+     */
+    public void prepareReloadAfterReply(Integer parentCommentId) {
+        if (parentCommentId == null) return;
+        // Xóa cached replies của comment cha để buộc re-fetch từ server
+        repliesCache.remove(parentCommentId);
+        // Đặt displayedCount = 10 (tối thiểu) nếu hiện tại đang mở
+        Integer currentCount = displayedCountCache.get(parentCommentId);
+        if (currentCount == null || currentCount == 0) {
+            displayedCountCache.put(parentCommentId, 10); // Tự động mở rộng sau khi gửi reply
+        }
+        // Notify item để trigger re-bind và auto-fetch replies từ server
+        for (int i = 0; i < commentList.size(); i++) {
+            if (getSafeInt(commentList.get(i).get("commentId")) == parentCommentId) {
+                notifyItemChanged(i);
+                break;
+            }
+        }
+    }
+
     @NonNull
     @Override
     public CommentViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -63,6 +85,15 @@ public class AdminCommentAdapter extends RecyclerView.Adapter<AdminCommentAdapte
         holder.tvContent.setText((String) comment.get("content"));
         holder.tvLikes.setText("(" + getSafeLong(comment.get("likes")) + ")");
         holder.tvDislikes.setText("(" + getSafeLong(comment.get("dislikes")) + ")");
+
+        // Hiển thị chapter tag bên cạnh tên user (giống phía User)
+        Object chapterNameObj = comment.get("chapterName");
+        if (chapterNameObj instanceof String && !((String) chapterNameObj).isEmpty()) {
+            holder.tvChapterTag.setVisibility(View.VISIBLE);
+            holder.tvChapterTag.setText("• " + chapterNameObj);
+        } else {
+            holder.tvChapterTag.setVisibility(View.GONE);
+        }
 
         long reportCount = getSafeLong(comment.get("reports"));
         holder.tvReportsCount.setText(String.valueOf(reportCount));
@@ -87,8 +118,12 @@ public class AdminCommentAdapter extends RecyclerView.Adapter<AdminCommentAdapte
             totalReplies = getSafeInt(comment.get("repliesCount"));
         }
 
+        // Khởi tạo cache ban đầu CHỈ NẾU chưa từng tồn tại
+        // Quan trọng: KHÔNG reset displayedCount nếu đã có (ví dụ sau prepareReloadAfterReply)
         if (!repliesCache.containsKey(commentId)) {
             repliesCache.put(commentId, new ArrayList<>());
+        }
+        if (!displayedCountCache.containsKey(commentId)) {
             displayedCountCache.put(commentId, 0);
         }
 
@@ -96,6 +131,7 @@ public class AdminCommentAdapter extends RecyclerView.Adapter<AdminCommentAdapte
         int currentDisplayedCount = displayedCountCache.get(commentId);
 
         if (currentDisplayedCount > 0 && !cachedReplies.isEmpty()) {
+            // Tình huống bình thường: đang mở và có cache
             holder.rvReplies.setVisibility(View.VISIBLE);
             int endBound = Math.min(currentDisplayedCount, cachedReplies.size());
             replyAdapter.setReplies(new ArrayList<>(cachedReplies.subList(0, endBound)));
@@ -105,6 +141,55 @@ public class AdminCommentAdapter extends RecyclerView.Adapter<AdminCommentAdapte
             } else {
                 holder.tvLoadMoreReplies.setText("—— Thu gọn phản hồi ——");
             }
+        } else if (currentDisplayedCount > 0 && cachedReplies.isEmpty()) {
+            // Tình huống sau khi gửi reply: displayedCount > 0 nhưng cache bị xóa → tự động fetch lại
+            holder.rvReplies.setVisibility(View.GONE);
+            holder.tvLoadMoreReplies.setVisibility(View.VISIBLE);
+            holder.tvLoadMoreReplies.setText("—— Đang tải phản hồi... ——");
+            int currentUserId2 = SharedPrefsManager.getUserId(holder.itemView.getContext());
+            ApiClient.getApiService().getRepliesByParentId(commentId, currentUserId2 != -1 ? currentUserId2 : null)
+                    .enqueue(new Callback<List<Comment>>() {
+                        @Override
+                        public void onResponse(Call<List<Comment>> call, Response<List<Comment>> response) {
+                            if (response.isSuccessful() && response.body() != null) {
+                                List<Comment> serverReplies = response.body();
+                                java.util.Collections.sort(serverReplies, (c1, c2) -> Integer.compare(c1.getCommentId(), c2.getCommentId()));
+                                Map<Integer, Comment> lookupMap = new java.util.HashMap<>();
+                                for (Comment r : serverReplies) { lookupMap.put(r.getCommentId(), r); }
+                                for (Comment r : serverReplies) {
+                                    if (r.getParentCommentId() != null && r.getParentCommentId() != commentId) {
+                                        Comment immediateParent = lookupMap.get(r.getParentCommentId());
+                                        if (immediateParent != null) {
+                                            String parentName = (immediateParent.getUserDisplayName() != null && !immediateParent.getUserDisplayName().isEmpty())
+                                                    ? immediateParent.getUserDisplayName() : "Thành viên #" + immediateParent.getUserId();
+                                            if (r.getContent() != null && !r.getContent().trim().startsWith("@")) {
+                                                r.setContent("@" + parentName + " " + r.getContent());
+                                            }
+                                        }
+                                    }
+                                }
+                                repliesCache.put(commentId, serverReplies);
+                                int showCount = Math.min(currentDisplayedCount, serverReplies.size());
+                                if (showCount > 0) {
+                                    holder.rvReplies.setVisibility(View.VISIBLE);
+                                    replyAdapter.setReplies(new ArrayList<>(serverReplies.subList(0, showCount)));
+                                    holder.tvLoadMoreReplies.setVisibility(View.VISIBLE);
+                                    if (serverReplies.size() > showCount) {
+                                        holder.tvLoadMoreReplies.setText("—— Xem thêm phản hồi ——");
+                                    } else {
+                                        holder.tvLoadMoreReplies.setText("—— Thu gọn phản hồi ——");
+                                    }
+                                } else {
+                                    holder.rvReplies.setVisibility(View.GONE);
+                                    holder.tvLoadMoreReplies.setVisibility(View.GONE);
+                                    displayedCountCache.put(commentId, 0);
+                                }
+                            }
+                        }
+                        @Override public void onFailure(Call<List<Comment>> call, Throwable t) {
+                            holder.tvLoadMoreReplies.setText("—— Xem phản hồi ——");
+                        }
+                    });
         } else {
             holder.rvReplies.setVisibility(View.GONE);
             replyAdapter.setReplies(new ArrayList<>());
@@ -255,6 +340,26 @@ public class AdminCommentAdapter extends RecyclerView.Adapter<AdminCommentAdapte
         }
     }
 
+    /**
+     * Cập nhật số like/dislike tại chỗ không cần reload toàn bộ list.
+     * Dùng sau khi tương tác like/dislike để tránh mất state reply đang mở.
+     */
+    public void updateLikeDislikeInPlace(int commentId, Comment updatedComment) {
+        for (int i = 0; i < commentList.size(); i++) {
+            if (getSafeInt(commentList.get(i).get("commentId")) == commentId) {
+                Map<String, Object> item = commentList.get(i);
+                item.put("likes", (double) updatedComment.getLikeCount());
+                item.put("dislikes", (double) updatedComment.getDislikeCount());
+                item.put("liked", updatedComment.isLiked());
+                item.put("disliked", updatedComment.isDisliked());
+                item.put("isLiked", updatedComment.isLiked());
+                item.put("isDisliked", updatedComment.isDisliked());
+                notifyItemChanged(i);
+                break;
+            }
+        }
+    }
+
     private long getSafeLong(Object obj) {
         if (obj instanceof Number) return ((Number) obj).longValue();
         return 0L;
@@ -276,7 +381,7 @@ public class AdminCommentAdapter extends RecyclerView.Adapter<AdminCommentAdapte
 
     static class CommentViewHolder extends RecyclerView.ViewHolder {
         ImageView imgAvatar, imgLikeIcon, imgDislikeIcon;
-        TextView tvUser, tvContent, tvLikes, tvDislikes, tvReportsCount, btnDelete, tvLoadMoreReplies;
+        TextView tvUser, tvContent, tvChapterTag, tvLikes, tvDislikes, tvReportsCount, btnDelete, tvLoadMoreReplies;
         View layoutLike, layoutDislike, layoutReply, layoutReport, layoutDelete;
         RecyclerView rvReplies;
 
@@ -285,6 +390,7 @@ public class AdminCommentAdapter extends RecyclerView.Adapter<AdminCommentAdapte
             imgAvatar = itemView.findViewById(R.id.imgAdminCommentAvatar);
             tvUser = itemView.findViewById(R.id.tvAdminCommentUser);
             tvContent = itemView.findViewById(R.id.tvAdminCommentContent);
+            tvChapterTag = itemView.findViewById(R.id.tvAdminCommentChapterTag);
             rvReplies = itemView.findViewById(R.id.recyclerViewAdminReplies);
             tvLoadMoreReplies = itemView.findViewById(R.id.tvAdminLoadMoreReplies);
 

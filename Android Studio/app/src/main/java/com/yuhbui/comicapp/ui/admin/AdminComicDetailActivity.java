@@ -50,6 +50,7 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
     private Button btnEdit, btnDelete, btnAdminAddChapter;
     private ImageButton btnAdminSendComment;
     private EditText edtAdminCommentInput;
+    private TextView tvAdminReplyingTo;
     private RecyclerView rvComments, rvChapters;
     private AdminCommentAdapter commentAdapter;
     private AdminChapterAdapter chapterAdapter;
@@ -121,6 +122,7 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
         btnDelete = findViewById(R.id.btnAdminDeleteComicDetail);
         rvComments = findViewById(R.id.rvAdminDetailComments);
         edtAdminCommentInput = findViewById(R.id.edtAdminCommentInput);
+        tvAdminReplyingTo = findViewById(R.id.tvAdminReplyingTo);
         btnAdminSendComment = findViewById(R.id.btnAdminSendComment);
         rvChapters = findViewById(R.id.rvAdminDetailChapters);
         btnAdminAddChapter = findViewById(R.id.btnAdminAddChapter);
@@ -203,7 +205,7 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
             adminComment.setComicId(comicId);
             adminComment.setUserId(currentUserId);
             adminComment.setContent(content);
-            adminComment.setParentCommentId(targetParentCommentId); // ĐÃ SỬA: Gửi kèm parent id khi gửi để phân luồng reply con lồng nhau chuẩn
+            adminComment.setParentCommentId(targetParentCommentId);
 
             ApiClient.getApiService().postComment(adminComment).enqueue(new Callback<Comment>() {
                 @Override
@@ -211,13 +213,23 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
                     if (response.isSuccessful()) {
                         Toast.makeText(AdminComicDetailActivity.this, "Đăng bình luận thành công!", Toast.LENGTH_SHORT).show();
                         edtAdminCommentInput.setText("");
+                        edtAdminCommentInput.setHint("Viết bình luận Admin...");
+                        tvAdminReplyingTo.setVisibility(android.view.View.GONE);
 
-                        // ĐÃ SỬA: Reset cache và yêu cầu cập nhật lại các nhánh trả lời con thời gian thực giống bên User
-                        if (targetParentCommentId != null) {
-                            commentAdapter.resetRepliesCache(targetParentCommentId);
+                        // Ẩn bàn phím
+                        android.view.inputmethod.InputMethodManager imm =
+                                (android.view.inputmethod.InputMethodManager) getSystemService(android.content.Context.INPUT_METHOD_SERVICE);
+                        if (imm != null && getCurrentFocus() != null) {
+                            imm.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
                         }
+
+                        Integer savedParentId = targetParentCommentId;
                         targetParentCommentId = null;
 
+                        if (savedParentId != null) {
+                            // Gửi reply: chuẩn bị auto-fetch và hiển thị reply mới ngay sau khi reload
+                            commentAdapter.prepareReloadAfterReply(savedParentId);
+                        }
                         loadCommentsData();
                     } else if (response.code() == 403) {
                         Toast.makeText(AdminComicDetailActivity.this, "Tài khoản đang bị khóa chức năng bình luận!", Toast.LENGTH_LONG).show();
@@ -441,14 +453,17 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
         Number idNum = (Number) comment.get("commentId");
         targetParentCommentId = idNum != null ? idNum.intValue() : null;
 
-        // 2. Điền @tên_user vào ô nhập liệu
+        // 2. Hiển thị "Đang trả lời @username"
         String username = (String) comment.get("username");
         if (username != null && !username.isEmpty()) {
+            tvAdminReplyingTo.setVisibility(android.view.View.VISIBLE);
+            tvAdminReplyingTo.setText("↳ Đang trả lời @" + username);
             String tagText = "@" + username + " ";
             edtAdminCommentInput.setText(tagText);
             edtAdminCommentInput.setSelection(tagText.length());
-            edtAdminCommentInput.setHint("Đang trả lời " + username + "...");
+            edtAdminCommentInput.setHint("");
         } else {
+            tvAdminReplyingTo.setVisibility(android.view.View.GONE);
             edtAdminCommentInput.setText("");
             edtAdminCommentInput.setHint("Viết phản hồi...");
         }
@@ -544,8 +559,9 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
         ApiClient.getApiService().interactWithComment(commentId, currentUserId, type).enqueue(new Callback<Comment>() {
             @Override
             public void onResponse(Call<Comment> call, Response<Comment> response) {
-                if (response.isSuccessful()) {
-                    loadCommentsData();
+                if (response.isSuccessful() && response.body() != null) {
+                    // Cập nhật tại chỗ, không reload toàn bộ → giữ state reply đang mở
+                    commentAdapter.updateLikeDislikeInPlace(commentId, response.body());
                 }
             }
             @Override public void onFailure(Call<Comment> call, Throwable t) {}

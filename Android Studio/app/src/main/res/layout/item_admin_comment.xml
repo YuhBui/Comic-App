@@ -27,14 +27,33 @@
             android:orientation="vertical"
             android:layout_marginStart="12dp">
 
-            <TextView
-                android:id="@+id/tvAdminCommentUser"
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="User Name"
-                android:textStyle="bold"
-                android:textColor="#FFB77D"
-                android:textSize="14sp"/>
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/tvAdminCommentUser"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="User Name"
+                    android:textStyle="bold"
+                    android:textColor="#FFB77D"
+                    android:textSize="14sp"/>
+
+                <TextView
+                    android:id="@+id/tvAdminCommentChapterTag"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="• Chương 1"
+                    android:textColor="#DBC2B0"
+                    android:alpha="0.5"
+                    android:textSize="12sp"
+                    android:textStyle="italic"
+                    android:visibility="gone"/>
+            </LinearLayout>
 
             <TextView
                 android:id="@+id/tvAdminCommentContent"
