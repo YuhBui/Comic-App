@@ -17,6 +17,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
@@ -267,7 +268,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
                         return;
                     }
 
-                    LineDataSet dataSet = new LineDataSet(entries, "Lượt truy cập đọc truyện");
+                    LineDataSet dataSet = new LineDataSet(entries, "");
                     dataSet.setColor(Color.parseColor("#E74C3C"));
                     dataSet.setCircleColor(Color.parseColor("#2C3E50"));
                     dataSet.setLineWidth(2.5f);
@@ -280,6 +281,14 @@ public class AdminDashboardActivity extends AppCompatActivity {
                     lineChartAccess.setData(lineData);
 
                     XAxis xAxis = lineChartAccess.getXAxis();
+                    xAxis.setTextColor(Color.parseColor("#FFFFFF")); // 🔴 Điền mã màu bạn muốn hiển thị ở đây
+
+                    YAxis leftAxis = lineChartAccess.getAxisLeft();
+                    leftAxis.setTextColor(Color.parseColor("#FFFFFF")); // 🔴 Điền mã màu bạn muốn hiển thị ở đây
+
+                    YAxis rightAxis = lineChartAccess.getAxisRight();
+                    rightAxis.setTextColor(Color.parseColor("#FFFFFF")); // 🔴 Điền mã màu bạn muốn hiển thị ở đây
+
                     xAxis.setValueFormatter(new IndexAxisValueFormatter(xLabels));
                     xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
                     xAxis.setGranularity(1f);

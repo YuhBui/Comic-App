@@ -50,8 +50,6 @@ public class AdminUserAdapter extends RecyclerView.Adapter<AdminUserAdapter.User
         holder.tvName.setText(user.getDisplayName());
         holder.tvEmail.setText(user.getEmail());
 
-        // ĐỔI: Chuyển nút Ban thành biểu tượng cấm (Hệ thống vòng tròn gạch ngang báo bận/cấm mặc định)
-        holder.btnBan.setImageResource(android.R.drawable.presence_busy);
 
         // Lấy thông số cấu hình mật độ pixel để quy đổi chuẩn kích thước px từ CSS sang dp
         float density = holder.itemView.getContext().getResources().getDisplayMetrics().density;

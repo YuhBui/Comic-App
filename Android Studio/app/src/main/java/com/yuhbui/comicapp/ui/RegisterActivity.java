@@ -61,7 +61,13 @@ public class RegisterActivity extends AppCompatActivity {
             return;
         }
 
-        // 2. Kiểm tra mật khẩu khớp nhau ở phía App để tiết kiệm thời gian gọi mạng
+        // 2. Kiểm tra định dạng Email hợp lệ
+        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            Toast.makeText(this, "Địa chỉ Email không đúng định dạng chuẩn!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // 3. Kiểm tra mật khẩu khớp nhau ở phía App để tiết kiệm thời gian gọi mạng
         if (!password.equals(confirmPassword)) {
             Toast.makeText(this, "Mật khẩu xác nhận không khớp!", Toast.LENGTH_SHORT).show();
             return;

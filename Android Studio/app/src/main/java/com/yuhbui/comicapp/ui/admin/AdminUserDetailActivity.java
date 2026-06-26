@@ -140,6 +140,23 @@ public class AdminUserDetailActivity extends AppCompatActivity {
         }
 
         loadUserProfileData();
+
+        android.text.TextWatcher userDetailWatcher = new android.text.TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) { updateSaveButtonState(); }
+            @Override public void afterTextChanged(android.text.Editable s) {}
+        };
+        edtName.addTextChangedListener(userDetailWatcher);
+        edtEmail.addTextChangedListener(userDetailWatcher);
+        edtPassword.addTextChangedListener(userDetailWatcher);
+        edtConfirmPassword.addTextChangedListener(userDetailWatcher);
+
+        spinnerRole.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override public void onItemSelected(AdapterView<?> parent, View view, int position, long id) { updateSaveButtonState(); }
+            @Override public void onNothingSelected(AdapterView<?> parent) {}
+        });
+
+        updateSaveButtonState(); // Khóa nút ban đầu
     }
 
     private void loadUserProfileData() {
@@ -174,6 +191,8 @@ public class AdminUserDetailActivity extends AppCompatActivity {
                                 .circleCrop()
                                 .into(imgAvatar);
                     }
+
+                    updateSaveButtonState();
                 }
             }
             @Override public void onFailure(Call<User> call, Throwable t) {}
@@ -205,6 +224,11 @@ public class AdminUserDetailActivity extends AppCompatActivity {
 
         if (name.isEmpty() || email.isEmpty()) {
             Toast.makeText(this, "Họ tên và địa chỉ Email không được để trống!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            Toast.makeText(this, "Địa chỉ Email không đúng định dạng chuẩn!", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -295,6 +319,7 @@ public class AdminUserDetailActivity extends AppCompatActivity {
         if (requestCode == 502 && resultCode == RESULT_OK && data != null && data.getData() != null) {
             localImageUri = data.getData();
             Glide.with(this).load(localImageUri).circleCrop().into(imgAvatar);
+            updateSaveButtonState();
         }
     }
 
@@ -309,5 +334,28 @@ public class AdminUserDetailActivity extends AppCompatActivity {
             }
             return tempFile;
         } catch (Exception e) { return null; }
+    }
+
+    private boolean hasUserChanges() {
+        if (currentUser == null) return false;
+
+        String currentName = edtName.getText().toString().trim();
+        String currentEmail = edtEmail.getText().toString().trim();
+        String currentRole = spinnerRole.getSelectedItem() != null ? spinnerRole.getSelectedItem().toString() : "User";
+        String currentPass = edtPassword.getText().toString().trim();
+
+        if (!currentName.equals(currentUser.getDisplayName())) return true;
+        if (!currentEmail.equals(currentUser.getEmail())) return true;
+        if (!currentRole.equalsIgnoreCase(currentUser.getRole())) return true;
+        if (localImageUri != null) return true;
+        if (!currentPass.isEmpty()) return true; // Có gõ mật khẩu mới
+
+        return false;
+    }
+
+    private void updateSaveButtonState() {
+        boolean changed = hasUserChanges();
+        btnSave.setEnabled(changed);
+        btnSave.setAlpha(changed ? 1.0f : 0.5f);
     }
 }

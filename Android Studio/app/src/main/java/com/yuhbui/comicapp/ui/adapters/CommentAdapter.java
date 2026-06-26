@@ -85,7 +85,6 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
 
         holder.tvLikeCount.setText("(" + comment.getLikeCount() + ")");
         holder.tvDislikeCount.setText("(" + comment.getDislikeCount() + ")");
-        holder.tvReplyCount.setText("Phản hồi (" + comment.getReplyCount() + ")");
 
         updateCommentLikeDislikeUI(holder, comment);
 
@@ -150,20 +149,9 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
             holder.layoutLike.setVisibility(View.VISIBLE);
             holder.layoutDislike.setVisibility(View.VISIBLE);
 
-//            // Bấm vào chính mình sẽ hiện Toast thông báo thay vì gọi API gửi lên Server
-//            holder.layoutLike.setOnClickListener(v ->
-//                    Toast.makeText(context, "Bạn không thể tự thích bình luận của chính mình!", Toast.LENGTH_SHORT).show()
-//            );
-//
-//            holder.layoutDislike.setOnClickListener(v ->
-//                    Toast.makeText(context, "Bạn không thể tự ghét bình luận của chính mình!", Toast.LENGTH_SHORT).show()
-//            );
-
-            // Biến nút Báo cáo thành nút Xóa
-            holder.tvReportText.setText("Xóa");
-            holder.imgReport.setImageResource(android.R.drawable.ic_menu_delete);
+            // CHÍNH CHỦ: Biến icon báo cáo thành icon Xóa (Delete)
+            holder.imgReport.setImageResource(R.drawable.ic_delete);
             holder.imgReport.setImageTintList(ColorStateList.valueOf(Color.parseColor("#F44336")));
-            holder.tvReportText.setTextColor(Color.parseColor("#F44336"));
 
             holder.layoutReport.setOnClickListener(v -> new AlertDialog.Builder(context)
                     .setTitle("Xóa bình luận")
@@ -172,14 +160,12 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
                     .setNegativeButton("Hủy", null)
                     .show());
         } else {
-            // Bình luận của người khác -> Hoạt động tương tác bình thường
+            // NGƯỜI KHÁC: Giữ nguyên icon báo cáo hiểm họa
             holder.layoutLike.setVisibility(View.VISIBLE);
             holder.layoutDislike.setVisibility(View.VISIBLE);
 
-            holder.tvReportText.setText("Báo cáo");
-            holder.imgReport.setImageResource(android.R.drawable.ic_menu_report_image);
+            holder.imgReport.setImageResource(R.drawable.ic_report);
             holder.imgReport.setImageTintList(ColorStateList.valueOf(Color.parseColor("#E91E63")));
-            holder.tvReportText.setTextColor(Color.parseColor("#E91E63"));
 
             holder.layoutLike.setOnClickListener(v -> {
                 if (currentUserId == -1) {
@@ -386,7 +372,7 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
 
     static class CommentViewHolder extends RecyclerView.ViewHolder {
         TextView tvUserComment, tvCommentContent, tvCommentChapterTag, tvLoadMoreReplies;
-        TextView tvLikeCount, tvDislikeCount, tvReplyCount, tvReportText;
+        TextView tvLikeCount, tvDislikeCount, tvReplyCount;
         View layoutLike, layoutDislike, layoutReply, layoutReport;
         ImageView imgUserAvatar, imgReport, imgLikeIcon, imgDislikeIcon;
         RecyclerView rvReplies;
@@ -409,7 +395,6 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
             tvLikeCount = itemView.findViewById(R.id.tvLikeCommentCount);
             tvDislikeCount = itemView.findViewById(R.id.tvDislikeCommentCount);
             tvReplyCount = itemView.findViewById(R.id.tvReplyCommentCount);
-            tvReportText = itemView.findViewById(R.id.tvReportCommentText);
             imgReport = itemView.findViewById(R.id.imgReportComment);
 
             imgLikeIcon = itemView.findViewById(R.id.imgLikeCommentIcon);

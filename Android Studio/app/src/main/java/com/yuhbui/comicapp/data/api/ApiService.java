@@ -244,7 +244,7 @@ public interface ApiService {
 
     @Multipart
     @POST("/api/admin/chapters/comic/{comicId}/with-images")
-    Call<Map<String, Object>> adminCreateChapterWithImages(@Path("comicId") Integer comicId, @Part("chapterNumber") RequestBody chapterNumber, @Part("title") RequestBody title, @Part List<MultipartBody.Part> files);
+    Call<Map<String, Object>> adminCreateChapterWithImages(@Path("comicId") int comicId, @Part("chapterNumber") RequestBody chapterNumber, @Part("title") RequestBody title, @Part List<MultipartBody.Part> files);
 
     @PUT("/api/admin/chapters/pages/reorder")
     Call<Map<String, Object>> adminReorderPages(@Body List<Integer> imageIds);
@@ -310,9 +310,8 @@ public interface ApiService {
     Call<Void> adminCreateNotification(@Body com.yuhbui.comicapp.data.model.Notification notification);
 
     // Lấy toàn bộ danh sách thông báo hệ thống (Dành cho Admin quản lý)
-    @GET("api/notifications/user/1")
-    // Tạm thời lấy danh sách tổng hoặc tạo endpoint riêng, ở đây ta gọi danh sách để hiển thị
-    Call<List<com.yuhbui.comicapp.data.model.Notification>> getAllNotificationsForAdmin();
+    @GET("/api/notifications/admin/all")
+    Call<List<com.yuhbui.comicapp.data.model.Notification>> getAllNotificationsForAdmin(@Query("keyword") String keyword);
 
     // API cập nhật sửa đổi thông báo
     @PUT("api/notifications/admin/edit/{id}")

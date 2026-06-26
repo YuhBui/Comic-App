@@ -7,7 +7,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -29,7 +28,6 @@ public class AdminCommentAdapter extends RecyclerView.Adapter<AdminCommentAdapte
 
     private List<Map<String, Object>> commentList = new ArrayList<>();
     private final OnCommentAdminActionListener listener;
-
     private final Map<Integer, List<Comment>> repliesCache = new HashMap<>();
     private final Map<Integer, Integer> displayedCountCache = new HashMap<>();
 
@@ -63,12 +61,12 @@ public class AdminCommentAdapter extends RecyclerView.Adapter<AdminCommentAdapte
 
         holder.tvUser.setText((String) comment.get("username"));
         holder.tvContent.setText((String) comment.get("content"));
-
         holder.tvLikes.setText("(" + getSafeLong(comment.get("likes")) + ")");
         holder.tvDislikes.setText("(" + getSafeLong(comment.get("dislikes")) + ")");
 
+        // ĐÃ SỬA: Hiển thị số lượng báo cáo vào ô đếm bên cạnh icon
         long reportCount = getSafeLong(comment.get("reports"));
-        holder.tvReports.setText("Báo cáo (" + reportCount + ")");
+        holder.tvReportsCount.setText(String.valueOf(reportCount));
 
         Glide.with(holder.itemView.getContext())
                 .load((String) comment.get("avatarUrl"))
@@ -76,12 +74,10 @@ public class AdminCommentAdapter extends RecyclerView.Adapter<AdminCommentAdapte
                 .circleCrop()
                 .into(holder.imgAvatar);
 
-        // --- CẬP NHẬT BAN ĐẦU GIAO DIỆN ICON VECTOR CHUYỂN ĐỔI CHUẨN XÁC ---
         updateAdminLikeDislikeUI(holder, comment);
 
         holder.rvReplies.setLayoutManager(new LinearLayoutManager(holder.itemView.getContext()));
         holder.rvReplies.setNestedScrollingEnabled(false);
-
         ReplyAdapter replyAdapter = new ReplyAdapter();
         holder.rvReplies.setAdapter(replyAdapter);
 
@@ -104,7 +100,6 @@ public class AdminCommentAdapter extends RecyclerView.Adapter<AdminCommentAdapte
             holder.rvReplies.setVisibility(View.VISIBLE);
             int endBound = Math.min(currentDisplayedCount, cachedReplies.size());
             replyAdapter.setReplies(new ArrayList<>(cachedReplies.subList(0, endBound)));
-
             holder.tvLoadMoreReplies.setVisibility(View.VISIBLE);
             if (cachedReplies.size() > currentDisplayedCount) {
                 holder.tvLoadMoreReplies.setText("—— Xem thêm phản hồi ——");
@@ -114,7 +109,6 @@ public class AdminCommentAdapter extends RecyclerView.Adapter<AdminCommentAdapte
         } else {
             holder.rvReplies.setVisibility(View.GONE);
             replyAdapter.setReplies(new ArrayList<>());
-
             if (totalReplies > 0) {
                 holder.tvLoadMoreReplies.setVisibility(View.VISIBLE);
                 holder.tvLoadMoreReplies.setText("—— Xem phản hồi (" + totalReplies + ") ——");
@@ -127,16 +121,12 @@ public class AdminCommentAdapter extends RecyclerView.Adapter<AdminCommentAdapte
         int commentUserId = getSafeInt(comment.get("userId"));
 
         holder.layoutLike.setOnClickListener(v -> {
-            if (commentUserId == currentUserId && currentUserId != -1) {
-                return;
-            }
+            if (commentUserId == currentUserId && currentUserId != -1) return;
             if (listener != null) listener.onInteract(commentId, 1, position);
         });
 
         holder.layoutDislike.setOnClickListener(v -> {
-            if (commentUserId == currentUserId && currentUserId != -1) {
-                return;
-            }
+            if (commentUserId == currentUserId && currentUserId != -1) return;
             if (listener != null) listener.onInteract(commentId, -1, position);
         });
 
@@ -156,8 +146,6 @@ public class AdminCommentAdapter extends RecyclerView.Adapter<AdminCommentAdapte
         holder.tvLoadMoreReplies.setOnClickListener(v -> {
             List<Comment> currentList = repliesCache.get(commentId);
             if (currentList == null || currentList.isEmpty()) {
-
-                // SỬA TẠI ĐÂY: Truyền thêm tham số userId vào sau commentId để khớp định dạng của ApiService
                 ApiClient.getApiService().getRepliesByParentId(commentId, currentUserId != -1 ? currentUserId : null)
                         .enqueue(new Callback<List<Comment>>() {
                             @Override
@@ -177,7 +165,6 @@ public class AdminCommentAdapter extends RecyclerView.Adapter<AdminCommentAdapte
         });
     }
 
-    // --- HÀM HELPER: THAY ĐỔI TRẠNG THÁI TIM FILL MÀU CHO PHÍA ADMIN ---
     private void updateAdminLikeDislikeUI(CommentViewHolder holder, Map<String, Object> comment) {
         boolean isLiked = getSafeBoolean(comment.get("isLiked")) || getSafeBoolean(comment.get("liked"));
         boolean isDisliked = getSafeBoolean(comment.get("isDisliked")) || getSafeBoolean(comment.get("disliked"));
@@ -216,7 +203,6 @@ public class AdminCommentAdapter extends RecyclerView.Adapter<AdminCommentAdapte
             displayedCountCache.put(commentId, 0);
             holder.rvReplies.setVisibility(View.GONE);
             replyAdapter.setReplies(new ArrayList<>());
-
             if (totalReplies > 0) {
                 holder.tvLoadMoreReplies.setVisibility(View.VISIBLE);
                 holder.tvLoadMoreReplies.setText("—— Xem phản hồi (" + totalReplies + ") ——");
@@ -227,9 +213,7 @@ public class AdminCommentAdapter extends RecyclerView.Adapter<AdminCommentAdapte
         }
 
         currentCount += 10;
-        if (currentCount > fullList.size()) {
-            currentCount = fullList.size();
-        }
+        if (currentCount > fullList.size()) currentCount = fullList.size();
         displayedCountCache.put(commentId, currentCount);
 
         holder.rvReplies.setVisibility(View.VISIBLE);
@@ -263,8 +247,8 @@ public class AdminCommentAdapter extends RecyclerView.Adapter<AdminCommentAdapte
     public int getItemCount() { return commentList.size(); }
 
     static class CommentViewHolder extends RecyclerView.ViewHolder {
-        ImageView imgAvatar, imgLikeIcon, imgDislikeIcon, imgReport;
-        TextView tvUser, tvContent, tvLikes, tvDislikes, tvReports, btnReply, btnDelete, tvLoadMoreReplies, tvReportText;
+        ImageView imgAvatar, imgLikeIcon, imgDislikeIcon;
+        TextView tvUser, tvContent, tvLikes, tvDislikes, tvReportsCount, btnDelete, tvLoadMoreReplies; // ĐÃ XÓA tvReports, btnReply cũ để chống crash
         View layoutLike, layoutDislike, layoutReply, layoutReport, layoutDelete;
         RecyclerView rvReplies;
 
@@ -276,19 +260,17 @@ public class AdminCommentAdapter extends RecyclerView.Adapter<AdminCommentAdapte
             rvReplies = itemView.findViewById(R.id.recyclerViewAdminReplies);
             tvLoadMoreReplies = itemView.findViewById(R.id.tvAdminLoadMoreReplies);
 
-            // Ánh xạ thành công các khối Layout bọc ngoài
             layoutLike = itemView.findViewById(R.id.layoutAdminLikeComment);
             layoutDislike = itemView.findViewById(R.id.layoutAdminDislikeComment);
             layoutReply = itemView.findViewById(R.id.layoutAdminReplyComment);
             layoutReport = itemView.findViewById(R.id.layoutAdminReportComment);
             layoutDelete = itemView.findViewById(R.id.layoutAdminDeleteComment);
 
-            // Ánh xạ các Text số lượng và Icon con bên trong để gán đổi động mượt mà
             tvLikes = itemView.findViewById(R.id.tvAdminCommentLikes);
             tvDislikes = itemView.findViewById(R.id.tvAdminCommentDislikes);
-            tvReports = itemView.findViewById(R.id.tvAdminCommentReports);
-            btnReply = itemView.findViewById(R.id.btnAdminCommentReply);
             btnDelete = itemView.findViewById(R.id.btnAdminCommentDelete);
+
+            tvReportsCount = itemView.findViewById(R.id.tvAdminCommentReportsCount);
 
             imgLikeIcon = itemView.findViewById(R.id.imgAdminLikeIcon);
             imgDislikeIcon = itemView.findViewById(R.id.imgAdminDislikeIcon);

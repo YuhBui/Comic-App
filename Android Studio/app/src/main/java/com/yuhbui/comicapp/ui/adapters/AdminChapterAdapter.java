@@ -3,6 +3,7 @@ package com.yuhbui.comicapp.ui.adapters;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -58,8 +59,12 @@ public class AdminChapterAdapter extends RecyclerView.Adapter<AdminChapterAdapte
         // Sự kiện xử lý bấm nút Xóa chương trực tiếp hàng ngang
         holder.btnDelete.setOnClickListener(v -> {
             if (chapter.get("chapterId") != null) {
-                int chapterId = ((Double) chapter.get("chapterId")).intValue();
-                listener.onDelete(chapterId, position);
+                // ĐÃ SỬA: Dùng Number cứu cánh để tránh lỗi ép kiểu Double sang Integer đột ngột
+                Number idNum = (Number) chapter.get("chapterId");
+                int chapterId = idNum != null ? idNum.intValue() : -1;
+                if (chapterId != -1) {
+                    listener.onDelete(chapterId, position);
+                }
             }
         });
     }
@@ -68,12 +73,13 @@ public class AdminChapterAdapter extends RecyclerView.Adapter<AdminChapterAdapte
     public int getItemCount() { return list.size(); }
 
     static class ChapterViewHolder extends RecyclerView.ViewHolder {
-        TextView tvChapterName, btnDelete;
+        TextView tvChapterName;
+        ImageView btnDelete;
 
         public ChapterViewHolder(@NonNull View itemView) {
             super(itemView);
             tvChapterName = itemView.findViewById(R.id.tvAdminChapterName);
-            btnDelete = itemView.findViewById(R.id.btnAdminDeleteChapterItem);
+            btnDelete = itemView.findViewById(R.id.btnAdminDeleteChapterItem); // SỬA
         }
     }
 }

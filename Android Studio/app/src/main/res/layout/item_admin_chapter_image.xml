@@ -41,7 +41,7 @@
         <ImageView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:src="@android:drawable/ic_menu_delete"
+            android:src="@drawable/ic_delete"
             android:padding="7dp"
             app:tint="#FFDAD6"
             android:contentDescription="Xóa trang truyện" />

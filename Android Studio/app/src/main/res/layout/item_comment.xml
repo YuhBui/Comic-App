@@ -139,7 +139,6 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"
-                android:text="Phản hồi (0)"
                 android:textColor="#FFB77D"
                 android:textStyle="bold"
                 android:textSize="13sp"/>
@@ -161,18 +160,10 @@
             android:padding="4dp">
             <ImageView
                 android:id="@+id/imgReportComment"
-                android:layout_width="14dp"
-                android:layout_height="14dp"
-                android:src="@android:drawable/ic_menu_report_image"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_report"
                 app:tint="#E91E63"/>
-            <TextView
-                android:id="@+id/tvReportCommentText"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="4dp"
-                android:text="Báo cáo"
-                android:textColor="#E91E63"
-                android:textSize="12sp"/>
         </LinearLayout>
     </LinearLayout>
 

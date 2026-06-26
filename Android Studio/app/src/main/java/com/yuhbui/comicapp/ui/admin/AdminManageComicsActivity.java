@@ -72,14 +72,14 @@ public class AdminManageComicsActivity extends AppCompatActivity implements Admi
         drawerLayout = findViewById(R.id.drawerLayout);
 
         // 1. Khởi tạo Header đặc thù dành riêng cho Admin
-        View layoutHeader = findViewById(R.id.layoutHeaderManageComics); //
-        ImageView headerMenu = layoutHeader.findViewById(R.id.headerMenu); //
-        TextView headerLogo = layoutHeader.findViewById(R.id.headerLogo); //
+        View layoutHeader = findViewById(R.id.layoutHeaderManageComics);
+        ImageView headerMenu = layoutHeader.findViewById(R.id.headerMenu);
+        TextView headerLogo = layoutHeader.findViewById(R.id.headerLogo);
 
         // Khởi tạo các tính năng cơ bản của Header dùng chung
         HeaderUtils.initHeader(this, layoutHeader, drawerLayout);
 
-        // THAY ĐỔI: Kích hoạt Menu trượt Admin thay vì đóng trang (finish) như cũ
+        // Kích hoạt Menu trượt Admin thay vì đóng trang (finish) như cũ
         MenuUtils.setupAdminSideMenu(this, drawerLayout, headerMenu);
 
         // YÊU CẦU: Khóa ẩn triệt để hai nút Tìm kiếm và Thông báo trên thanh Header Admin
@@ -113,41 +113,41 @@ public class AdminManageComicsActivity extends AppCompatActivity implements Admi
         });
 
         // 2. Ánh xạ các thành phần điều khiển
-        edtComicSearch = findViewById(R.id.edtComicSearch); //
-        imgComicFilter = findViewById(R.id.imgAdminComicFilter); //
-        btnPrevPage = findViewById(R.id.btnComicPrevPage); //
-        btnNextPage = findViewById(R.id.btnComicNextPage); //
-        layoutPageNumbersContainer = findViewById(R.id.layoutComicPageNumbersContainer); //
+        edtComicSearch = findViewById(R.id.edtComicSearch);
+        imgComicFilter = findViewById(R.id.imgAdminComicFilter);
+        btnPrevPage = findViewById(R.id.btnComicPrevPage);
+        btnNextPage = findViewById(R.id.btnComicNextPage);
+        layoutPageNumbersContainer = findViewById(R.id.layoutComicPageNumbersContainer);
 
         // 3. Cài đặt RecyclerView danh sách truyện hiển thị
-        rvAdminManageComics = findViewById(R.id.rvAdminManageComics); //
-        rvAdminManageComics.setLayoutManager(new LinearLayoutManager(this)); //
-        adapter = new AdminComicAdapter(this); //
-        rvAdminManageComics.setAdapter(adapter); //
+        rvAdminManageComics = findViewById(R.id.rvAdminManageComics);
+        rvAdminManageComics.setLayoutManager(new LinearLayoutManager(this));
+        adapter = new AdminComicAdapter(this);
+        rvAdminManageComics.setAdapter(adapter);
 
         // 4. Khởi tạo trạng thái ban đầu của bộ lọc tái sử dụng
-        selectedCategoryIds.add(0); //
-        setupFilterAdapter(); //
+        selectedCategoryIds.add(0);
+        setupFilterAdapter();
 
         // 5. Bắt sự kiện bấm vào nút Biểu tượng Bộ lọc -> Mở hộp thoại BottomSheet
-        imgComicFilter.setOnClickListener(v -> showCategoryFilterDialog()); //
+        imgComicFilter.setOnClickListener(v -> showCategoryFilterDialog());
 
         // 6. Sự kiện click nút Thêm truyện nổi
-        fabAddComic = findViewById(R.id.fabAddComic); //
+        fabAddComic = findViewById(R.id.fabAddComic);
         fabAddComic.setOnClickListener(v -> {
             Intent intent = new Intent(this, AdminEditComicActivity.class);
             startActivity(intent);
-        }); //
+        });
 
-        setupFilterAndPaginationListeners(); //
-        loadCategoriesDataForFilterList(); //
+        setupFilterAndPaginationListeners();
+        loadCategoriesDataForFilterList();
     }
 
     // Làm tươi Avatar trên Header mỗi lần quay lại trang quản lý truyện này
     @Override
     protected void onResume() {
         super.onResume();
-        loadComicsDataFromServer(); //
+        loadComicsDataFromServer();
         View layoutHeader = findViewById(R.id.layoutHeaderManageComics);
         if (layoutHeader != null && layoutHeader.findViewById(R.id.headerAvatar) != null) {
             HeaderUtils.loadHeaderAvatar(this, layoutHeader.findViewById(R.id.headerAvatar));
@@ -166,7 +166,7 @@ public class AdminManageComicsActivity extends AppCompatActivity implements Admi
         if (!masterCategoriesList.isEmpty()) {
             filterAdapter.setCategories(masterCategoriesList);
         }
-    } //
+    }
 
     private void showCategoryFilterDialog() {
         BottomSheetDialog dialog = new BottomSheetDialog(this);
@@ -190,7 +190,7 @@ public class AdminManageComicsActivity extends AppCompatActivity implements Admi
         });
 
         dialog.show();
-    } //
+    }
 
     private void setupFilterAndPaginationListeners() {
         edtComicSearch.addTextChangedListener(new TextWatcher() {
@@ -205,7 +205,7 @@ public class AdminManageComicsActivity extends AppCompatActivity implements Admi
 
         btnPrevPage.setOnClickListener(v -> { if (currentPage > 0) { currentPage--; loadComicsDataFromServer(); } });
         btnNextPage.setOnClickListener(v -> { if (currentPage < totalPages - 1) { currentPage++; loadComicsDataFromServer(); } });
-    } //
+    }
 
     private void loadCategoriesDataForFilterList() {
         ApiClient.getApiService().getAllCategories().enqueue(new Callback<List<Category>>() {
@@ -229,7 +229,7 @@ public class AdminManageComicsActivity extends AppCompatActivity implements Admi
                 Toast.makeText(AdminManageComicsActivity.this, "Không thể tải bộ lọc thể loại!", Toast.LENGTH_SHORT).show();
             }
         });
-    } //
+    }
 
     private void loadComicsDataFromServer() {
         List<Integer> idsToSend = new ArrayList<>(selectedCategoryIds);
@@ -259,7 +259,7 @@ public class AdminManageComicsActivity extends AppCompatActivity implements Admi
                         Toast.makeText(AdminManageComicsActivity.this, "Lỗi tải danh sách truyện!", Toast.LENGTH_SHORT).show();
                     }
                 });
-    } //
+    }
 
     private void renderPaginationUIControls() {
         layoutPageNumbersContainer.removeAllViews();
@@ -308,12 +308,12 @@ public class AdminManageComicsActivity extends AppCompatActivity implements Admi
             }
             layoutPageNumbersContainer.addView(tvPage);
         }
-    } //
+    }
 
     private void openNotificationManager() {
         AdminNotificationAdapter adminAdapter = new AdminNotificationAdapter();
 
-        ApiClient.getApiService().getAllNotificationsForAdmin().enqueue(new Callback<List<Notification>>() {
+        ApiClient.getApiService().getAllNotificationsForAdmin("").enqueue(new Callback<List<Notification>>() {
             @Override
             public void onResponse(Call<List<Notification>> call, Response<List<Notification>> response) {
                 if (response.isSuccessful() && response.body() != null) {
@@ -371,12 +371,12 @@ public class AdminManageComicsActivity extends AppCompatActivity implements Admi
             }
             @Override public void onFailure(Call<List<Notification>> call, Throwable t) {}
         });
-    } //
+    }
 
     private int dpToPx(int dp) {
         float density = getResources().getDisplayMetrics().density;
         return Math.round(dp * density);
-    } //
+    }
 
     @Override public void onEdit(Comic comic) {}
     @Override public void onDelete(Comic comic, int position) {}

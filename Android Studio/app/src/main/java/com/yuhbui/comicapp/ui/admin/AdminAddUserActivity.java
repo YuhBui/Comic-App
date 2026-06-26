@@ -125,6 +125,20 @@ public class AdminAddUserActivity extends AppCompatActivity {
                 }
             }
         });
+
+        android.text.TextWatcher userFormWatcher = new android.text.TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) { checkFormValidity(); }
+            @Override public void afterTextChanged(android.text.Editable s) {}
+        };
+
+        edtName.addTextChangedListener(userFormWatcher);
+        edtEmail.addTextChangedListener(userFormWatcher);
+        edtPassword.addTextChangedListener(userFormWatcher);
+        edtConfirmPassword.addTextChangedListener(userFormWatcher);
+
+        // Đặt trạng thái mờ khóa nút Lưu lúc khởi tạo màn hình
+        checkFormValidity();
     }
 
     // Làm mới, hiển thị ảnh đại diện Admin góc trên bên phải mỗi khi quay lại trang này
@@ -159,6 +173,11 @@ public class AdminAddUserActivity extends AppCompatActivity {
 
         if (name.isEmpty() || email.isEmpty() || pass.isEmpty()) {
             Toast.makeText(this, "Vui lòng nhập đầy đủ thông tin bắt buộc!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            Toast.makeText(this, "Địa chỉ Email không đúng định dạng chuẩn!", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -234,5 +253,18 @@ public class AdminAddUserActivity extends AppCompatActivity {
 
     public void finishActivity(View view) {
         finish();
+    }
+
+    private void checkFormValidity() {
+        String name = edtName.getText().toString().trim();
+        String email = edtEmail.getText().toString().trim();
+        String pass = edtPassword.getText().toString().trim();
+        String confirmPass = edtConfirmPassword.getText().toString().trim();
+
+        // Điều kiện: Điền đủ 4 ô bắt buộc
+        boolean isValid = !name.isEmpty() && !email.isEmpty() && !pass.isEmpty() && !confirmPass.isEmpty();
+
+        btnSubmit.setEnabled(isValid);
+        btnSubmit.setAlpha(isValid ? 1.0f : 0.5f);
     }
 }

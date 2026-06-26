@@ -6,192 +6,181 @@
     android:orientation="vertical"
     android:padding="12dp"
     android:layout_marginBottom="8dp"
-    android:background="#1E1E1E"> <LinearLayout
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:gravity="top">
-
-    <ImageView
-        android:id="@+id/imgAdminCommentAvatar"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:src="@android:drawable/sym_def_app_icon"/>
+    android:background="#1E1E1E">
 
     <LinearLayout
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:orientation="vertical"
-        android:layout_marginStart="12dp">
+        android:orientation="horizontal"
+        android:gravity="top">
 
-        <TextView
-            android:id="@+id/tvAdminCommentUser"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="User Name"
-            android:textStyle="bold"
-            android:textColor="#FFB77D"
-            android:textSize="14sp"/>
-
-        <TextView
-            android:id="@+id/tvAdminCommentContent"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="Nội dung bình luận truyện"
-            android:textColor="#DBC2B0"
-            android:textSize="14sp"/>
+        <ImageView
+            android:id="@+id/imgAdminCommentAvatar"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@android:drawable/sym_def_app_icon"/>
 
         <LinearLayout
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginTop="8dp"
-            android:gravity="center_vertical">
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:layout_marginStart="12dp">
 
-            <LinearLayout
-                android:id="@+id/layoutAdminLikeComment"
+            <TextView
+                android:id="@+id/tvAdminCommentUser"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:clickable="true"
-                android:focusable="true"
-                android:padding="4dp"
-                android:layout_marginEnd="12dp">
-                <ImageView
-                    android:id="@+id/imgAdminLikeIcon"
-                    android:layout_width="16dp"
-                    android:layout_height="16dp"
-                    android:src="@drawable/ic_thumb_up_outline"
-                    app:tint="#DBC2B0"/>
-                <TextView
-                    android:id="@+id/tvAdminCommentLikes"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="4dp"
-                    android:text="0"
-                    android:textColor="#DBC2B0"
-                    android:textSize="12sp"/>
-            </LinearLayout>
+                android:text="User Name"
+                android:textStyle="bold"
+                android:textColor="#FFB77D"
+                android:textSize="14sp"/>
+
+            <TextView
+                android:id="@+id/tvAdminCommentContent"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Nội dung bình luận truyện"
+                android:textColor="#DBC2B0"
+                android:textSize="14sp"/>
 
             <LinearLayout
-                android:id="@+id/layoutAdminDislikeComment"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:clickable="true"
-                android:focusable="true"
-                android:padding="4dp"
-                android:layout_marginEnd="12dp">
-                <ImageView
-                    android:id="@+id/imgAdminDislikeIcon"
-                    android:layout_width="16dp"
-                    android:layout_height="16dp"
-                    android:src="@drawable/ic_thumb_down_outline"
-                    app:tint="#DBC2B0"/>
-                <TextView
-                    android:id="@+id/tvAdminCommentDislikes"
+                android:layout_marginTop="8dp"
+                android:gravity="center_vertical">
+
+                <LinearLayout
+                    android:id="@+id/layoutAdminLikeComment"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="4dp"
-                    android:text="0"
-                    android:textColor="#DBC2B0"
-                    android:textSize="12sp"/>
-            </LinearLayout>
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:padding="4dp"
+                    android:layout_marginEnd="12dp">
+                    <ImageView
+                        android:id="@+id/imgAdminLikeIcon"
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:src="@drawable/ic_thumb_up_outline"
+                        app:tint="#DBC2B0"/>
+                    <TextView
+                        android:id="@+id/tvAdminCommentLikes"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="4dp"
+                        android:text="0"
+                        android:textColor="#DBC2B0"
+                        android:textSize="12sp"/>
+                </LinearLayout>
 
-            <LinearLayout
-                android:id="@+id/layoutAdminReplyComment"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:clickable="true"
-                android:focusable="true"
-                android:padding="4dp"
-                android:layout_marginEnd="12dp">
-                <ImageView
-                    android:layout_width="14dp"
-                    android:layout_height="14dp"
-                    android:src="@drawable/ic_comment"
-                    app:tint="#FF9800"/>
-                <TextView
-                    android:id="@+id/btnAdminCommentReply"
+                <LinearLayout
+                    android:id="@+id/layoutAdminDislikeComment"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="4dp"
-                    android:text="Phản hồi"
-                    android:textColor="#FF9800"
-                    android:textStyle="bold"
-                    android:textSize="12sp"
-                    android:clickable="false"
-                    android:focusable="false"/>
-            </LinearLayout>
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:padding="4dp"
+                    android:layout_marginEnd="12dp">
+                    <ImageView
+                        android:id="@+id/imgAdminDislikeIcon"
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:src="@drawable/ic_thumb_down_outline"
+                        app:tint="#DBC2B0"/>
+                    <TextView
+                        android:id="@+id/tvAdminCommentDislikes"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="4dp"
+                        android:text="0"
+                        android:textColor="#DBC2B0"
+                        android:textSize="12sp"/>
+                </LinearLayout>
 
-            <LinearLayout
-                android:id="@+id/layoutAdminReportComment"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:clickable="true"
-                android:focusable="true"
-                android:padding="4dp"
-                android:layout_marginEnd="12dp">
-                <ImageView
-                    android:layout_width="14dp"
-                    android:layout_height="14dp"
-                    android:src="@android:drawable/ic_menu_report_image"
-                    app:tint="#E91E63"/>
-                <TextView
-                    android:id="@+id/tvAdminCommentReports"
+                <LinearLayout
+                    android:id="@+id/layoutAdminReplyComment"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="4dp"
-                    android:text="Báo cáo (0)"
-                    android:textColor="#E91E63"
-                    android:textStyle="bold"
-                    android:textSize="12sp"
-                    android:clickable="false"
-                    android:focusable="false"/>
-            </LinearLayout>
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:padding="6dp"
+                    android:layout_marginEnd="12dp">
+                    <ImageView
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:src="@drawable/ic_comment"
+                        app:tint="#FF9800"/>
+                </LinearLayout>
 
-            <View
-                android:layout_width="0dp"
-                android:layout_height="1dp"
-                android:layout_weight="1"/>
-
-            <LinearLayout
-                android:id="@+id/layoutAdminDeleteComment"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:clickable="true"
-                android:focusable="true"
-                android:padding="4dp">
-                <ImageView
-                    android:layout_width="14dp"
-                    android:layout_height="14dp"
-                    android:src="@android:drawable/ic_menu_delete"
-                    app:tint="#E74C3C"/>
-                <TextView
-                    android:id="@+id/btnAdminCommentDelete"
+                <LinearLayout
+                    android:id="@+id/layoutAdminReportComment"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="4dp"
-                    android:text="Xóa"
-                    android:textColor="#E74C3C"
-                    android:textStyle="bold"
-                    android:textSize="12sp"
-                    android:clickable="false"
-                    android:focusable="false"/>
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:padding="6dp"
+                    android:layout_marginEnd="12dp">
+                    <ImageView
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:src="@android:drawable/ic_menu_report_image"
+                        app:tint="#E91E63"/>
+                    <TextView
+                        android:id="@+id/tvAdminCommentReportsCount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="4dp"
+                        android:text="0"
+                        android:textColor="#E91E63"
+                        android:textStyle="bold"
+                        android:textSize="12sp"/>
+                </LinearLayout>
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_weight="1"/>
+
+                <LinearLayout
+                    android:id="@+id/layoutAdminDeleteComment"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:padding="4dp">
+                    <ImageView
+                        android:layout_width="14dp"
+                        android:layout_height="14dp"
+                        android:src="@android:drawable/ic_menu_delete"
+                        app:tint="#E74C3C"/>
+                    <TextView
+                        android:id="@+id/btnAdminCommentDelete"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="4dp"
+                        android:text="Xóa"
+                        android:textColor="#E74C3C"
+                        android:textStyle="bold"
+                        android:textSize="12sp"
+                        android:clickable="false"
+                        android:focusable="false"/>
+                </LinearLayout>
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>
-</LinearLayout>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerViewAdminReplies"

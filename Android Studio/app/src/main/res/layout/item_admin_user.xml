@@ -106,7 +106,7 @@
                 android:layout_marginStart="4dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:padding="7dp"
-                android:src="@android:drawable/ic_menu_delete"
+                android:src="@drawable/ic_delete"
                 app:tint="#DBC2B0" />
 
         </LinearLayout>

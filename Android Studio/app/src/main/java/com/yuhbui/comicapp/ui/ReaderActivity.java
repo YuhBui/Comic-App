@@ -670,6 +670,12 @@ public class ReaderActivity extends AppCompatActivity {
                 if (response.isSuccessful()) {
                     edtCommentInput.setText("");
                     edtCommentInput.setHint("Viết bình luận...");
+
+                    android.view.inputmethod.InputMethodManager imm = (android.view.inputmethod.InputMethodManager) getSystemService(android.content.Context.INPUT_METHOD_SERVICE);
+                    if (imm != null && getCurrentFocus() != null) {
+                        imm.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
+                    }
+
                     if (targetParentCommentId != null) {
                         commentAdapter.resetRepliesCache(targetParentCommentId);
                     }

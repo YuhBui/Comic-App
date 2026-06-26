@@ -6,52 +6,103 @@
     android:layout_height="match_parent"
     android:fitsSystemWindows="true">
 
-    <LinearLayout
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#F5F5F5"
-        android:orientation="vertical">
-
-        <include
-            android:id="@+id/layoutHeaderAdmin"
-            layout="@layout/layout_header" />
+        android:background="#2A2A2A">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:orientation="vertical"
-            android:padding="16dp">
+            android:orientation="vertical">
 
-            <RelativeLayout
+            <include
+                android:id="@+id/layoutHeaderAdmin"
+                layout="@layout/layout_header" />
+
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp">
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:padding="16dp">
 
-                <TextView
-                    android:layout_width="wrap_content"
+                <RelativeLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_centerVertical="true"
-                    android:text="Danh sách thông báo hệ thống"
-                    android:textColor="#333333"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
+                    android:layout_marginBottom="16dp">
 
-                <Button
-                    android:id="@+id/btnAdminAddNotif"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentEnd="true"
-                    android:backgroundTint="#4CAF50"
-                    android:text="➕ Tạo mới"
-                    android:textColor="#FFFFFF" />
-            </RelativeLayout>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerVertical="true"
+                        android:text="Thông báo"
+                        android:textColor="#FFB77D"
+                        android:textSize="30sp"
+                        android:textStyle="bold" />
 
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/recyclerViewAdminNotifications"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent" />
+                </RelativeLayout>
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="46dp"
+                    android:layout_marginBottom="16dp"
+                    android:background="#1E1E1E"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp">
+
+                    <ImageView
+                        android:id="@+id/ivSearchIcon"
+                        android:layout_width="18dp"
+                        android:layout_height="18dp"
+                        android:layout_centerVertical="true"
+                        android:src="@android:drawable/ic_menu_search"
+                        app:tint="#DBC2B0" />
+
+                    <EditText
+                        android:id="@+id/edtSearchNotif"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_marginStart="12dp"
+                        android:layout_toEndOf="@id/ivSearchIcon"
+                        android:background="@null"
+                        android:hint="Nhập tiêu đề..."
+                        android:textColor="#FFFFFF"
+                        android:textColorHint="#DBC2B0"
+                        android:textSize="14sp"
+                        android:maxLines="1"
+                        android:inputType="text" />
+                </RelativeLayout>
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recyclerViewAdminNotifications"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
+            </LinearLayout>
         </LinearLayout>
-    </LinearLayout>
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/btnAdminAddNotif"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_alignParentEnd="true" android:layout_alignParentBottom="true"
+            android:layout_marginEnd="24dp"
+            android:layout_marginBottom="24dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            app:cardBackgroundColor="#D97707"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="6dp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_gravity="center"
+                android:src="@android:drawable/ic_input_add"
+                app:tint="#432100" />
+        </androidx.cardview.widget.CardView>
+
+    </RelativeLayout>
 
     <include layout="@layout/layout_admin_side_menu" />
 

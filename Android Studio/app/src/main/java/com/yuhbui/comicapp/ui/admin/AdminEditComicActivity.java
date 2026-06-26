@@ -62,6 +62,8 @@ public class AdminEditComicActivity extends AppCompatActivity {
     // Các thành phần của Header
     private View layoutHeader;
     private TextView headerLogo;
+    private String origTitle = "", origAuthor = "", origDesc = "", origStatus = "";
+    private List<Integer> origCategoryIds = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,7 +102,6 @@ public class AdminEditComicActivity extends AppCompatActivity {
         if (getIntent() != null && getIntent().hasExtra("EDIT_COMIC_ID")) {
             editComicId = getIntent().getIntExtra("EDIT_COMIC_ID", -1);
 
-            // ĐÃ SỬA: Cập nhật chữ động chuẩn xác theo yêu cầu thiết kế CSS mới
             tvFormTitle.setText("Cập nhật truyện");
             btnSaveComicForm.setText("Cập nhật");
 
@@ -120,7 +121,14 @@ public class AdminEditComicActivity extends AppCompatActivity {
             if (uploadedCoverUrl != null && !uploadedCoverUrl.isEmpty()) {
                 Glide.with(this).load(uploadedCoverUrl).into(imgComicCoverSelect);
             }
+
+            origTitle = edtComicTitle.getText().toString().trim();
+            origAuthor = edtComicAuthor.getText().toString().trim();
+            origDesc = edtComicDescription.getText().toString().trim();
+            origStatus = "Completed".equalsIgnoreCase(currentStatus) ? "Completed" : "Ongoing";
         }
+
+
 
         // Sự kiện click nút Chọn ảnh từ thư viện máy
         btnSelectCover.setOnClickListener(v -> {
@@ -148,6 +156,19 @@ public class AdminEditComicActivity extends AppCompatActivity {
                 }
             }
         });
+
+        android.text.TextWatcher comicWatcher = new android.text.TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) { updateSaveButtonState(); }
+            @Override public void afterTextChanged(android.text.Editable s) {}
+        };
+        edtComicTitle.addTextChangedListener(comicWatcher);
+        edtComicAuthor.addTextChangedListener(comicWatcher);
+        edtComicDescription.addTextChangedListener(comicWatcher);
+        rgStatus.setOnCheckedChangeListener((group, checkedId) -> updateSaveButtonState());
+
+        // Thiết lập trạng thái khóa nút ban đầu
+        updateSaveButtonState();
     }
 
     // Làm mới avatar Admin mỗi khi quay lại từ các trang quản lý khác hoặc trang cá nhân
@@ -198,6 +219,7 @@ public class AdminEditComicActivity extends AppCompatActivity {
         if (requestCode == PICK_IMAGE_REQUEST && resultCode == RESULT_OK && data != null && data.getData() != null) {
             selectedImageUri = data.getData();
             imgComicCoverSelect.setImageURI(selectedImageUri);
+            updateSaveButtonState();
         }
     }
 
@@ -234,6 +256,9 @@ public class AdminEditComicActivity extends AppCompatActivity {
             }
             @Override public void onFailure(Call<List<Category>> call, Throwable t) {}
         });
+
+        origCategoryIds = new ArrayList<>(selectedCategoryIds);
+        updateSaveButtonState();
     }
 
     private void showMultiSelectCategoryDialog() {
@@ -268,6 +293,8 @@ public class AdminEditComicActivity extends AppCompatActivity {
             } else {
                 tvComicCategoriesSelect.setText(displayText.toString());
             }
+
+            updateSaveButtonState();
         });
 
         builder.setNegativeButton("Hủy bỏ", null);
@@ -414,5 +441,37 @@ public class AdminEditComicActivity extends AppCompatActivity {
     // Phương thức xử lý đóng nhanh activity khi chạm mũi tên quay lại
     public void finishActivity(View view) {
         finish();
+    }
+
+    private boolean hasComicChanges() {
+        String currentTitle = edtComicTitle.getText().toString().trim();
+        if (editComicId == -1) {
+            // THÊM MỚI: Bật nút nếu tiêu đề truyện không để trống
+            return !currentTitle.isEmpty();
+        } else {
+            // CẬP NHẬT: So sánh xem có bất kỳ trường nào thay đổi so với ban đầu không
+            String currentAuthor = edtComicAuthor.getText().toString().trim();
+            String currentDesc = edtComicDescription.getText().toString().trim();
+            String currentStatus = rgStatus.getCheckedRadioButtonId() == R.id.rbCompleted ? "Completed" : "Ongoing";
+
+            if (!currentTitle.equals(origTitle)) return true;
+            if (!currentAuthor.equals(origAuthor)) return true;
+            if (!currentDesc.equals(origDesc)) return true;
+            if (!currentStatus.equals(origStatus)) return true;
+            if (selectedImageUri != null) return true;
+
+            // So sánh mảng thể loại truyện
+            if (selectedCategoryIds.size() != origCategoryIds.size()) return true;
+            for (int id : selectedCategoryIds) {
+                if (!origCategoryIds.contains(id)) return true;
+            }
+            return false;
+        }
+    }
+
+    private void updateSaveButtonState() {
+        boolean enable = hasComicChanges();
+        btnSaveComicForm.setEnabled(enable);
+        btnSaveComicForm.setAlpha(enable ? 1.0f : 0.5f);
     }
 }

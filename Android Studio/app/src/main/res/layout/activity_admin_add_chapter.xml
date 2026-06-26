@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.drawerlayout.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/drawerLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#2A2A2A">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <include
+                android:id="@+id/layoutHeaderAddChapter"
+                layout="@layout/layout_header" />
+
+            <androidx.core.widget.NestedScrollView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:fillViewport="true">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Thêm Chương Truyện Mới"
+                        android:textColor="#FFB77D"
+                        android:textSize="24sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="20dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Số thứ tự chương (*):"
+                        android:textColor="#FFFFFF"
+                        android:layout_marginBottom="6dp"/>
+
+                    <EditText
+                        android:id="@+id/edtAddChapterNumber"
+                        android:layout_width="match_parent"
+                        android:layout_height="46dp"
+                        android:background="#1E1E1E"
+                        android:hint="Ví dụ: 1 hoặc 1.5"
+                        android:textColorHint="#DBC2B0"
+                        android:textColor="#FFFFFF"
+                        android:padding="12dp"
+                        android:textSize="14sp"
+                        android:inputType="numberDecimal"
+                        android:layout_marginBottom="16dp"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Tên tiêu đề chương (Không bắt buộc):"
+                        android:textColor="#FFFFFF"
+                        android:layout_marginBottom="6dp"/>
+
+                    <EditText
+                        android:id="@+id/edtAddChapterTitle"
+                        android:layout_width="match_parent"
+                        android:layout_height="46dp"
+                        android:background="#1E1E1E"
+                        android:hint="Nhập tên chương (nếu có)..."
+                        android:textColorHint="#DBC2B0"
+                        android:textColor="#FFFFFF"
+                        android:padding="12dp"
+                        android:textSize="14sp"
+                        android:inputType="text"
+                        android:layout_marginBottom="20dp"/>
+
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="12dp">
+
+                        <TextView
+                            android:id="@+id/tvPagesCountLabel"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_centerVertical="true"
+                            android:text="Danh sách trang truyện (0 trang):"
+                            android:textColor="#FFFFFF"
+                            android:textStyle="bold" />
+
+                        <Button
+                            android:id="@+id/btnSelectImages"
+                            android:layout_width="wrap_content"
+                            android:layout_height="38dp"
+                            android:layout_alignParentEnd="true"
+                            android:backgroundTint="#D97707"
+                            android:text="+ Thêm Ảnh"
+                            android:textSize="12sp"
+                            android:padding="0dp"
+                            android:textColor="#FFFFFF"/>
+                    </RelativeLayout>
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rvSelectedImagesPreview"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:nestedScrollingEnabled="false"
+                        android:background="#1E1E1E"
+                        android:padding="8dp"
+                        android:layout_marginBottom="30dp"/>
+
+                    <Button
+                        android:id="@+id/btnSaveChapterWithImages"
+                        android:layout_width="match_parent"
+                        android:layout_height="50dp"
+                        android:backgroundTint="#D97707"
+                        android:text="THÊM CHƯƠNG TRUYỆN"
+                        android:textColor="#FFFFFF"
+                        android:textStyle="bold"
+                        android:textSize="16sp"/>
+
+                    <Button
+                        android:id="@+id/btnCancelAddChapter"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:layout_marginTop="12dp"
+                        android:text="Hủy"
+                        android:textColor="#FFFFFF"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:backgroundTint="@android:color/transparent"
+                        app:strokeColor="#554336"
+                        app:strokeWidth="1dp"/>
+
+                </LinearLayout>
+            </androidx.core.widget.NestedScrollView>
+
+        </LinearLayout>
+    </RelativeLayout>
+
+    <include layout="@layout/layout_admin_side_menu" />
+</androidx.drawerlayout.widget.DrawerLayout>

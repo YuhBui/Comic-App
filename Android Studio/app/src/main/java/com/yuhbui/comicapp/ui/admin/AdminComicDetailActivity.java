@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -45,7 +46,8 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
     private int comicId;
     private ImageView imgCover;
     private TextView tvTitle, tvAuthor, tvStatus, tvDesc, tvGenre, tvRelease, tvViews, tvFavorites, tvRating;
-    private Button btnEdit, btnDelete, btnAdminSendComment, btnAdminAddChapter;
+    private Button btnEdit, btnDelete, btnAdminAddChapter;
+    private ImageButton btnAdminSendComment;
     private EditText edtAdminCommentInput;
     private RecyclerView rvComments, rvChapters;
     private AdminCommentAdapter commentAdapter;
@@ -129,6 +131,7 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
 
         // Khởi tạo RecyclerView cấu hình Adapter Chương truyện
         rvChapters.setLayoutManager(new LinearLayoutManager(this));
+        // TÌM VÀ THAY THẾ PHƯƠNG THỨC ONDELETE BỊ TRỐNG TRONG HÀM ONCREATE():
         chapterAdapter = new AdminChapterAdapter(new AdminChapterAdapter.OnChapterAdminActionListener() {
             @Override
             public void onClick(Map<String, Object> chapter) {
@@ -149,12 +152,39 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
 
             @Override
             public void onDelete(int chapterId, int position) {
-                // Đã được tích hợp trực tiếp vào danh sách chương hàng ngang hoặc Dialog
+                // ĐÃ SỬA: Bổ sung Dialog cảnh báo và gửi lệnh API xóa chương trực tiếp lên Server
+                new AlertDialog.Builder(AdminComicDetailActivity.this)
+                        .setTitle("Xác nhận xóa chương")
+                        .setMessage("Bạn có chắc chắn muốn xóa vĩnh viễn chương truyện này cùng toàn bộ các trang ảnh đính kèm không?")
+                        .setPositiveButton("Xóa vĩnh viễn", (dialog, which) -> {
+                            ApiClient.getApiService().adminDeleteChapter(chapterId).enqueue(new Callback<Map<String, Object>>() {
+                                @Override
+                                public void onResponse(Call<Map<String, Object>> call, Response<Map<String, Object>> response) {
+                                    if (response.isSuccessful()) {
+                                        Toast.makeText(AdminComicDetailActivity.this, "Đã xóa chương truyện thành công!", Toast.LENGTH_SHORT).show();
+                                        loadChaptersData(); // Tải lại danh sách chương truyện mới nhất
+                                    } else {
+                                        Toast.makeText(AdminComicDetailActivity.this, "Server từ chối yêu cầu xóa chương!", Toast.LENGTH_SHORT).show();
+                                    }
+                                }
+
+                                @Override
+                                public void onFailure(Call<Map<String, Object>> call, Throwable t) {
+                                    Toast.makeText(AdminComicDetailActivity.this, "Lỗi kết nối máy chủ khi xóa!", Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                        })
+                        .setNegativeButton("Hủy", null)
+                        .show();
             }
         });
         rvChapters.setAdapter(chapterAdapter);
 
-        btnAdminAddChapter.setOnClickListener(v -> showChapterFormDialog(null));
+        btnAdminAddChapter.setOnClickListener(v -> {
+            Intent intent = new Intent(AdminComicDetailActivity.this, AdminAddChapterActivity.class);
+            intent.putExtra("COMIC_ID", comicId);
+            startActivity(intent);
+        });
 
         btnAdminSendComment.setOnClickListener(v -> {
             String content = edtAdminCommentInput.getText().toString().trim();
@@ -330,9 +360,9 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
                     tvStatus.setText("Tình trạng: " + currentComic.getStatus());
                     tvDesc.setText(currentComic.getDescription());
 
-                    tvViews.setText("👁️ " + currentComic.getViewCount());
-                    tvRating.setText("⭐ " + currentComic.getRating() + "/5");
-                    tvFavorites.setText("❤️ " + detailResponse.getFavoriteCount());
+                    tvViews.setText("Lượt xem: " + currentComic.getViewCount());
+                    tvRating.setText("Đánh giá: " + currentComic.getRating() + "/5");
+                    tvFavorites.setText("Yêu thích: " + detailResponse.getFavoriteCount());
 
                     tvRelease.setText("Phát hành: " + (currentComic.getCreatedAt() != null ? formatToDateOnly(currentComic.getCreatedAt()) : "Đang cập nhật"));
 
