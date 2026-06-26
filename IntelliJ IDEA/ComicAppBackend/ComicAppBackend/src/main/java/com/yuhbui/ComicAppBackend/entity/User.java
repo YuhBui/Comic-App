@@ -37,9 +37,14 @@ public class User {
     @Column(name = "Status")
     private String status = "Active";
 
-    // SỬA: Cấm Hibernate tự ý thêm/sửa cột này trong SQL.
-    // MySQL sẽ tự động gán CURRENT_TIMESTAMP khi thêm mới nên an toàn tuyệt đối!
     @Column(name = "CreatedAt", insertable = false, updatable = false)
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;
+
+    @Column(name = "OtpCode")
+    private String otpCode;
+
+    @Column(name = "OtpExpiry")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime otpExpiry;
 }

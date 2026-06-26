@@ -40,8 +40,17 @@ public interface ApiService {
     @POST("/api/users/login")
     Call<User> login(@Body LoginRequest request);
 
+    @POST("/api/users/google-login")
+    Call<User> loginWithGoogle(@Body java.util.Map<String, String> body);
+    
     @POST("/api/users/register")
     Call<User> register(@Body RegisterRequest request);
+
+    @POST("/api/users/forgot-password")
+    Call<okhttp3.ResponseBody> forgotPassword(@Query("email") String email);
+
+    @POST("/api/users/reset-password")
+    Call<okhttp3.ResponseBody> resetPassword(@Body com.yuhbui.comicapp.data.model.ResetPasswordRequest request);
 
     @POST("/api/history/save")
     Call<ReadingHistory> saveReadingHistory(@Body ReadingHistory history);
