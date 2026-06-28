@@ -58,6 +58,7 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
     private AdminCommentAdapter commentAdapter;
     private AdminChapterAdapter chapterAdapter;
     private Comic currentComic;
+    private String currentGenres = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -240,11 +241,8 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
             if (currentComic == null) return;
             Intent intent = new Intent(this, AdminEditComicActivity.class);
             intent.putExtra("EDIT_COMIC_ID", currentComic.getComicId());
-            intent.putExtra("TITLE", currentComic.getTitle());
-            intent.putExtra("AUTHOR", currentComic.getAuthor());
-            intent.putExtra("COVER_URL", currentComic.getCoverImageUrl());
-            intent.putExtra("STATUS", currentComic.getStatus());
-            intent.putExtra("DESC", currentComic.getDescription());
+            intent.putExtra("COMIC_OBJECT", currentComic);
+            intent.putExtra("CURRENT_GENRES_STRING", currentGenres);
             startActivity(intent);
         });
 
@@ -380,8 +378,9 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
 
                     tvRelease.setText("Phát hành: " + (currentComic.getCreatedAt() != null ? formatToDateOnly(currentComic.getCreatedAt()) : "Đang cập nhật"));
 
-                    if (detailResponse.getGenres() != null && !detailResponse.getGenres().isEmpty()) {
-                        tvGenre.setText("Thể loại: " + detailResponse.getGenres());
+                    currentGenres = detailResponse.getGenres() != null ? detailResponse.getGenres() : "";
+                    if (!currentGenres.isEmpty()) {
+                        tvGenre.setText("Thể loại: " + currentGenres);
                     } else {
                         tvGenre.setText("Thể loại: Đang cập nhật");
                     }

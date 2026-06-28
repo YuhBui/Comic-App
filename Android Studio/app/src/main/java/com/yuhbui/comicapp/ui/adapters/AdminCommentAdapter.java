@@ -1,5 +1,7 @@
 package com.yuhbui.comicapp.ui.adapters;
 
+import android.content.Context;
+import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.view.LayoutInflater;
@@ -14,6 +16,7 @@ import com.bumptech.glide.Glide;
 import com.yuhbui.comicapp.R;
 import com.yuhbui.comicapp.data.api.ApiClient;
 import com.yuhbui.comicapp.data.model.Comment;
+import com.yuhbui.comicapp.ui.admin.AdminUserDetailActivity;
 import com.yuhbui.comicapp.utils.SharedPrefsManager;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -103,6 +106,9 @@ public class AdminCommentAdapter extends RecyclerView.Adapter<AdminCommentAdapte
                 .placeholder(android.R.drawable.sym_def_app_icon)
                 .circleCrop()
                 .into(holder.imgAvatar);
+
+        int commentUserId = getSafeInt(comment.get("userId"));
+        holder.imgAvatar.setOnClickListener(v -> navigateToUserDetail(v.getContext(), commentUserId));
 
         updateAdminLikeDislikeUI(holder, comment);
 
@@ -202,7 +208,6 @@ public class AdminCommentAdapter extends RecyclerView.Adapter<AdminCommentAdapte
         }
 
         int currentUserId = SharedPrefsManager.getUserId(holder.itemView.getContext());
-        int commentUserId = getSafeInt(comment.get("userId"));
 
         holder.layoutLike.setOnClickListener(v -> {
             if (commentUserId == currentUserId && currentUserId != -1) return;
@@ -358,6 +363,13 @@ public class AdminCommentAdapter extends RecyclerView.Adapter<AdminCommentAdapte
                 break;
             }
         }
+    }
+
+    static void navigateToUserDetail(Context context, int userId) {
+        if (userId <= 0) return;
+        Intent intent = new Intent(context, AdminUserDetailActivity.class);
+        intent.putExtra("USER_ID", userId);
+        context.startActivity(intent);
     }
 
     private long getSafeLong(Object obj) {

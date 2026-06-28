@@ -18,6 +18,9 @@
             android:id="@+id/imgAdminCommentAvatar"
             android:layout_width="40dp"
             android:layout_height="40dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:contentDescription="Xem hồ sơ người bình luận"
             android:src="@android:drawable/sym_def_app_icon"/>
 
         <LinearLayout

@@ -67,6 +67,9 @@ public class AdminReplyAdapter extends RecyclerView.Adapter<AdminReplyAdapter.Ad
                 .circleCrop()
                 .into(holder.imgAvatar);
 
+        holder.imgAvatar.setOnClickListener(v ->
+                AdminCommentAdapter.navigateToUserDetail(v.getContext(), reply.getUserId()));
+
         // ---- Tên người dùng ----
         String displayName = (reply.getUserDisplayName() != null && !reply.getUserDisplayName().isEmpty())
                 ? reply.getUserDisplayName()

@@ -113,9 +113,8 @@ public class AdminEditComicActivity extends AppCompatActivity {
                 edtComicTitle.setText(comic.getTitle());
                 edtComicAuthor.setText(comic.getAuthor());
                 edtComicDescription.setText(comic.getDescription());
-                uploadedCoverUrl = comic.getCoverImageUrl();
+                uploadedCoverUrl = comic.getCoverImageUrl() != null ? comic.getCoverImageUrl() : "";
 
-                // Tải trạng thái lên hệ thống nút chọn RadioButton
                 String currentStatus = comic.getStatus();
                 if ("Completed".equalsIgnoreCase(currentStatus)) {
                     rgStatus.check(R.id.rbCompleted);
@@ -123,7 +122,12 @@ public class AdminEditComicActivity extends AppCompatActivity {
                     rgStatus.check(R.id.rbOngoing);
                 }
 
-                if (uploadedCoverUrl != null && !uploadedCoverUrl.isEmpty()) {
+                origTitle = comic.getTitle() != null ? comic.getTitle().trim() : "";
+                origAuthor = comic.getAuthor() != null ? comic.getAuthor().trim() : "";
+                origDesc = comic.getDescription() != null ? comic.getDescription().trim() : "";
+                origStatus = "Completed".equalsIgnoreCase(currentStatus) ? "Completed" : "Ongoing";
+
+                if (!uploadedCoverUrl.isEmpty()) {
                     Glide.with(this).load(uploadedCoverUrl).into(imgComicCoverSelect);
                 }
             }
@@ -255,13 +259,13 @@ public class AdminEditComicActivity extends AppCompatActivity {
                     } else {
                         tvComicCategoriesSelect.setText(displayText.toString());
                     }
+
+                    origCategoryIds = new ArrayList<>(selectedCategoryIds);
+                    updateSaveButtonState();
                 }
             }
             @Override public void onFailure(Call<List<Category>> call, Throwable t) {}
         });
-
-        origCategoryIds = new ArrayList<>(selectedCategoryIds);
-        updateSaveButtonState();
     }
 
     private void showMultiSelectCategoryDialog() {
