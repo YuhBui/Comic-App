@@ -191,14 +191,14 @@ public class AdminDashboardActivity extends AppCompatActivity {
                 if (response.isSuccessful() && response.body() != null) {
                     Map<String, Object> result = response.body();
 
-                    // ĐÃ SỬA: Thay thế "totalElements" bằng "totalItems" cho khớp 100% với Spring Boot
                     if (result.containsKey("totalItems")) {
                         Number totalItemsNum = (Number) result.get("totalItems");
                         if (totalItemsNum != null) {
                             int total = totalItemsNum.intValue();
-                            // Định dạng rút gọn nếu dữ liệu người dùng lớn
+
+                            // SỬA ĐỔI: Sử dụng phép chia lấy phần nguyên trực tiếp để không xuất hiện số float (.0)
                             if (total >= 1000) {
-                                tvTotalUsersValue.setText(String.format(Locale.getDefault(), "%.1fk", total / 1000.0));
+                                tvTotalUsersValue.setText((total / 1000) + "k"); // Ví dụ: 1500 -> 1k thay vì 1.5k
                             } else {
                                 tvTotalUsersValue.setText(String.valueOf(total));
                             }
@@ -231,8 +231,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
         }
 
         if (headerLogo != null) {
-            headerLogo.setText("COMIC APP");
-            headerLogo.setTextColor(Color.parseColor("#E74C3C"));
+            headerLogo.setText(android.text.Html.fromHtml("<font color='#D97707'>h</font><font color='#FFFFFF'>ay</font><font color='#D97707'>c</font><font color='#FFFFFF'>omic</font>"));
         }
 
         if (headerAvatar != null) {
@@ -277,22 +276,45 @@ public class AdminDashboardActivity extends AppCompatActivity {
                     dataSet.setValueTextSize(10f);
                     dataSet.setValueTextColor(Color.parseColor("#FFFFFF"));
 
+                    // SỬA ĐỔI 1: Ép kiểu số nguyên cho các giá trị hiện trên các nút điểm của biểu đồ
+                    dataSet.setValueFormatter(new com.github.mikephil.charting.formatter.ValueFormatter() {
+                        @Override
+                        public String getFormattedValue(float value) {
+                            return String.valueOf((int) value); // Loại bỏ phần thập phân (.0)
+                        }
+                    });
+
                     LineData lineData = new LineData(dataSet);
                     lineChartAccess.setData(lineData);
 
                     XAxis xAxis = lineChartAccess.getXAxis();
-                    xAxis.setTextColor(Color.parseColor("#FFFFFF")); // 🔴 Điền mã màu bạn muốn hiển thị ở đây
-
-                    YAxis leftAxis = lineChartAccess.getAxisLeft();
-                    leftAxis.setTextColor(Color.parseColor("#FFFFFF")); // 🔴 Điền mã màu bạn muốn hiển thị ở đây
-
-                    YAxis rightAxis = lineChartAccess.getAxisRight();
-                    rightAxis.setTextColor(Color.parseColor("#FFFFFF")); // 🔴 Điền mã màu bạn muốn hiển thị ở đây
-
+                    xAxis.setTextColor(Color.parseColor("#FFFFFF"));
                     xAxis.setValueFormatter(new IndexAxisValueFormatter(xLabels));
                     xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
                     xAxis.setGranularity(1f);
                     xAxis.setLabelRotationAngle(-30);
+
+                    // SỬA ĐỔI 2: Định dạng trục Y bên trái thành số nguyên
+                    YAxis leftAxis = lineChartAccess.getAxisLeft();
+                    leftAxis.setTextColor(Color.parseColor("#FFFFFF"));
+                    leftAxis.setGranularity(1f); // Chỉ nhảy tiến theo số nguyên (1, 2, 3...)
+                    leftAxis.setValueFormatter(new com.github.mikephil.charting.formatter.ValueFormatter() {
+                        @Override
+                        public String getFormattedValue(float value) {
+                            return String.valueOf((int) value);
+                        }
+                    });
+
+                    // SỬA ĐỔI 3: Định dạng trục Y bên phải thành số nguyên
+                    YAxis rightAxis = lineChartAccess.getAxisRight();
+                    rightAxis.setTextColor(Color.parseColor("#FFFFFF"));
+                    rightAxis.setGranularity(1f); // Chỉ nhảy tiến theo số nguyên
+                    rightAxis.setValueFormatter(new com.github.mikephil.charting.formatter.ValueFormatter() {
+                        @Override
+                        public String getFormattedValue(float value) {
+                            return String.valueOf((int) value);
+                        }
+                    });
 
                     lineChartAccess.getDescription().setEnabled(false);
                     lineChartAccess.animateX(800);

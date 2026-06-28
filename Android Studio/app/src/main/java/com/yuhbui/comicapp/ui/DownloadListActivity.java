@@ -29,8 +29,6 @@ public class DownloadListActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private ComicAdapter comicAdapter;
     private TextView tvEmptyDownload;
-
-    // Khai báo các thuộc tính phục vụ phân trang offline
     private int currentPage = 0;
     private static final int PAGE_SIZE = 10;
     private int totalPages = 1;
@@ -49,6 +47,9 @@ public class DownloadListActivity extends AppCompatActivity {
         MenuUtils.setupSideMenu(this, drawerLayout, layoutHeader.findViewById(R.id.headerMenu));
 
         TextView headerLogo = layoutHeader.findViewById(R.id.headerLogo);
+
+        headerLogo.setText(android.text.Html.fromHtml("<font color='#D97707'>h</font><font color='#FFFFFF'>ay</font><font color='#D97707'>c</font><font color='#FFFFFF'>omic</font>", android.text.Html.FROM_HTML_MODE_COMPACT));
+
         headerLogo.setOnClickListener(v -> finish());
 
         recyclerView = findViewById(R.id.recyclerViewDownloads);
@@ -194,7 +195,15 @@ public class DownloadListActivity extends AppCompatActivity {
             layoutPageNumbers.addView(btnPage);
         }
 
-        findViewById(R.id.btnPrevPageDownload).setEnabled(currentPage > 0);
-        findViewById(R.id.btnNextPageDownload).setEnabled(currentPage < totalPages - 1);
+        Button btnPrev = findViewById(R.id.btnPrevPageDownload);
+        Button btnNext = findViewById(R.id.btnNextPageDownload);
+        btnPrev.setEnabled(currentPage > 0);
+        btnNext.setEnabled(currentPage < totalPages - 1);
+        btnPrev.setBackgroundResource(R.drawable.bg_nav_btn);
+        btnPrev.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.parseColor("#1E1E1E")));
+        btnPrev.setTextColor(Color.parseColor(currentPage > 0 ? "#DBC2B0" : "#555555"));
+        btnNext.setBackgroundResource(R.drawable.bg_nav_btn);
+        btnNext.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.parseColor("#1E1E1E")));
+        btnNext.setTextColor(Color.parseColor(currentPage < totalPages - 1 ? "#DBC2B0" : "#555555"));
     }
 }

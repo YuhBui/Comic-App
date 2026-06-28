@@ -53,13 +53,13 @@ public class NotificationListActivity extends AppCompatActivity {
 
         // CHỈNH SỬA TẠI ĐÂY: Giữ lại tiêu đề ứng dụng gốc và thiết lập click chuyển hướng về Trang chủ
         if (headerLogo != null) {
-            headerLogo.setText("COMIC APP"); // Đặt lại tên app ban đầu
+            headerLogo.setText(android.text.Html.fromHtml("<font color='#D97707'>h</font><font color='#FFFFFF'>ay</font><font color='#D97707'>c</font><font color='#FFFFFF'>omic</font>", android.text.Html.FROM_HTML_MODE_COMPACT));
+
             headerLogo.setOnClickListener(v -> {
                 Intent intent = new Intent(NotificationListActivity.this, MainActivity.class);
-                // Dùng cờ Clear Top và Single Top để mở lại trang chủ cũ mượt mà, không tạo thêm nhiều trang mới chồng lên nhau
                 intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                 startActivity(intent);
-                finish(); // Đóng màn hình thông báo lại
+                finish();
             });
         }
 

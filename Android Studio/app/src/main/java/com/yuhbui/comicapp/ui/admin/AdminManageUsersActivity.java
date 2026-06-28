@@ -77,7 +77,7 @@ public class AdminManageUsersActivity extends AppCompatActivity {
             layoutHeader.findViewById(R.id.headerNotification).setVisibility(View.GONE);
         }
 
-        headerLogo.setText("COMIC APP");
+        headerLogo.setText(android.text.Html.fromHtml("<font color='#D97707'>h</font><font color='#FFFFFF'>ay</font><font color='#D97707'>c</font><font color='#FFFFFF'>omic</font>", android.text.Html.FROM_HTML_MODE_COMPACT));
         headerLogo.setOnClickListener(v -> {
             Intent intent = new Intent(this, AdminDashboardActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
@@ -203,10 +203,13 @@ public class AdminManageUsersActivity extends AppCompatActivity {
         layoutPageNumbersContainer.removeAllViews();
 
         btnPrevPage.setEnabled(currentPage > 0);
-        btnPrevPage.setAlpha(currentPage > 0 ? 1.0f : 0.3f);
-
         btnNextPage.setEnabled(currentPage < totalPages - 1);
-        btnNextPage.setAlpha(currentPage < totalPages - 1 ? 1.0f : 0.3f);
+        btnPrevPage.setBackgroundResource(R.drawable.bg_nav_btn);
+        btnPrevPage.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#1E1E1E")));
+        btnPrevPage.setTextColor(Color.parseColor(currentPage > 0 ? "#DBC2B0" : "#555555"));
+        btnNextPage.setBackgroundResource(R.drawable.bg_nav_btn);
+        btnNextPage.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#1E1E1E")));
+        btnNextPage.setTextColor(Color.parseColor(currentPage < totalPages - 1 ? "#DBC2B0" : "#555555"));
 
         if (totalPages <= 0) return;
 
@@ -237,11 +240,11 @@ public class AdminManageUsersActivity extends AppCompatActivity {
             tvPage.setBackgroundResource(R.drawable.bg_page_btn);
 
             if (i == currentPage) {
-                tvPage.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#E74C3C")));
-                tvPage.setTextColor(Color.WHITE);
+                tvPage.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#FFB77D")));
+                tvPage.setTextColor(Color.parseColor("#4D2600"));
             } else {
-                tvPage.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#EEEEEE")));
-                tvPage.setTextColor(Color.parseColor("#333333"));
+                tvPage.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#1E1E1E")));
+                tvPage.setTextColor(Color.parseColor("#DBC2B0"));
                 tvPage.setOnClickListener(v -> {
                     currentPage = targetPageIndex;
                     loadUsersDataFromServer();

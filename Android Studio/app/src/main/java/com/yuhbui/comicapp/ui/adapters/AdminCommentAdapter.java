@@ -43,7 +43,7 @@ public class AdminCommentAdapter extends RecyclerView.Adapter<AdminCommentAdapte
     }
 
     public void setData(List<Map<String, Object>> list) {
-        this.commentList = list;
+        this.commentList = new ArrayList<>(list);
         notifyDataSetChanged();
     }
 

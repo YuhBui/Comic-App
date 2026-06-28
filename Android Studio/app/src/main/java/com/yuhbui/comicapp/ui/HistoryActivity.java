@@ -62,6 +62,8 @@ public class HistoryActivity extends AppCompatActivity {
         layoutHeader = findViewById(R.id.layoutHeaderHistory);
         headerLogo   = layoutHeader.findViewById(R.id.headerLogo);
 
+        headerLogo.setText(android.text.Html.fromHtml("<font color='#D97707'>h</font><font color='#FFFFFF'>ay</font><font color='#D97707'>c</font><font color='#FFFFFF'>omic</font>", android.text.Html.FROM_HTML_MODE_COMPACT));
+
         // 2. TỐI ƯU: Khởi tạo các tính năng cốt lõi của Header (Menu, Chuông, Avatar, Badge) bằng 1 dòng duy nhất
         HeaderUtils.initHeader(this, layoutHeader, drawerLayout);
 

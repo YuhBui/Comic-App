@@ -7,7 +7,7 @@ import androidx.room.PrimaryKey;
 public class DownloadedChapter {
     @PrimaryKey
     private int chapterId;
-    private int comicId; // Khóa ngoại liên kết với DownloadedComic
+    private int comicId;
     private float chapterNumber;
     private String title;
 

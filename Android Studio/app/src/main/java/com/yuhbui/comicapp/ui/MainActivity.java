@@ -277,10 +277,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setupHeader() {
-        // ĐÃ SỬA: Gọi MenuUtils quản lý tập trung toàn bộ sự kiện click và nhuộm màu highlight động
+        if (headerLogo != null) {
+            headerLogo.setText(android.text.Html.fromHtml("<font color='#D97707'>h</font><font color='#FFFFFF'>ay</font><font color='#D97707'>c</font><font color='#FFFFFF'>omic</font>", android.text.Html.FROM_HTML_MODE_COMPACT));
+        }
+
         MenuUtils.setupSideMenu(this, drawerLayout, headerMenu);
 
-        // Giữ nguyên các logic xử lý Avatar cá nhân và thông báo của Trang chủ ở phía dưới
         headerAvatar.setOnClickListener(v -> showAvatarMenu(v));
 
         headerNotification.setOnClickListener(v -> {
@@ -578,35 +580,40 @@ public class MainActivity extends AppCompatActivity {
 
         for (int i = startPage; i <= endPage; i++) {
             final int pageIndex = i;
-            TextView tvPage = new TextView(this);
+            Button btnPage = new Button(this);
             LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(dpSize, dpSize);
             params.setMargins(marginDp, 0, marginDp, 0);
-            tvPage.setLayoutParams(params);
-            tvPage.setText(String.valueOf(i + 1));
-            tvPage.setGravity(Gravity.CENTER);
-            tvPage.setTextSize(13);
+            btnPage.setLayoutParams(params);
+            btnPage.setPadding(0, 0, 0, 0);
+            btnPage.setText(String.valueOf(i + 1));
+            btnPage.setTextSize(13);
+            btnPage.setAllCaps(false);
 
             if (i == currentPage) {
-                tvPage.setBackgroundResource(R.drawable.bg_page_btn);
-                tvPage.setBackgroundColor(Color.parseColor("#FF9800"));
-                tvPage.setTextColor(Color.WHITE);
-                tvPage.setTypeface(null, android.graphics.Typeface.BOLD);
+                btnPage.setBackgroundResource(R.drawable.bg_nav_btn);
+                btnPage.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.parseColor("#FFB77D")));
+                btnPage.setTextColor(Color.parseColor("#4D2600"));
+                btnPage.setTypeface(null, android.graphics.Typeface.BOLD);
             } else {
-                tvPage.setBackgroundResource(R.drawable.bg_page_btn);
-                tvPage.setBackgroundColor(Color.parseColor("#EEEEEE"));
-                tvPage.setTextColor(Color.parseColor("#333333"));
-                tvPage.setOnClickListener(v -> {
+                btnPage.setBackgroundResource(R.drawable.bg_nav_btn);
+                btnPage.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.parseColor("#1E1E1E")));
+                btnPage.setTextColor(Color.parseColor("#DBC2B0"));
+                btnPage.setOnClickListener(v -> {
                     MainActivity.this.currentPage = pageIndex;
                     loadComicsByCategories(pageIndex);
                 });
             }
-            layoutPageNumbers.addView(tvPage);
+            layoutPageNumbers.addView(btnPage);
         }
 
         btnPrevPage.setEnabled(currentPage > 0);
         btnNextPage.setEnabled(currentPage < totalPages - 1);
-        btnPrevPage.setAlpha(currentPage > 0 ? 1.0f : 0.4f);
-        btnNextPage.setAlpha(currentPage < totalPages - 1 ? 1.0f : 0.4f);
+        btnPrevPage.setBackgroundResource(R.drawable.bg_nav_btn);
+        btnPrevPage.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.parseColor("#1E1E1E")));
+        btnPrevPage.setTextColor(Color.parseColor(currentPage > 0 ? "#DBC2B0" : "#555555"));
+        btnNextPage.setBackgroundResource(R.drawable.bg_nav_btn);
+        btnNextPage.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.parseColor("#1E1E1E")));
+        btnNextPage.setTextColor(Color.parseColor(currentPage < totalPages - 1 ? "#DBC2B0" : "#555555"));
     }
 
     private void setupRankingSection() {

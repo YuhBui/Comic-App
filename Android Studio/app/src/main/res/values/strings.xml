@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">ComicApp</string>
+    <string name="header_logo_html"><![CDATA[<font color="#D97707">h</font><font color="#FFFFFF">ay</font><font color="#D97707">c</font><font color="#FFFFFF">omic</font>]]></string>
 </resources>

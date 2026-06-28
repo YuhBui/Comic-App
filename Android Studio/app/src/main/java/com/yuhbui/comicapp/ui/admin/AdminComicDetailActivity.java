@@ -3,6 +3,7 @@ package com.yuhbui.comicapp.ui.admin;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.text.Html; // THÊM
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -13,11 +14,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
-import androidx.activity.OnBackPressedCallback;         // THÊM: Quản lý phím Back cứng hệ thống
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.view.GravityCompat;              // THÊM: Hỗ trợ điều hướng trượt trái
-import androidx.drawerlayout.widget.DrawerLayout;    // THÊM: Khai báo thành phần DrawerLayout root
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
@@ -28,10 +29,12 @@ import com.yuhbui.comicapp.data.model.ComicDetailResponse;
 import com.yuhbui.comicapp.data.model.Comment;
 import com.yuhbui.comicapp.ui.adapters.AdminChapterAdapter;
 import com.yuhbui.comicapp.ui.adapters.AdminCommentAdapter;
-import com.yuhbui.comicapp.utils.HeaderUtils;          // THÊM: Khởi tạo Header tập trung
-import com.yuhbui.comicapp.utils.MenuUtils;            // THÊM: Gọi Menu trượt Admin dùng chung
+import com.yuhbui.comicapp.ui.admin.AdminAddChapterActivity;
+import com.yuhbui.comicapp.utils.HeaderUtils;
+import com.yuhbui.comicapp.utils.MenuUtils;
 import com.yuhbui.comicapp.utils.SharedPrefsManager;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import okhttp3.ResponseBody;
@@ -41,10 +44,10 @@ import retrofit2.Response;
 
 public class AdminComicDetailActivity extends AppCompatActivity implements AdminCommentAdapter.OnCommentAdminActionListener {
 
-    private DrawerLayout drawerLayout; // THÊM: Khai báo DrawerLayout toàn cục
+    private DrawerLayout drawerLayout;
 
     private int comicId;
-    private Integer targetParentCommentId = null; // ĐÃ THÊM: Quản lý ID comment cha đang được phản hồi giống phía User
+    private Integer targetParentCommentId = null;
     private ImageView imgCover;
     private TextView tvTitle, tvAuthor, tvStatus, tvDesc, tvGenre, tvRelease, tvViews, tvFavorites, tvRating;
     private Button btnEdit, btnDelete, btnAdminAddChapter;
@@ -63,7 +66,6 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
 
         comicId = getIntent().getIntExtra("COMIC_ID", -1);
 
-        // 1. Ánh xạ thành phần DrawerLayout mới bao bọc ngoài cùng
         drawerLayout = findViewById(R.id.drawerLayout);
 
         // 2. Khởi tạo và cấu hình thanh Header Admin chuyên biệt
@@ -71,13 +73,9 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
         TextView headerLogo = layoutHeader.findViewById(R.id.headerLogo);
         ImageView headerMenu = layoutHeader.findViewById(R.id.headerMenu);
 
-        // Khởi tạo lõi các tính năng của Header
         HeaderUtils.initHeader(this, layoutHeader, drawerLayout);
-
-        // Gán sự kiện click nút Menu góc trái để đóng/mở Menu trượt Admin
         MenuUtils.setupAdminSideMenu(this, drawerLayout, headerMenu);
 
-        // YÊU CẦU: Khóa ẩn triệt độ nút Tìm kiếm và Thông báo trên Header dành riêng cho Admin
         if (layoutHeader.findViewById(R.id.headerSearch) != null) {
             layoutHeader.findViewById(R.id.headerSearch).setVisibility(View.GONE);
         }
@@ -85,14 +83,16 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
             layoutHeader.findViewById(R.id.headerNotification).setVisibility(View.GONE);
         }
 
-        headerLogo.setText("COMIC APP");
-        headerLogo.setOnClickListener(v -> {
-            Intent intent = new Intent(this, AdminDashboardActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            startActivity(intent);
-        });
+        // ĐÃ SỬA: Thay đổi sang định dạng chữ HTML phân tách màu chữ giống AdminDashboardActivity
+        if (headerLogo != null) {
+            headerLogo.setText(Html.fromHtml("<font color='#D97707'>h</font><font color='#FFFFFF'>ay</font><font color='#D97707'>c</font><font color='#FFFFFF'>omic</font>", Html.FROM_HTML_MODE_COMPACT));
+            headerLogo.setOnClickListener(v -> {
+                Intent intent = new Intent(this, AdminDashboardActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                startActivity(intent);
+            });
+        }
 
-        // 3. CẤU HÌNH: Khóa nút Quay lại hệ thống - Ưu tiên đóng Menu trượt nếu đang mở
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
@@ -106,7 +106,6 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
             }
         });
 
-        // Ánh xạ toàn bộ View bao gồm khối thông tin nâng cấp mở rộng
         imgCover = findViewById(R.id.imgAdminDetailCover);
         tvTitle = findViewById(R.id.tvAdminDetailTitle);
         tvAuthor = findViewById(R.id.tvAdminDetailAuthor);
@@ -127,12 +126,10 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
         rvChapters = findViewById(R.id.rvAdminDetailChapters);
         btnAdminAddChapter = findViewById(R.id.btnAdminAddChapter);
 
-        // Thiết lập danh sách bình luận hàng dọc
         rvComments.setLayoutManager(new LinearLayoutManager(this));
         commentAdapter = new AdminCommentAdapter(this);
         rvComments.setAdapter(commentAdapter);
 
-        // Khởi tạo RecyclerView cấu hình Adapter Chương truyện
         rvChapters.setLayoutManager(new LinearLayoutManager(this));
 
         chapterAdapter = new AdminChapterAdapter(new AdminChapterAdapter.OnChapterAdminActionListener() {
@@ -216,7 +213,6 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
                         edtAdminCommentInput.setHint("Viết bình luận Admin...");
                         tvAdminReplyingTo.setVisibility(android.view.View.GONE);
 
-                        // Ẩn bàn phím
                         android.view.inputmethod.InputMethodManager imm =
                                 (android.view.inputmethod.InputMethodManager) getSystemService(android.content.Context.INPUT_METHOD_SERVICE);
                         if (imm != null && getCurrentFocus() != null) {
@@ -227,7 +223,6 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
                         targetParentCommentId = null;
 
                         if (savedParentId != null) {
-                            // Gửi reply: chuẩn bị auto-fetch và hiển thị reply mới ngay sau khi reload
                             commentAdapter.prepareReloadAfterReply(savedParentId);
                         }
                         loadCommentsData();
@@ -286,7 +281,6 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
         loadChaptersData();
         loadCommentsData();
 
-        // Đồng bộ cập nhật lại ảnh đại diện Admin lên Header nếu có
         View layoutHeader = findViewById(R.id.layoutHeaderAdminDetail);
         if (layoutHeader != null && layoutHeader.findViewById(R.id.headerAvatar) != null) {
             HeaderUtils.loadHeaderAvatar(this, layoutHeader.findViewById(R.id.headerAvatar));
@@ -436,24 +430,46 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
         int currentUserId = SharedPrefsManager.getUserId(this);
         Integer apiUserId = (currentUserId != -1) ? currentUserId : null;
 
-        ApiClient.getApiService().adminGetComicComments(comicId, apiUserId).enqueue(new Callback<List<Map<String, Object>>>() {
+        ApiClient.getApiService().getCommentsByComic(comicId, apiUserId).enqueue(new Callback<List<Comment>>() {
             @Override
-            public void onResponse(Call<List<Map<String, Object>>> call, Response<List<Map<String, Object>>> response) {
+            public void onResponse(Call<List<Comment>> call, Response<List<Comment>> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    commentAdapter.setData(response.body());
+                    List<Map<String, Object>> result = new ArrayList<>();
+                    for (Comment c : response.body()) {
+                        result.add(commentToAdminMap(c));
+                    }
+                    commentAdapter.setData(result);
                 }
             }
-            @Override public void onFailure(Call<List<Map<String, Object>>> call, Throwable t) {}
+            @Override public void onFailure(Call<List<Comment>> call, Throwable t) {}
         });
+    }
+
+    private Map<String, Object> commentToAdminMap(Comment c) {
+        Map<String, Object> map = new java.util.HashMap<>();
+        map.put("commentId", c.getCommentId());
+        map.put("username", c.getUserDisplayName() != null ? c.getUserDisplayName() : "User #" + c.getUserId());
+        map.put("content", c.getContent());
+        map.put("likes", (double) c.getLikeCount());
+        map.put("dislikes", (double) c.getDislikeCount());
+        map.put("liked", c.isLiked());
+        map.put("disliked", c.isDisliked());
+        map.put("isLiked", c.isLiked());
+        map.put("isDisliked", c.isDisliked());
+        map.put("userId", c.getUserId());
+        map.put("avatarUrl", c.getUserAvatarUrl());
+        map.put("replyCount", c.getReplyCount());
+        map.put("parentCommentId", c.getParentCommentId());
+        map.put("chapterName", c.getChapterName());
+        map.put("reports", 0.0);
+        return map;
     }
 
     @Override
     public void onReply(Map<String, Object> comment) {
-        // 1. Lưu ID comment cha để gán parentCommentId khi gửi
         Number idNum = (Number) comment.get("commentId");
         targetParentCommentId = idNum != null ? idNum.intValue() : null;
 
-        // 2. Hiển thị "Đang trả lời @username"
         String username = (String) comment.get("username");
         if (username != null && !username.isEmpty()) {
             tvAdminReplyingTo.setVisibility(android.view.View.VISIBLE);
@@ -468,7 +484,6 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
             edtAdminCommentInput.setHint("Viết phản hồi...");
         }
 
-        // 3. Focus và mở bàn phím tự động
         edtAdminCommentInput.requestFocus();
         android.view.inputmethod.InputMethodManager imm =
                 (android.view.inputmethod.InputMethodManager) getSystemService(android.content.Context.INPUT_METHOD_SERVICE);
@@ -532,7 +547,6 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
                 tvTime.setVisibility(android.view.View.GONE);
             }
 
-            // Đường phân cách mỏng
             android.view.View divider = new android.view.View(this);
             android.widget.LinearLayout.LayoutParams dp = new android.widget.LinearLayout.LayoutParams(
                     android.widget.LinearLayout.LayoutParams.MATCH_PARENT, 1);
@@ -560,7 +574,6 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
             @Override
             public void onResponse(Call<Comment> call, Response<Comment> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    // Cập nhật tại chỗ, không reload toàn bộ → giữ state reply đang mở
                     commentAdapter.updateLikeDislikeInPlace(commentId, response.body());
                 }
             }

@@ -5,16 +5,17 @@ import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.text.Editable;
+import android.text.Html; // THÊM
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.*;
 
-import androidx.activity.OnBackPressedCallback;       // THÊM: Quản lý nút Back
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.view.GravityCompat;              // THÊM: Hỗ trợ đóng mở Drawer
-import androidx.drawerlayout.widget.DrawerLayout;    // THÊM: Thành phần DrawerLayout root
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -30,8 +31,8 @@ import com.yuhbui.comicapp.data.model.Notification;
 import com.yuhbui.comicapp.ui.adapters.AdminComicAdapter;
 import com.yuhbui.comicapp.ui.adapters.AdminNotificationAdapter;
 import com.yuhbui.comicapp.ui.adapters.CategoryFilterAdapter;
-import com.yuhbui.comicapp.utils.HeaderUtils;          // THÊM: Lớp tiện ích Header dùng chung
-import com.yuhbui.comicapp.utils.MenuUtils;            // THÊM: Lớp tiện ích Menu dùng chung
+import com.yuhbui.comicapp.utils.HeaderUtils;
+import com.yuhbui.comicapp.utils.MenuUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,7 +43,7 @@ import retrofit2.Response;
 
 public class AdminManageComicsActivity extends AppCompatActivity implements AdminComicAdapter.OnComicActionListener {
 
-    private DrawerLayout drawerLayout; // THÊM: Khai báo DrawerLayout toàn cục
+    private DrawerLayout drawerLayout;
 
     private RecyclerView rvAdminManageComics;
     private AdminComicAdapter adapter;
@@ -68,21 +69,16 @@ public class AdminManageComicsActivity extends AppCompatActivity implements Admi
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_admin_manage_comics);
 
-        // Ánh xạ thành phần DrawerLayout root mới bổ sung từ XML
         drawerLayout = findViewById(R.id.drawerLayout);
 
-        // 1. Khởi tạo Header đặc thù dành riêng cho Admin
+        // 1. Khởi tạo Header dành riêng cho Admin
         View layoutHeader = findViewById(R.id.layoutHeaderManageComics);
         ImageView headerMenu = layoutHeader.findViewById(R.id.headerMenu);
         TextView headerLogo = layoutHeader.findViewById(R.id.headerLogo);
 
-        // Khởi tạo các tính năng cơ bản của Header dùng chung
         HeaderUtils.initHeader(this, layoutHeader, drawerLayout);
-
-        // Kích hoạt Menu trượt Admin thay vì đóng trang (finish) như cũ
         MenuUtils.setupAdminSideMenu(this, drawerLayout, headerMenu);
 
-        // YÊU CẦU: Khóa ẩn triệt để hai nút Tìm kiếm và Thông báo trên thanh Header Admin
         if (layoutHeader.findViewById(R.id.headerSearch) != null) {
             layoutHeader.findViewById(R.id.headerSearch).setVisibility(View.GONE);
         }
@@ -90,15 +86,22 @@ public class AdminManageComicsActivity extends AppCompatActivity implements Admi
             layoutHeader.findViewById(R.id.headerNotification).setVisibility(View.GONE);
         }
 
-        headerLogo.setText("COMIC APP");
-        headerLogo.setTextColor(Color.parseColor("#E74C3C"));
-        headerLogo.setOnClickListener(v -> {
-            Intent intent = new Intent(this, AdminDashboardActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            startActivity(intent);
-        });
+        // ĐÃ SỬA: Thay đổi cấu trúc chữ logo dạng Html đa màu đồng bộ thương hiệu "haycomic"
+        if (headerLogo != null) {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                headerLogo.setText(Html.fromHtml("<font color='#D97707'>h</font><font color='#FFFFFF'>ay</font><font color='#D97707'>c</font><font color='#FFFFFF'>omic</font>", Html.FROM_HTML_MODE_LEGACY));
+            } else {
+                headerLogo.setText(Html.fromHtml("<font color='#D97707'>h</font><font color='#FFFFFF'>ay</font><font color='#D97707'>c</font><font color='#FFFFFF'>omic</font>"));
+            }
+            // ĐÃ XÓA dòng ép màu cứng Color.parseColor("#E74C3C") để chống mất màu HTML
 
-        // THÊM: Lắng nghe sự kiện nút Back cứng - Ưu tiên đóng Menu trượt nếu nó đang mở
+            headerLogo.setOnClickListener(v -> {
+                Intent intent = new Intent(this, AdminDashboardActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                startActivity(intent);
+            });
+        }
+
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
@@ -112,27 +115,22 @@ public class AdminManageComicsActivity extends AppCompatActivity implements Admi
             }
         });
 
-        // 2. Ánh xạ các thành phần điều khiển
         edtComicSearch = findViewById(R.id.edtComicSearch);
         imgComicFilter = findViewById(R.id.imgAdminComicFilter);
         btnPrevPage = findViewById(R.id.btnComicPrevPage);
         btnNextPage = findViewById(R.id.btnComicNextPage);
         layoutPageNumbersContainer = findViewById(R.id.layoutComicPageNumbersContainer);
 
-        // 3. Cài đặt RecyclerView danh sách truyện hiển thị
         rvAdminManageComics = findViewById(R.id.rvAdminManageComics);
         rvAdminManageComics.setLayoutManager(new LinearLayoutManager(this));
         adapter = new AdminComicAdapter(this);
         rvAdminManageComics.setAdapter(adapter);
 
-        // 4. Khởi tạo trạng thái ban đầu của bộ lọc tái sử dụng
         selectedCategoryIds.add(0);
         setupFilterAdapter();
 
-        // 5. Bắt sự kiện bấm vào nút Biểu tượng Bộ lọc -> Mở hộp thoại BottomSheet
         imgComicFilter.setOnClickListener(v -> showCategoryFilterDialog());
 
-        // 6. Sự kiện click nút Thêm truyện nổi
         fabAddComic = findViewById(R.id.fabAddComic);
         fabAddComic.setOnClickListener(v -> {
             Intent intent = new Intent(this, AdminEditComicActivity.class);
@@ -143,7 +141,6 @@ public class AdminManageComicsActivity extends AppCompatActivity implements Admi
         loadCategoriesDataForFilterList();
     }
 
-    // Làm tươi Avatar trên Header mỗi lần quay lại trang quản lý truyện này
     @Override
     protected void onResume() {
         super.onResume();
@@ -264,9 +261,13 @@ public class AdminManageComicsActivity extends AppCompatActivity implements Admi
     private void renderPaginationUIControls() {
         layoutPageNumbersContainer.removeAllViews();
         btnPrevPage.setEnabled(currentPage > 0);
-        btnPrevPage.setAlpha(currentPage > 0 ? 1.0f : 0.3f);
         btnNextPage.setEnabled(currentPage < totalPages - 1);
-        btnNextPage.setAlpha(currentPage < totalPages - 1 ? 1.0f : 0.3f);
+        btnPrevPage.setBackgroundResource(R.drawable.bg_nav_btn);
+        btnPrevPage.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#1E1E1E")));
+        btnPrevPage.setTextColor(Color.parseColor(currentPage > 0 ? "#DBC2B0" : "#555555"));
+        btnNextPage.setBackgroundResource(R.drawable.bg_nav_btn);
+        btnNextPage.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#1E1E1E")));
+        btnNextPage.setTextColor(Color.parseColor(currentPage < totalPages - 1 ? "#DBC2B0" : "#555555"));
 
         if (totalPages <= 0) return;
 
@@ -296,11 +297,11 @@ public class AdminManageComicsActivity extends AppCompatActivity implements Admi
             tvPage.setBackgroundResource(R.drawable.bg_page_btn);
 
             if (i == currentPage) {
-                tvPage.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#E74C3C")));
-                tvPage.setTextColor(Color.WHITE);
+                tvPage.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#FFB77D")));
+                tvPage.setTextColor(Color.parseColor("#4D2600"));
             } else {
-                tvPage.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#EEEEEE")));
-                tvPage.setTextColor(Color.parseColor("#333333"));
+                tvPage.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#1E1E1E")));
+                tvPage.setTextColor(Color.parseColor("#DBC2B0"));
                 tvPage.setOnClickListener(v -> {
                     currentPage = targetPageIndex;
                     loadComicsDataFromServer();
@@ -378,6 +379,46 @@ public class AdminManageComicsActivity extends AppCompatActivity implements Admi
         return Math.round(dp * density);
     }
 
-    @Override public void onEdit(Comic comic) {}
-    @Override public void onDelete(Comic comic, int position) {}
+    // TÌM VÀ SỬA LẠI HÀM NÀY TRONG AdminManageComicsActivity.java:
+    @Override
+    public void onEdit(Comic comic) {
+        Intent intent = new Intent(this, AdminEditComicActivity.class);
+        intent.putExtra("EDIT_COMIC_ID", comic.getComicId());
+
+        // THÊM DÒNG NÀY: Gửi toàn bộ đối tượng truyện đã đóng gói Serializable sang màn hình sửa
+        intent.putExtra("COMIC_OBJECT", comic);
+
+        startActivity(intent);
+    }
+
+    @Override public void onDelete(Comic comic, int position) {
+        new AlertDialog.Builder(this)
+                .setTitle("Xác nhận xóa truyện")
+                .setMessage("Bạn có chắc chắn muốn xóa vĩnh viễn bộ truyện '" + comic.getTitle() + "' cùng toàn bộ chương và ảnh đi kèm không?")
+                .setPositiveButton("Xóa vĩnh viễn", (dialog, which) -> {
+
+                    // Gọi API kết nối Server để thực hiện xóa bản ghi DB
+                    ApiClient.getApiService().adminDeleteComic(comic.getComicId()).enqueue(new Callback<okhttp3.ResponseBody>() {
+                        @Override
+                        public void onResponse(Call<okhttp3.ResponseBody> call, Response<okhttp3.ResponseBody> response) {
+                            if (response.isSuccessful()) {
+                                Toast.makeText(AdminManageComicsActivity.this, "Đã xóa bộ truyện thành công!", Toast.LENGTH_SHORT).show();
+
+                                // Làm mới và tải lại danh sách truyện phân trang chuẩn xác từ máy chủ
+                                loadComicsDataFromServer();
+                            } else {
+                                Toast.makeText(AdminManageComicsActivity.this, "Xóa thất bại! Server từ chối lệnh.", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(Call<okhttp3.ResponseBody> call, Throwable t) {
+                            Toast.makeText(AdminManageComicsActivity.this, "Lỗi kết nối mạng, không thể xóa truyện!", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+
+                })
+                .setNegativeButton("Hủy bỏ", null)
+                .show();
+    }
 }

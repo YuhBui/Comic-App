@@ -20,7 +20,7 @@ import retrofit2.Response;
 
 public class ForgotPasswordActivity extends AppCompatActivity {
 
-    private EditText edtForgotEmail, edtOtpCode, edtForgotNewPassword;
+    private EditText edtForgotEmail, edtOtpCode, edtForgotNewPassword, edtForgotConfirmNewPassword;
     private Button btnSendOtp, btnConfirmReset;
     private LinearLayout layoutResetPasswordStep;
     private ProgressBar forgotProgressBar;
@@ -33,15 +33,16 @@ public class ForgotPasswordActivity extends AppCompatActivity {
         edtForgotEmail = findViewById(R.id.edtForgotEmail);
         edtOtpCode = findViewById(R.id.edtOtpCode);
         edtForgotNewPassword = findViewById(R.id.edtForgotNewPassword);
+        edtForgotConfirmNewPassword = findViewById(R.id.edtForgotConfirmNewPassword);
         btnSendOtp = findViewById(R.id.btnSendOtp);
         btnConfirmReset = findViewById(R.id.btnConfirmReset);
         layoutResetPasswordStep = findViewById(R.id.layoutResetPasswordStep);
         forgotProgressBar = findViewById(R.id.forgotProgressBar);
 
-        // Giai đoạn 1: Gửi yêu cầu mã OTP
+        // Giai đoạn 1: Gửi yêu cầu mã OTP về Gmail
         btnSendOtp.setOnClickListener(v -> requestOtpFromBackend());
 
-        // Giai đoạn 2: Gửi OTP kèm mật khẩu mới để cập nhật dữ liệu
+        // Giai đoạn 2: Xác nhận OTP và đổi mật khẩu mới
         btnConfirmReset.setOnClickListener(v -> submitNewPasswordToBackend());
     }
 
@@ -63,13 +64,12 @@ public class ForgotPasswordActivity extends AppCompatActivity {
                 btnSendOtp.setEnabled(true);
 
                 if (response.isSuccessful()) {
-                    Toast.makeText(ForgotPasswordActivity.this, "Mã OTP đã được gửi! Vui lòng kiểm tra màn hình log console của Server.", Toast.LENGTH_LONG).show();
-                    // Hiển thị phần nhập mã OTP và đổi mật khẩu mới lên
+                    Toast.makeText(ForgotPasswordActivity.this, "Mã OTP đã gửi! Vui lòng kiểm tra hộp thư Gmail.", Toast.LENGTH_LONG).show();
                     layoutResetPasswordStep.setVisibility(View.VISIBLE);
-                    edtForgotEmail.setEnabled(false); // Khóa ô nhập email để cố định thông tin xác thực
-                    btnSendOtp.setVisibility(View.GONE); // Ẩn nút gửi mã ban đầu
+                    edtForgotEmail.setEnabled(false);
+                    btnSendOtp.setVisibility(View.GONE);
                 } else {
-                    Toast.makeText(ForgotPasswordActivity.this, "Email này không tồn tại trong hệ thống!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(ForgotPasswordActivity.this, "Email này không tồn tại trên hệ thống!", Toast.LENGTH_SHORT).show();
                 }
             }
 
@@ -86,10 +86,18 @@ public class ForgotPasswordActivity extends AppCompatActivity {
         String email = edtForgotEmail.getText().toString().trim();
         String otp = edtOtpCode.getText().toString().trim();
         String newPassword = edtForgotNewPassword.getText().toString().trim();
+        String confirmNewPassword = edtForgotConfirmNewPassword.getText().toString().trim(); // Lấy chữ người dùng gõ ở ô thứ 2
 
-        if (otp.isEmpty() || newPassword.isEmpty()) {
-            Toast.makeText(this, "Vui lòng nhập đầy đủ mã OTP và Mật khẩu mới", Toast.LENGTH_SHORT).show();
+        // 1. Kiểm tra không được bỏ trống thông tin
+        if (otp.isEmpty() || newPassword.isEmpty() || confirmNewPassword.isEmpty()) {
+            Toast.makeText(this, "Vui lòng nhập đầy đủ mã OTP và mật khẩu mới thiết lập", Toast.LENGTH_SHORT).show();
             return;
+        }
+
+        // 2. BƯỚC QUAN TRỌNG: Kiểm tra trùng khớp mật khẩu nhập 2 lần ở phía App để tối ưu hệ thống
+        if (!newPassword.equals(confirmNewPassword)) {
+            Toast.makeText(this, "Mật khẩu xác nhận không trùng khớp! Vui lòng nhập lại.", Toast.LENGTH_LONG).show();
+            return; // Chặn đứng luồng kết nối không cho gọi API gửi lên server
         }
 
         if (forgotProgressBar != null) forgotProgressBar.setVisibility(View.VISIBLE);
@@ -104,10 +112,10 @@ public class ForgotPasswordActivity extends AppCompatActivity {
                 btnConfirmReset.setEnabled(true);
 
                 if (response.isSuccessful()) {
-                    Toast.makeText(ForgotPasswordActivity.this, "Đặt lại mật khẩu thành công! Hãy đăng nhập bằng mật khẩu mới.", Toast.LENGTH_LONG).show();
-                    finish(); // Đóng màn hình khôi phục, quay trở lại màn hình đăng nhập
+                    Toast.makeText(ForgotPasswordActivity.this, "Đặt lại mật khẩu thành công! Mời bạn đăng nhập.", Toast.LENGTH_LONG).show();
+                    finish();
                 } else {
-                    Toast.makeText(ForgotPasswordActivity.this, "Mã OTP không chính xác hoặc đã hết hạn!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(ForgotPasswordActivity.this, "Mã OTP nhập vào sai hoặc đã hết hạn!", Toast.LENGTH_SHORT).show();
                 }
             }
 

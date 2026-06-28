@@ -129,14 +129,16 @@ public class AdminChapterDetailActivity extends AppCompatActivity implements Adm
 
         // ĐÃ SỬA: Khi bấm xóa trang truyện, chỉ gỡ khỏi danh sách hiển thị và lưu ID vào hàng chờ xóa
         adapter = new AdminChapterImageAdapter((imageId, position) -> {
+            // ĐỀ PHÒNG: Kiểm tra bounds mảng an toàn
             if (position >= 0 && position < pageList.size()) {
                 Map<String, Object> removedPage = pageList.remove(position);
-                if (removedPage.get("imageId") != null) {
-                    int imgId = ((Double) removedPage.get("imageId")).intValue();
-                    if (imgId > 0) {
-                        pagesToDeleteLocal.add(imgId); // Đưa vào hàng chờ xóa thật trên server
-                    }
+
+                // Nếu ảnh bị xóa là ảnh cũ tồn tại trên server (imageId > 0), đưa vào danh sách chờ xóa thật
+                if (imageId > 0) {
+                    pagesToDeleteLocal.add(imageId);
                 }
+
+                // Cập nhật lại giao diện và tính toán lại số trang
                 refreshLocalPagesUI();
             }
         });
@@ -286,6 +288,7 @@ public class AdminChapterDetailActivity extends AppCompatActivity implements Adm
     private void setupAdminHeaderView() {
         View layoutHeader = findViewById(R.id.layoutHeaderChapterDetail);
         TextView headerLogo = layoutHeader.findViewById(R.id.headerLogo);
+        ImageView headerAvatar = layoutHeader.findViewById(R.id.headerAvatar);
 
         HeaderUtils.initHeader(this, layoutHeader, drawerLayout);
         MenuUtils.setupAdminSideMenu(this, drawerLayout, layoutHeader.findViewById(R.id.headerMenu));
@@ -298,13 +301,11 @@ public class AdminChapterDetailActivity extends AppCompatActivity implements Adm
         }
 
         if (headerLogo != null) {
-            headerLogo.setText("COMIC APP");
-            headerLogo.setTextColor(Color.parseColor("#E74C3C"));
-            headerLogo.setOnClickListener(v -> {
-                Intent intent = new Intent(this, AdminDashboardActivity.class);
-                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                startActivity(intent);
-            });
+            headerLogo.setText(android.text.Html.fromHtml("<font color='#D97707'>h</font><font color='#FFFFFF'>ay</font><font color='#D97707'>c</font><font color='#FFFFFF'>omic</font>"));
+        }
+
+        if (headerAvatar != null) {
+            headerAvatar.setOnClickListener(v -> showAvatarPopupMenu(v));
         }
     }
 
@@ -445,20 +446,50 @@ public class AdminChapterDetailActivity extends AppCompatActivity implements Adm
             pageList.get(i).put("pageNumber", (double) (i + 1));
         }
         adapter.setData(pageList);
+
+        // GIẢI PHÁP: Ép buộc RecyclerView yêu cầu tính toán lại chiều cao đo lường dọc lồng nhau bên trong NestedScrollView
+        rvPages.post(() -> {
+            rvPages.requestLayout();
+            updateSaveButtonState(); // Tự động mở/khóa nút "Lưu thay đổi" thời gian thực khi có hành động Thêm/Xóa ảnh
+        });
     }
 
     private void loadChapterComments() {
-        int currentUserId = SharedPrefsManager.getUserId(this);
-        Integer apiUserId = (currentUserId != -1) ? currentUserId : null;
-        ApiClient.getApiService().adminGetChapterComments(chapterId).enqueue(new Callback<List<Map<String, Object>>>() {
+        // Dùng user endpoint — server đã lọc sẵn chỉ trả về comment gốc (không có reply)
+        ApiClient.getApiService().getCommentsByChapter(chapterId).enqueue(new Callback<List<Comment>>() {
             @Override
-            public void onResponse(Call<List<Map<String, Object>>> call, Response<List<Map<String, Object>>> response) {
+            public void onResponse(Call<List<Comment>> call, Response<List<Comment>> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    commentAdapter.setData(response.body());
+                    List<Map<String, Object>> result = new ArrayList<>();
+                    for (Comment c : response.body()) {
+                        result.add(commentToAdminMap(c));
+                    }
+                    commentAdapter.setData(result);
                 }
             }
-            @Override public void onFailure(Call<List<Map<String, Object>>> call, Throwable t) {}
+            @Override public void onFailure(Call<List<Comment>> call, Throwable t) {}
         });
+    }
+
+    /** Chuyển Comment (user model) sang Map với field names mà AdminCommentAdapter dùng */
+    private Map<String, Object> commentToAdminMap(Comment c) {
+        Map<String, Object> map = new java.util.HashMap<>();
+        map.put("commentId", c.getCommentId());
+        map.put("username", c.getUserDisplayName() != null ? c.getUserDisplayName() : "User #" + c.getUserId());
+        map.put("content", c.getContent());
+        map.put("likes", (double) c.getLikeCount());
+        map.put("dislikes", (double) c.getDislikeCount());
+        map.put("liked", c.isLiked());
+        map.put("disliked", c.isDisliked());
+        map.put("isLiked", c.isLiked());
+        map.put("isDisliked", c.isDisliked());
+        map.put("userId", c.getUserId());
+        map.put("avatarUrl", c.getUserAvatarUrl());
+        map.put("replyCount", c.getReplyCount());
+        map.put("parentCommentId", c.getParentCommentId());
+        map.put("chapterName", c.getChapterName());
+        map.put("reports", 0.0); // Chức năng báo cáo xem qua nút "Đọc báo cáo"
+        return map;
     }
 
     private void sendChapterCommentToServer() {
@@ -509,20 +540,22 @@ public class AdminChapterDetailActivity extends AppCompatActivity implements Adm
                 .setTitle("Hủy bỏ thay đổi")
                 .setMessage("Bạn có chắc chắn muốn hủy bỏ mọi sửa đổi chưa lưu trên chương này không?")
                 .setPositiveButton("Hủy bỏ hết", (dialog, which) -> {
-                    // Khôi phục thông tin chương cũ
                     if (currentChapterIndex != -1 && currentChapterIndex < allChaptersInComic.size()) {
                         Map<String, Object> currentCh = allChaptersInComic.get(currentChapterIndex);
                         edtChapterNumber.setText(String.valueOf(currentCh.get("chapterNumber")));
                         edtChapterTitle.setText(currentCh.get("title") != null ? (String) currentCh.get("title") : "");
                     }
 
-                    // Khôi phục danh sách ảnh cũ
                     pagesToDeleteLocal.clear();
                     pageList.clear();
                     for (Map<String, Object> op : originalPageList) {
                         pageList.add(new HashMap<>(op));
                     }
                     refreshLocalPagesUI();
+
+                    // THÊM: Đảm bảo nút Lưu quay về trạng thái mờ khóa ban đầu sau khi hủy bỏ
+                    updateSaveButtonState();
+
                     Toast.makeText(this, "Đã khôi phục dữ liệu gốc!", Toast.LENGTH_SHORT).show();
                 })
                 .setNegativeButton("Tiếp tục sửa", null)
@@ -976,5 +1009,30 @@ public class AdminChapterDetailActivity extends AppCompatActivity implements Adm
         btnSaveChanges.setEnabled(changed);
         // Thay đổi độ mờ của nút để hiển thị trực quan trạng thái đóng/mở khóa
         btnSaveChanges.setAlpha(changed ? 1.0f : 0.5f);
+    }
+
+    // THÊM PHƯƠNG THỨC NÀY VÀO TRONG CLASS AdminChapterDetailActivity.java
+    private void showAvatarPopupMenu(View anchorView) {
+        androidx.appcompat.widget.PopupMenu popupMenu = new androidx.appcompat.widget.PopupMenu(this, anchorView);
+        popupMenu.getMenu().add(0, 1, 1, "👤 Hồ sơ cá nhân");
+        popupMenu.getMenu().add(0, 2, 2, "🚪 Đăng xuất hệ thống");
+
+        popupMenu.setOnMenuItemClickListener(item -> {
+            int id = item.getItemId();
+            if (id == 1) {
+                Intent intent = new Intent(AdminChapterDetailActivity.this, com.yuhbui.comicapp.ui.ProfileActivity.class);
+                startActivity(intent);
+                return true;
+            } else if (id == 2) {
+                SharedPrefsManager.logout(this);
+                Intent intent = new Intent(this, com.yuhbui.comicapp.ui.LoginActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intent);
+                finish();
+                return true;
+            }
+            return false;
+        });
+        popupMenu.show();
     }
 }

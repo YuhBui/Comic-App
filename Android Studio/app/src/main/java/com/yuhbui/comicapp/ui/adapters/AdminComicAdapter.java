@@ -59,7 +59,6 @@ public class AdminComicAdapter extends RecyclerView.Adapter<AdminComicAdapter.Ad
         String timeUpdate = comic.getTimeUpdated();
         holder.tvTimeUpdate.setText(timeUpdate != null ? formatToDateOnly(timeUpdate) : "Đang cập nhật");
 
-        // ĐÃ SỬA: Chỉ truyền giá trị số đã format (K, M), bỏ đi emoji unicode vì giao diện đã có cụm Icon riêng biệt
         holder.tvViews.setText(formatNumber(comic.getViewCount()));
         holder.tvLikes.setText(formatNumber(comic.getFollowCount()));
         holder.tvComments.setText(formatNumber(comic.getCommentCount()));

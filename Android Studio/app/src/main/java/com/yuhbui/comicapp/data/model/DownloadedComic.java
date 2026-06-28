@@ -8,7 +8,7 @@ public class DownloadedComic {
     @PrimaryKey
     private int comicId;
     private String title;
-    private String localCoverPath; // Đường dẫn file ảnh bìa local trong máy
+    private String localCoverPath;
     private String author;
     private String description;
     private String genres;

@@ -114,6 +114,8 @@ public class FollowActivity extends AppCompatActivity {
         layoutEmptyFavorites       = findViewById(R.id.layoutEmptyFavorites);
         imgFavoritesFilter         = findViewById(R.id.imgPageFilter);
 
+        headerLogo.setText(android.text.Html.fromHtml("<font color='#D97707'>h</font><font color='#FFFFFF'>ay</font><font color='#D97707'>c</font><font color='#FFFFFF'>omic</font>", android.text.Html.FROM_HTML_MODE_COMPACT));
+
         currentUserId = SharedPrefsManager.getUserId(this);
     }
 

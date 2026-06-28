@@ -3,7 +3,9 @@ package com.yuhbui.comicapp.ui.admin;
 import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.Build; // THÊM
 import android.os.Bundle;
+import android.text.Html;  // THÊM
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,8 +16,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.PickVisualMediaRequest; // THÊM
-import androidx.activity.result.contract.ActivityResultContracts; // THÊM
+import androidx.activity.result.PickVisualMediaRequest;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.GravityCompat;
@@ -27,6 +29,7 @@ import com.yuhbui.comicapp.R;
 import com.yuhbui.comicapp.data.api.ApiClient;
 import com.yuhbui.comicapp.utils.HeaderUtils;
 import com.yuhbui.comicapp.utils.MenuUtils;
+import com.yuhbui.comicapp.utils.SharedPrefsManager; // THÊM
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -50,9 +53,11 @@ public class AdminAddChapterActivity extends AppCompatActivity {
 
     private List<Uri> selectedImageUris = new ArrayList<>();
     private SelectedImagesAdapter previewAdapter;
-
-    // ĐÃ SỬA: Nâng cấp lên Photo Picker chuyên dụng hỗ trợ đa chọn mượt mà
     private ActivityResultLauncher<PickVisualMediaRequest> pickMultipleMediaLauncher;
+
+    private View layoutHeaderAdmin;
+    private ImageView headerMenu, headerAvatar;
+    private TextView headerLogo;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,16 +74,7 @@ public class AdminAddChapterActivity extends AppCompatActivity {
         btnSave = findViewById(R.id.btnSaveChapterWithImages);
         rvImagesPreview = findViewById(R.id.rvSelectedImagesPreview);
 
-        View layoutHeader = findViewById(R.id.layoutHeaderAddChapter);
-        HeaderUtils.initHeader(this, layoutHeader, drawerLayout);
-        MenuUtils.setupAdminSideMenu(this, drawerLayout, layoutHeader.findViewById(R.id.headerMenu));
-
-        if (layoutHeader.findViewById(R.id.headerSearch) != null) {
-            layoutHeader.findViewById(R.id.headerSearch).setVisibility(View.GONE);
-        }
-        if (layoutHeader.findViewById(R.id.headerNotification) != null) {
-            layoutHeader.findViewById(R.id.headerNotification).setVisibility(View.GONE);
-        }
+        setupAdminHeaderView();
 
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
@@ -93,25 +89,24 @@ public class AdminAddChapterActivity extends AppCompatActivity {
             }
         });
 
-        // CẤU HÌNH: Thiết lập hiển thị hàng dọc chuẩn như chi tiết ảnh đọc truyện
+        // Thiết lập hiển thị hàng dọc chuẩn như chi tiết ảnh đọc truyện
         rvImagesPreview.setLayoutManager(new LinearLayoutManager(this));
         rvImagesPreview.setNestedScrollingEnabled(false);
         previewAdapter = new SelectedImagesAdapter();
         rvImagesPreview.setAdapter(previewAdapter);
 
-        // ĐÃ SỬA: Đăng ký nhận diện dữ liệu từ trình chọn ảnh hệ thống mới
+        // Đăng ký nhận diện dữ liệu từ trình chọn ảnh hệ thống mới
         pickMultipleMediaLauncher = registerForActivityResult(
-                new ActivityResultContracts.PickMultipleVisualMedia(100), // Cho phép chọn tối đa 100 ảnh cùng lúc
+                new ActivityResultContracts.PickMultipleVisualMedia(100),
                 uris -> {
                     if (uris != null && !uris.isEmpty()) {
-                        selectedImageUris.addAll(uris); // Thêm nối tiếp các ảnh mới chọn vào danh sách
+                        selectedImageUris.addAll(uris);
                         updateImagePreview();
                     }
                 }
         );
 
         btnSelectImages.setOnClickListener(v -> {
-            // Khởi chạy trình chọn ảnh đa nhiệm an toàn
             pickMultipleMediaLauncher.launch(new PickVisualMediaRequest.Builder()
                     .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE)
                     .build());
@@ -119,33 +114,25 @@ public class AdminAddChapterActivity extends AppCompatActivity {
 
         btnSave.setOnClickListener(v -> performUploadChapterWithImages());
 
-        // THÊM ĐOẠN CODE NÀY VÀO TRONG HÀM onCreate():
         btnCancel = findViewById(R.id.btnCancelAddChapter);
-
         btnCancel.setOnClickListener(v -> {
-            // Hiển thị Dialog xác nhận để tránh việc Admin vô tình chạm nhầm nút làm mất danh sách ảnh đã chọn
             new androidx.appcompat.app.AlertDialog.Builder(this)
                     .setTitle("Xác nhận hủy dữ liệu")
                     .setMessage("Bạn có chắc chắn muốn xóa toàn bộ thông tin chương và danh sách ảnh đã chọn không?")
                     .setPositiveButton("Xóa hết", (dialog, which) -> {
-                        // 1. Xóa sạch chữ trong 2 ô nhập liệu
                         edtChapterNumber.setText("");
                         edtChapterTitle.setText("");
-
-                        // 2. Làm rỗng mảng lưu Uri ảnh và cập nhật lại giao diện hiển thị dọc công khai
                         selectedImageUris.clear();
                         updateImagePreview();
                         checkFormValidity();
-
                         Toast.makeText(this, "Đã xóa toàn bộ dữ liệu đang nhập thành công!", Toast.LENGTH_SHORT).show();
                     })
                     .setNegativeButton("Giữ lại", null)
                     .show();
         });
 
-        // THÊM ĐOẠN NÀY VÀO TRONG HÀM onCreate() CỦA AdminAddChapterActivity
         btnSave.setEnabled(false);
-        btnSave.setAlpha(0.5f); // Mờ nút Lưu lúc ban đầu
+        btnSave.setAlpha(0.5f);
 
         edtChapterNumber.addTextChangedListener(new android.text.TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -154,6 +141,71 @@ public class AdminAddChapterActivity extends AppCompatActivity {
             }
             @Override public void afterTextChanged(android.text.Editable s) {}
         });
+    }
+
+    // --- THÊM HÀM ONRESUME ĐỂ TỰ ĐỘNG TẢI AVATAR KHI CẬP NHẬT HỒ SƠ QUAY LẠI ---
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (layoutHeaderAdmin != null && layoutHeaderAdmin.findViewById(R.id.headerAvatar) != null) {
+            HeaderUtils.loadHeaderAvatar(this, layoutHeaderAdmin.findViewById(R.id.headerAvatar));
+        }
+    }
+
+    // --- THÊM HÀM THIẾT LẬP HEADER CHUYÊN DỤNG ĐỒNG BỘ DASHBOARD ---
+    private void setupAdminHeaderView() {
+        layoutHeaderAdmin = findViewById(R.id.layoutHeaderAddChapter);
+        headerMenu = layoutHeaderAdmin.findViewById(R.id.headerMenu);
+        headerLogo = layoutHeaderAdmin.findViewById(R.id.headerLogo);
+        headerAvatar = layoutHeaderAdmin.findViewById(R.id.headerAvatar);
+
+        HeaderUtils.initHeader(this, layoutHeaderAdmin, drawerLayout);
+        MenuUtils.setupAdminSideMenu(this, drawerLayout, headerMenu);
+
+        if (layoutHeaderAdmin.findViewById(R.id.headerSearch) != null) {
+            layoutHeaderAdmin.findViewById(R.id.headerSearch).setVisibility(View.GONE);
+        }
+        if (layoutHeaderAdmin.findViewById(R.id.headerNotification) != null) {
+            layoutHeaderAdmin.findViewById(R.id.headerNotification).setVisibility(View.GONE);
+        }
+
+        // ĐÃ SỬA: Thiết lập định dạng chữ đa màu sắc thương hiệu "haycomic" thay cho chữ đỏ mặc định cũ
+        if (headerLogo != null) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                headerLogo.setText(Html.fromHtml("<font color='#D97707'>h</font><font color='#FFFFFF'>ay</font><font color='#D97707'>c</font><font color='#FFFFFF'>omic</font>", Html.FROM_HTML_MODE_COMPACT));
+            } else {
+                headerLogo.setText(Html.fromHtml("<font color='#D97707'>h</font><font color='#FFFFFF'>ay</font><font color='#D97707'>c</font><font color='#FFFFFF'>omic</font>"));
+            }
+        }
+
+        if (headerAvatar != null) {
+            headerAvatar.setOnClickListener(v -> showAvatarPopupMenu(v));
+        }
+    }
+
+    // --- THÊM HÀM XỔ POPUP MENU AVATAR ĐĂNG XUẤT/HỒ SƠ GIỐNG HỆT BIỂU ĐỒ ---
+    private void showAvatarPopupMenu(View anchorView) {
+        androidx.appcompat.widget.PopupMenu popupMenu = new androidx.appcompat.widget.PopupMenu(this, anchorView);
+        popupMenu.getMenu().add(0, 1, 1, "👤 Hồ sơ cá nhân");
+        popupMenu.getMenu().add(0, 2, 2, "🚪 Đăng xuất hệ thống");
+
+        popupMenu.setOnMenuItemClickListener(item -> {
+            int id = item.getItemId();
+            if (id == 1) {
+                Intent intent = new Intent(AdminAddChapterActivity.this, com.yuhbui.comicapp.ui.ProfileActivity.class);
+                startActivity(intent);
+                return true;
+            } else if (id == 2) {
+                SharedPrefsManager.logout(this);
+                Intent intent = new Intent(this, com.yuhbui.comicapp.ui.LoginActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intent);
+                finish();
+                return true;
+            }
+            return false;
+        });
+        popupMenu.show();
     }
 
     private void updateImagePreview() {
@@ -231,12 +283,10 @@ public class AdminAddChapterActivity extends AppCompatActivity {
         return byteBuffer.toByteArray();
     }
 
-    // === ADAPTER HIỂN THỊ ẢNH XẾP DỌC THEO KHUNG HÌNH THỰC TẾ ===
     private class SelectedImagesAdapter extends RecyclerView.Adapter<SelectedImagesAdapter.PreviewViewHolder> {
         @NonNull
         @Override
         public PreviewViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            // Giữ nguyên liên kết layout item gốc của bạn để đảm bảo không làm thay đổi thiết kế
             View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_admin_chapter_image, parent, false);
             return new PreviewViewHolder(v);
         }
@@ -280,7 +330,6 @@ public class AdminAddChapterActivity extends AppCompatActivity {
         }
     }
 
-    // THÊM VÀO TRONG CLASS ADMINADDCHAPTERACTIVITY
     private void checkFormValidity() {
         String num = edtChapterNumber.getText().toString().trim();
         boolean isValid = !num.isEmpty() && !selectedImageUris.isEmpty();

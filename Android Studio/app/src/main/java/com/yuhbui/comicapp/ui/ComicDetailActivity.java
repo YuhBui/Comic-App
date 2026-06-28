@@ -119,6 +119,8 @@ public class ComicDetailActivity extends AppCompatActivity {
         layoutHeader = findViewById(R.id.layoutHeader);
         headerLogo = layoutHeader.findViewById(R.id.headerLogo);
 
+        headerLogo.setText(android.text.Html.fromHtml("<font color='#D97707'>h</font><font color='#FFFFFF'>ay</font><font color='#D97707'>c</font><font color='#FFFFFF'>omic</font>", android.text.Html.FROM_HTML_MODE_COMPACT));
+
         HeaderUtils.initHeader(this, layoutHeader, drawerLayout);
         MenuUtils.setupSideMenu(this, drawerLayout, layoutHeader.findViewById(R.id.headerMenu));
 

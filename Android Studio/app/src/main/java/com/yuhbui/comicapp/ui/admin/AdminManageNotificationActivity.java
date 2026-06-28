@@ -131,8 +131,7 @@ public class AdminManageNotificationActivity extends AppCompatActivity {
             }
 
             if (headerLogo != null) {
-                headerLogo.setText("COMIC APP");
-                headerLogo.setTextColor(Color.parseColor("#E74C3C"));
+                headerLogo.setText(android.text.Html.fromHtml("<font color='#D97707'>h</font><font color='#FFFFFF'>ay</font><font color='#D97707'>c</font><font color='#FFFFFF'>omic</font>", android.text.Html.FROM_HTML_MODE_COMPACT));
                 headerLogo.setOnClickListener(v -> {
                     Intent intent = new Intent(this, AdminDashboardActivity.class);
                     intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);

@@ -99,33 +99,34 @@ public class AdminEditComicActivity extends AppCompatActivity {
         btnSaveComicForm.setText("Thêm truyện mới");
 
         // Kiểm tra xử lý nạp dữ liệu nếu là luồng SỬA BỘ TRUYỆN HỆ THỐNG
+        // TÌM KHỐI IF CHECK INTENT TRONG HÀM onCreate() CỦA AdminEditComicActivity.java VÀ SỬA THÀNH:
         if (getIntent() != null && getIntent().hasExtra("EDIT_COMIC_ID")) {
             editComicId = getIntent().getIntExtra("EDIT_COMIC_ID", -1);
 
             tvFormTitle.setText("Cập nhật truyện");
             btnSaveComicForm.setText("Cập nhật");
 
-            edtComicTitle.setText(getIntent().getStringExtra("TITLE"));
-            edtComicAuthor.setText(getIntent().getStringExtra("AUTHOR"));
-            edtComicDescription.setText(getIntent().getStringExtra("DESC"));
-            uploadedCoverUrl = getIntent().getStringExtra("COVER_URL");
+            // ĐÃ SỬA: Nhận trọn vẹn object Comic và thực hiện bóc tách gán chữ an toàn lên màn hình
+            Comic comic = (Comic) getIntent().getSerializableExtra("COMIC_OBJECT");
 
-            // Tải trạng thái và tích chọn tương ứng lên giao diện RadioButton
-            String currentStatus = getIntent().getStringExtra("STATUS");
-            if ("Completed".equalsIgnoreCase(currentStatus)) {
-                rgStatus.check(R.id.rbCompleted);
-            } else {
-                rgStatus.check(R.id.rbOngoing);
+            if (comic != null) {
+                edtComicTitle.setText(comic.getTitle());
+                edtComicAuthor.setText(comic.getAuthor());
+                edtComicDescription.setText(comic.getDescription());
+                uploadedCoverUrl = comic.getCoverImageUrl();
+
+                // Tải trạng thái lên hệ thống nút chọn RadioButton
+                String currentStatus = comic.getStatus();
+                if ("Completed".equalsIgnoreCase(currentStatus)) {
+                    rgStatus.check(R.id.rbCompleted);
+                } else {
+                    rgStatus.check(R.id.rbOngoing);
+                }
+
+                if (uploadedCoverUrl != null && !uploadedCoverUrl.isEmpty()) {
+                    Glide.with(this).load(uploadedCoverUrl).into(imgComicCoverSelect);
+                }
             }
-
-            if (uploadedCoverUrl != null && !uploadedCoverUrl.isEmpty()) {
-                Glide.with(this).load(uploadedCoverUrl).into(imgComicCoverSelect);
-            }
-
-            origTitle = edtComicTitle.getText().toString().trim();
-            origAuthor = edtComicAuthor.getText().toString().trim();
-            origDesc = edtComicDescription.getText().toString().trim();
-            origStatus = "Completed".equalsIgnoreCase(currentStatus) ? "Completed" : "Ongoing";
         }
 
 
@@ -201,10 +202,12 @@ public class AdminEditComicActivity extends AppCompatActivity {
             layoutHeader.findViewById(R.id.headerNotification).setVisibility(View.GONE);
         }
 
-        // Đồng bộ phong cách chữ tiêu đề đỏ cam nhận diện không gian làm việc của Admin
         if (headerLogo != null) {
-            headerLogo.setText("COMIC APP");
-            headerLogo.setTextColor(Color.parseColor("#E74C3C"));
+            // ĐÃ SỬA: Chuyển đổi tên App đơn sắc thành chuỗi HTML đa màu "haycomic" theo Figma
+            headerLogo.setText(android.text.Html.fromHtml("<font color='#D97707'>h</font><font color='#FFFFFF'>ay</font><font color='#D97707'>c</font><font color='#FFFFFF'>omic</font>", android.text.Html.FROM_HTML_MODE_COMPACT));
+
+            // ĐÃ XÓA dòng lệnh ép chữ màu đỏ cũ để không bị ghi đè màu HTML
+
             headerLogo.setOnClickListener(v -> {
                 Intent intent = new Intent(this, AdminDashboardActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);

@@ -248,7 +248,7 @@ public class ProfileActivity extends AppCompatActivity {
      */
     private void setupDynamicHeaderAndMenu(User user) {
         FrameLayout drawerMenuContainer = findViewById(R.id.drawerMenuContainer);
-        layoutHeader = findViewById(R.id.layoutHeaderProfile); // Kết nối với @layout/layout_header trong XML
+        layoutHeader = findViewById(R.id.layoutHeaderProfile);
         if (drawerMenuContainer == null || layoutHeader == null) return;
 
         drawerMenuContainer.removeAllViews();
@@ -257,7 +257,6 @@ public class ProfileActivity extends AppCompatActivity {
 
         boolean isAdmin = user.getRole() != null && "ADMIN".equalsIgnoreCase(user.getRole());
 
-        // Khởi chạy bộ tiện ích nạp ảnh đại diện góc phải và sự kiện click Menu Hamburger chung
         HeaderUtils.initHeader(this, layoutHeader, drawerLayout);
 
         if (isAdmin) {
@@ -265,8 +264,7 @@ public class ProfileActivity extends AppCompatActivity {
             MenuUtils.setupAdminSideMenu(this, drawerLayout, headerMenu);
 
             if (headerLogo != null) {
-                headerLogo.setText("COMIC APP");
-                headerLogo.setTextColor(Color.parseColor("#E74C3C"));
+                headerLogo.setText(android.text.Html.fromHtml("<font color='#D97707'>h</font><font color='#FFFFFF'>ay</font><font color='#D97707'>c</font><font color='#FFFFFF'>omic</font>", android.text.Html.FROM_HTML_MODE_COMPACT));
             }
             View hSearch = layoutHeader.findViewById(R.id.headerSearch);
             View hNoti = layoutHeader.findViewById(R.id.headerNotification);
@@ -285,8 +283,7 @@ public class ProfileActivity extends AppCompatActivity {
             MenuUtils.setupSideMenu(this, drawerLayout, headerMenu);
 
             if (headerLogo != null) {
-                headerLogo.setText("COMIC APP");
-                headerLogo.setTextColor(Color.parseColor("#FFB77D")); // Màu cam sữa chuẩn Manga Noir
+                headerLogo.setText(android.text.Html.fromHtml("<font color='#D97707'>h</font><font color='#FFFFFF'>ay</font><font color='#D97707'>c</font><font color='#FFFFFF'>omic</font>", android.text.Html.FROM_HTML_MODE_COMPACT));
             }
             View hSearch = layoutHeader.findViewById(R.id.headerSearch);
             View hNoti = layoutHeader.findViewById(R.id.headerNotification);

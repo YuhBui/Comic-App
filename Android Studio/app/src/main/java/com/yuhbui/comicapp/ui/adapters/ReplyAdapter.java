@@ -99,7 +99,6 @@ public class ReplyAdapter extends RecyclerView.Adapter<ReplyAdapter.ReplyViewHol
         holder.tvLikeCount.setText("(" + reply.getLikeCount() + ")");
         holder.tvDislikeCount.setText("(" + reply.getDislikeCount() + ")");
 
-        // Cập nhật trạng thái fill màu icon phản hồi con
         if (reply.isLiked()) {
             holder.imgLikeIcon.setImageResource(R.drawable.ic_thumb_up_filled);
             holder.imgLikeIcon.setImageTintList(ColorStateList.valueOf(Color.parseColor("#FFB77D")));
@@ -131,10 +130,9 @@ public class ReplyAdapter extends RecyclerView.Adapter<ReplyAdapter.ReplyViewHol
                     Toast.makeText(holder.itemView.getContext(), "Bạn không thể tự ghét phản hồi của chính mình!", Toast.LENGTH_SHORT).show()
             );
 
-            holder.tvReportText.setText("Xóa");
-            holder.imgReport.setImageResource(android.R.drawable.ic_menu_delete);
+            // ĐÃ SỬA: Chuyển đổi Icon sang dạng xóa cho tài khoản chính chủ (Đã xóa tvReportText chống crash)
+            holder.imgReport.setImageResource(R.drawable.ic_delete);
             holder.imgReport.setImageTintList(ColorStateList.valueOf(Color.parseColor("#F44336")));
-            holder.tvReportText.setTextColor(Color.parseColor("#F44336"));
 
             holder.layoutReport.setOnClickListener(v -> new android.app.AlertDialog.Builder(holder.itemView.getContext())
                     .setTitle("Xóa phản hồi")
@@ -158,10 +156,9 @@ public class ReplyAdapter extends RecyclerView.Adapter<ReplyAdapter.ReplyViewHol
             holder.layoutLike.setVisibility(View.VISIBLE);
             holder.layoutDislike.setVisibility(View.VISIBLE);
 
-            holder.tvReportText.setText("Báo cáo");
-            holder.imgReport.setImageResource(android.R.drawable.ic_menu_report_image);
+            // ĐÃ SỬA: Thiết lập Icon tố cáo mặc định đối với tài khoản người dùng khác (Đã xóa tvReportText chống crash)
+            holder.imgReport.setImageResource(R.drawable.ic_report);
             holder.imgReport.setImageTintList(ColorStateList.valueOf(Color.parseColor("#E91E63")));
-            holder.tvReportText.setTextColor(Color.parseColor("#E91E63"));
 
             holder.layoutLike.setOnClickListener(v -> {
                 if (currentUserId == -1) {
@@ -203,18 +200,15 @@ public class ReplyAdapter extends RecyclerView.Adapter<ReplyAdapter.ReplyViewHol
                         if (response.isSuccessful() && response.body() != null) {
                             Comment updatedReply = response.body();
 
-                            // 1. Đồng bộ model replies tránh bị crash
                             reply.setLikeCount(updatedReply.getLikeCount());
                             reply.setDislikeCount(updatedReply.getDislikeCount());
                             reply.setLiked(updatedReply.isLiked());
                             reply.setDisliked(updatedReply.isDisliked());
 
-                            // 2. Cập nhật số liệu
                             holder.tvLikeCount.setText("(" + reply.getLikeCount() + ")");
                             holder.tvDislikeCount.setText("(" + reply.getDislikeCount() + ")");
 
-                            // 3. --- CHUYỂN TIM FILL MÀU NGAY TẠI CHỖ ---
-                            updateReplyLikeDislikeUI(holder, reply); // Gọi hàm helper vẽ lại cho replies con
+                            updateReplyLikeDislikeUI(holder, reply);
                         }
                     }
                     @Override public void onFailure(Call<Comment> call, Throwable t) {}
@@ -258,7 +252,8 @@ public class ReplyAdapter extends RecyclerView.Adapter<ReplyAdapter.ReplyViewHol
     public int getItemCount() { return replies.size(); }
 
     static class ReplyViewHolder extends RecyclerView.ViewHolder {
-        TextView tvUserReply, tvReplyContent, tvLikeCount, tvDislikeCount, tvReportText;
+        // ĐH XÓA: Biến tvReportText khỏi ViewHolder để tránh lỗi NullPointerException khi ép kiểu dữ liệu
+        TextView tvUserReply, tvReplyContent, tvLikeCount, tvDislikeCount;
         TextView tvReplyChapterTag;
         View layoutLike, layoutDislike, layoutReplyToReply, layoutReport;
         ImageView imgReport, imgLikeIcon, imgDislikeIcon;
@@ -279,29 +274,26 @@ public class ReplyAdapter extends RecyclerView.Adapter<ReplyAdapter.ReplyViewHol
 
             tvLikeCount = itemView.findViewById(R.id.tvLikeReplyCount);
             tvDislikeCount = itemView.findViewById(R.id.tvDislikeReplyCount);
-            tvReportText = itemView.findViewById(R.id.tvReportReplyText);
             imgReport = itemView.findViewById(R.id.imgReportReply);
 
-            // Ánh xạ thành công 2 ImageView Icon Vector mới cho Replies con
+            // ĐÃ XÓA dòng ánh xạ tvReportText cũ tại đây
+
             imgLikeIcon = itemView.findViewById(R.id.imgLikeReplyIcon);
             imgDislikeIcon = itemView.findViewById(R.id.imgDislikeReplyIcon);
         }
     }
 
-    // --- HÀM HELPER: CẬP NHẬT GIAO DIỆN TIM FILL MÀU CHO PHẢN HỒI CON (REPLY) ---
     private void updateReplyLikeDislikeUI(ReplyViewHolder holder, Comment reply) {
-        // Xử lý nút LIKE Phản hồi con
         if (reply.isLiked()) {
             holder.imgLikeIcon.setImageResource(R.drawable.ic_thumb_up_filled);
             holder.imgLikeIcon.setImageTintList(ColorStateList.valueOf(Color.parseColor("#FFB77D")));
             holder.tvLikeCount.setTextColor(Color.parseColor("#FFB77D"));
         } else {
             holder.imgLikeIcon.setImageResource(R.drawable.ic_thumb_up_outline);
-            holder.imgLikeIcon.setImageTintList(ColorStateList.valueOf(Color.parseColor("#666666"))); // Màu sẫm mờ
+            holder.imgLikeIcon.setImageTintList(ColorStateList.valueOf(Color.parseColor("#666666")));
             holder.tvLikeCount.setTextColor(Color.parseColor("#666666"));
         }
 
-        // Xử lý nút DISLIKE Phản hồi con
         if (reply.isDisliked()) {
             holder.imgDislikeIcon.setImageResource(R.drawable.ic_thumb_down_filled);
             holder.imgDislikeIcon.setImageTintList(ColorStateList.valueOf(Color.parseColor("#E91E63")));
