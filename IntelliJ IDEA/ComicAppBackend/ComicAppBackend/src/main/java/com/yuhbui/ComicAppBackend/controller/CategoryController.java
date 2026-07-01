@@ -11,7 +11,7 @@ import java.util.List;
 public class CategoryController {
 
     @Autowired
-    private CategoryRepository categoryRepository; // Inject Repository xịn vào đây
+    private CategoryRepository categoryRepository;
 
     @GetMapping
     public List<Category> getAllCategories() {

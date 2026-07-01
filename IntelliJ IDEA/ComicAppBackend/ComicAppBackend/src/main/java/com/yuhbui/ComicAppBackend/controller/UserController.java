@@ -281,7 +281,7 @@ public class UserController {
         // 3. Kết nối với hệ thống Gmail SMTP của Google để gửi thư trực tiếp đi
         try {
             SimpleMailMessage message = new SimpleMailMessage();
-            message.setTo(email); // Gửi trực tiếp tới Gmail của tài khoản yêu cầu
+            message.setTo(email);
             message.setSubject("[Comic App] Mã OTP Khôi Phục Mật Khẩu");
             message.setText("Chào bạn,\n\n"
                     + "Bạn đã yêu cầu đặt lại mật khẩu cho tài khoản trên ứng dụng đọc truyện Comic App.\n"
@@ -290,7 +290,7 @@ public class UserController {
                     + "Trân trọng,\n"
                     + "Đội ngũ phát triển Comic App.");
 
-            mailSender.send(message); // Kích hoạt lệnh gửi mail
+            mailSender.send(message);
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -320,7 +320,7 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Mã OTP này đã hết hiệu lực, vui lòng ấn nút gửi lại mã mới!");
         }
 
-        // 3. Sử dụng chính xác hàm hashPassword SHA-256 (Base64) sẵn có của bạn để mã hóa mật khẩu mới tinh
+        // 3. Sử dụng chính xác hàm hashPassword sẵn có để mã hóa mật khẩu mới tinh
         String hashedPassword = hashPassword(request.getNewPassword());
         user.setPassword(hashedPassword);
 

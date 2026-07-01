@@ -19,7 +19,6 @@ public class AdminChapterImageAdapter extends RecyclerView.Adapter<AdminChapterI
     private OnPageDeleteClickListener listener;
 
     public interface OnPageDeleteClickListener {
-        // ĐÃ SỬA: Truyền holder position động vào callback xử lý
         void onDelete(int imageId, int adapterPosition);
     }
 
@@ -54,7 +53,6 @@ public class AdminChapterImageAdapter extends RecyclerView.Adapter<AdminChapterI
                 .placeholder(R.drawable.ic_launcher_background)
                 .into(holder.imgPreview);
 
-        // ĐÃ SỬA: Sự kiện xóa trang truyện tính toán vị trí động chính xác 100%
         holder.btnDelete.setOnClickListener(v -> {
             int currentAdapterPos = holder.getAdapterPosition();
             if (currentAdapterPos != RecyclerView.NO_POSITION && listener != null) {
@@ -62,7 +60,7 @@ public class AdminChapterImageAdapter extends RecyclerView.Adapter<AdminChapterI
                 if (page.get("imageId") != null) {
                     imgId = ((Double) page.get("imageId")).intValue();
                 }
-                // Cho phép truyền đi để xóa (Kể cả ảnh cũ imgId > 0 hay ảnh mới add tạm imgId == -1)
+                // Cho phép truyền đi để xóa
                 listener.onDelete(imgId, currentAdapterPos);
             }
         });

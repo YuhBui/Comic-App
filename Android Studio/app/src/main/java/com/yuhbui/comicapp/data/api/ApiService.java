@@ -96,7 +96,6 @@ public interface ApiService {
     );
 
     // API Người dùng gửi đánh giá sao (1-5) cho truyện
-    // Server Spring Boot đang trả về chuỗi text, nên ta hứng bằng Call<String>
     @POST("/api/comics/{comicId}/rate")
     Call<String> rateComic(
             @Path("comicId") int comicId,
@@ -154,7 +153,7 @@ public interface ApiService {
             @Query("categoryIds") List<Integer> categoryIds
     );
 
-    // Lấy danh sách truyện yêu thích của người dùng (kèm đầy đủ thông số)
+    // Lấy danh sách truyện yêu thích của người dùng
     @GET("/api/comics/user-favorites/{userId}")
     Call<List<Comic>> getFavoriteComicsFiltered(
             @Path("userId") int userId,
@@ -166,7 +165,6 @@ public interface ApiService {
 
     @PUT("/api/users/update/{id}")
     Call<User> updateProfile(@Path("id") int userId, @Body com.yuhbui.comicapp.data.model.RegisterRequest request);
-    // Có thể tái sử dụng RegisterRequest vì cấu trúc gửi lên giống hệt nhau (email, displayName, password, confirmPassword)
 
     @Multipart
     @POST("/api/users/upload-avatar/{id}")

@@ -59,7 +59,7 @@ public class AdminChapterDetailActivity extends AppCompatActivity implements Adm
 
     private int chapterId;
     private int comicId;
-    private Integer targetParentCommentId = null; // ID comment cha đang được phản hồi
+    private Integer targetParentCommentId = null;
     private RecyclerView rvPages;
     private AdminChapterImageAdapter adapter;
     private Button btnUploadPage;
@@ -127,7 +127,7 @@ public class AdminChapterDetailActivity extends AppCompatActivity implements Adm
 
         rvPages.setLayoutManager(new LinearLayoutManager(this));
 
-        // ĐÃ SỬA: Khi bấm xóa trang truyện, chỉ gỡ khỏi danh sách hiển thị và lưu ID vào hàng chờ xóa
+        //  Khi bấm xóa trang truyện, chỉ gỡ khỏi danh sách hiển thị và lưu ID vào hàng chờ xóa
         adapter = new AdminChapterImageAdapter((imageId, position) -> {
             // ĐỀ PHÒNG: Kiểm tra bounds mảng an toàn
             if (position >= 0 && position < pageList.size()) {
@@ -190,7 +190,6 @@ public class AdminChapterDetailActivity extends AppCompatActivity implements Adm
             @Override
             public void clearView(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder) {
                 super.clearView(recyclerView, viewHolder);
-                // ĐÃ SỬA: Xóa bỏ hàm gọi API reorder ngay lập tức, chỉ tính toán lại số trang hiển thị
                 refreshLocalPagesUI();
             }
         };
@@ -262,7 +261,6 @@ public class AdminChapterDetailActivity extends AppCompatActivity implements Adm
             });
         }
 
-        // THÊM ĐOẠN NÀY VÀO TRONG HÀM onCreate()
         android.text.TextWatcher textWatcher = new android.text.TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
@@ -447,7 +445,7 @@ public class AdminChapterDetailActivity extends AppCompatActivity implements Adm
         }
         adapter.setData(pageList);
 
-        // GIẢI PHÁP: Ép buộc RecyclerView yêu cầu tính toán lại chiều cao đo lường dọc lồng nhau bên trong NestedScrollView
+        // Ép buộc RecyclerView yêu cầu tính toán lại chiều cao đo lường dọc lồng nhau bên trong NestedScrollView
         rvPages.post(() -> {
             rvPages.requestLayout();
             updateSaveButtonState(); // Tự động mở/khóa nút "Lưu thay đổi" thời gian thực khi có hành động Thêm/Xóa ảnh
@@ -749,7 +747,7 @@ public class AdminChapterDetailActivity extends AppCompatActivity implements Adm
                 selectedUris.add(data.getData());
             }
 
-            // ĐÃ SỬA: Không gửi API upload ngay lập tức, chỉ add tạm cấu trúc dữ liệu cục bộ vào mảng hiển thị dọc
+            // Không gửi API upload ngay lập tức, chỉ add tạm cấu trúc dữ liệu cục bộ vào mảng hiển thị dọc
             for (Uri uri : selectedUris) {
                 Map<String, Object> tempPageMap = new HashMap<>();
                 tempPageMap.put("imageId", -1.0); // Flag đánh dấu ảnh mới thêm cục bộ
@@ -970,7 +968,6 @@ public class AdminChapterDetailActivity extends AppCompatActivity implements Adm
         }
     }
 
-    // THÊM VÀO CUỐI CLASS ADMINCHAPTERDETAILACTIVITY
     private boolean hasChanges() {
         if (currentChapterIndex == -1 || allChaptersInComic.isEmpty()) return false;
 
@@ -1014,8 +1011,8 @@ public class AdminChapterDetailActivity extends AppCompatActivity implements Adm
     // THÊM PHƯƠNG THỨC NÀY VÀO TRONG CLASS AdminChapterDetailActivity.java
     private void showAvatarPopupMenu(View anchorView) {
         androidx.appcompat.widget.PopupMenu popupMenu = new androidx.appcompat.widget.PopupMenu(this, anchorView);
-        popupMenu.getMenu().add(0, 1, 1, "👤 Hồ sơ cá nhân");
-        popupMenu.getMenu().add(0, 2, 2, "🚪 Đăng xuất hệ thống");
+        popupMenu.getMenu().add(0, 1, 1, "Hồ sơ cá nhân");
+        popupMenu.getMenu().add(0, 2, 2, "Đăng xuất hệ thống");
 
         popupMenu.setOnMenuItemClickListener(item -> {
             int id = item.getItemId();

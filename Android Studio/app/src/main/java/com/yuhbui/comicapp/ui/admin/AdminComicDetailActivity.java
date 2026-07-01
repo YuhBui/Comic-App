@@ -84,7 +84,7 @@ public class AdminComicDetailActivity extends AppCompatActivity implements Admin
             layoutHeader.findViewById(R.id.headerNotification).setVisibility(View.GONE);
         }
 
-        // ĐÃ SỬA: Thay đổi sang định dạng chữ HTML phân tách màu chữ giống AdminDashboardActivity
+        // Thay đổi sang định dạng chữ HTML phân tách màu chữ giống AdminDashboardActivity
         if (headerLogo != null) {
             headerLogo.setText(Html.fromHtml("<font color='#D97707'>h</font><font color='#FFFFFF'>ay</font><font color='#D97707'>c</font><font color='#FFFFFF'>omic</font>", Html.FROM_HTML_MODE_COMPACT));
             headerLogo.setOnClickListener(v -> {

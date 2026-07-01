@@ -37,8 +37,7 @@ public class AdminAddUserActivity extends AppCompatActivity {
 
     private static final int PICK_IMAGE_REQUEST = 501;
 
-    private DrawerLayout drawerLayout; // THÊM: Khai báo thành phần DrawerLayout quản lý menu trượt đè lên
-
+    private DrawerLayout drawerLayout;
     private ImageView imgAvatar;
     private Button btnChooseAvatar;
     private EditText edtName, edtEmail, edtPassword, edtConfirmPassword;

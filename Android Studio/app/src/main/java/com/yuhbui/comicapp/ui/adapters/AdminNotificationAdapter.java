@@ -59,14 +59,14 @@ public class AdminNotificationAdapter extends RecyclerView.Adapter<AdminNotifica
         holder.tvTitle.setText(notif.getTitle());
         holder.tvMessage.setText(notif.getMessage());
 
-        // 1. ĐÃ SỬA: Định dạng thời gian tương đối bằng Date & SimpleDateFormat truyền thống (Không lo lỗi kén máy)
+        // 1. Định dạng thời gian tương đối bằng Date & SimpleDateFormat truyền thống
         if (notif.getCreatedAt() != null) {
             holder.tvTime.setText(formatRelativeTimeCompatible(notif.getCreatedAt().toString()));
         } else {
             holder.tvTime.setText("Vừa xong");
         }
 
-        // 2. ĐÃ SỬA: Định dạng hiển thị "Truyện: Tên truyện" thay cho ID khô khan
+        // 2. Định dạng hiển thị "Truyện: Tên truyện"
         if (notif.getComicId() != null && notif.getComicId() > 0) {
             if (comicMap.containsKey(notif.getComicId())) {
                 holder.tvTarget.setText("Truyện: " + comicMap.get(notif.getComicId()));
@@ -86,7 +86,7 @@ public class AdminNotificationAdapter extends RecyclerView.Adapter<AdminNotifica
         });
     }
 
-    // Hàm tính khoảng thời gian tương thích ngược cho mọi phiên bản Android cũ/mới
+    // Hàm tính khoảng thời gian tương thích ngược
     private String formatRelativeTimeCompatible(String dateTimeStr) {
         if (dateTimeStr == null || dateTimeStr.isEmpty()) return "Vừa xong";
         try {
@@ -113,7 +113,7 @@ public class AdminNotificationAdapter extends RecyclerView.Adapter<AdminNotifica
             long diffInDays = diffInHours / 24;
             if (diffInDays < 30) return diffInDays + " ngày trước";
 
-            return cleanStr.substring(0, 10); // Quá 1 tháng thì hiện ngày cố định
+            return cleanStr.substring(0, 10);
         } catch (Exception e) {
             return dateTimeStr;
         }

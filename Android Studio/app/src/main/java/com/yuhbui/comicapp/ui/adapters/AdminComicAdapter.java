@@ -63,7 +63,6 @@ public class AdminComicAdapter extends RecyclerView.Adapter<AdminComicAdapter.Ad
         holder.tvLikes.setText(formatNumber(comic.getFollowCount()));
         holder.tvComments.setText(formatNumber(comic.getCommentCount()));
 
-        // Bo viền l lót nền tối Bento tinh tế theo CSS hệ thống
         float density = holder.itemView.getContext().getResources().getDisplayMetrics().density;
         GradientDrawable itemBg = new GradientDrawable();
         itemBg.setShape(GradientDrawable.RECTANGLE);

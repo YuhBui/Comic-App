@@ -1,26 +1,26 @@
 package com.yuhbui.comicapp.ui.admin;
 
 import android.content.Intent;
-import android.graphics.Color; // THÊM: Để đổi màu chữ Header
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.webkit.MimeTypeMap;
 import android.widget.*;
 import androidx.annotation.Nullable;
-import androidx.activity.OnBackPressedCallback; // THÊM: Để bắt sự kiện nút Back hệ thống
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.view.GravityCompat;              // THÊM: Điều hướng DrawerLayout trượt trái
-import androidx.drawerlayout.widget.DrawerLayout;    // THÊM: Biến DrawerLayout root
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.bumptech.glide.Glide;
 import com.yuhbui.comicapp.R;
 import com.yuhbui.comicapp.data.api.ApiClient;
 import com.yuhbui.comicapp.data.model.Category;
 import com.yuhbui.comicapp.data.model.Comic;
-import com.yuhbui.comicapp.utils.HeaderUtils;          // THÊM: Tiện ích Header dùng chung
-import com.yuhbui.comicapp.utils.MenuUtils;            // THÊM: Tiện ích Menu Admin dùng chung
+import com.yuhbui.comicapp.utils.HeaderUtils;
+import com.yuhbui.comicapp.utils.MenuUtils;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -40,14 +40,12 @@ public class AdminEditComicActivity extends AppCompatActivity {
 
     private static final int PICK_IMAGE_REQUEST = 101;
 
-    private DrawerLayout drawerLayout; // THÊM: Thành phần quản lý Menu trượt trái đè màn hình
-
+    private DrawerLayout drawerLayout;
     private TextView tvFormTitle, tvComicCategoriesSelect;
     private EditText edtComicTitle, edtComicAuthor, edtComicDescription;
     private ImageView imgComicCoverSelect;
     private Button btnSelectCover, btnCancelComicForm, btnSaveComicForm;
 
-    // Đã sửa: Thay đổi Spinner trạng thái cũ sang RadioGroup
     private RadioGroup rgStatus;
 
     private int editComicId = -1;
@@ -453,10 +451,10 @@ public class AdminEditComicActivity extends AppCompatActivity {
     private boolean hasComicChanges() {
         String currentTitle = edtComicTitle.getText().toString().trim();
         if (editComicId == -1) {
-            // THÊM MỚI: Bật nút nếu tiêu đề truyện không để trống
+            // Bật nút nếu tiêu đề truyện không để trống
             return !currentTitle.isEmpty();
         } else {
-            // CẬP NHẬT: So sánh xem có bất kỳ trường nào thay đổi so với ban đầu không
+            // So sánh xem có bất kỳ trường nào thay đổi so với ban đầu không
             String currentAuthor = edtComicAuthor.getText().toString().trim();
             String currentDesc = edtComicDescription.getText().toString().trim();
             String currentStatus = rgStatus.getCheckedRadioButtonId() == R.id.rbCompleted ? "Completed" : "Ongoing";

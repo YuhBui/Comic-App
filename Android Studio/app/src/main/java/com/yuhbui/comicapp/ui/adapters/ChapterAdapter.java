@@ -15,8 +15,8 @@ import java.util.List;
 public class ChapterAdapter extends RecyclerView.Adapter<ChapterAdapter.ChapterViewHolder> {
 
     private List<Chapter> chapterList = new ArrayList<>();
-    private boolean isOfflineMode = false; // Quản lý xem đang mở truyện ở chế độ offline hay online
-    private List<Integer> downloadedChapterIds = new ArrayList<>(); // Lưu trữ các ID chương đã tải
+    private boolean isOfflineMode = false;
+    private List<Integer> downloadedChapterIds = new ArrayList<>();
     private OnChapterActionListener actionListener;
 
     // Định nghĩa Interface để giao tiếp ngược lại với ComicDetailActivity
@@ -108,12 +108,12 @@ public class ChapterAdapter extends RecyclerView.Adapter<ChapterAdapter.ChapterV
 
     static class ChapterViewHolder extends RecyclerView.ViewHolder {
         TextView tvChapterName;
-        ImageButton btnChapterAction; // Thêm khai báo nút vuông hành động
+        ImageButton btnChapterAction;
 
         public ChapterViewHolder(@NonNull View itemView) {
             super(itemView);
             tvChapterName = itemView.findViewById(R.id.tvChapterName);
-            btnChapterAction = itemView.findViewById(R.id.btnChapterAction); // Ánh xạ từ XML mới
+            btnChapterAction = itemView.findViewById(R.id.btnChapterAction);
         }
     }
 }

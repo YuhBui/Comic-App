@@ -3,9 +3,9 @@ package com.yuhbui.comicapp.ui.admin;
 import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
-import android.os.Build; // THÊM
+import android.os.Build;
 import android.os.Bundle;
-import android.text.Html;  // THÊM
+import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,7 +29,7 @@ import com.yuhbui.comicapp.R;
 import com.yuhbui.comicapp.data.api.ApiClient;
 import com.yuhbui.comicapp.utils.HeaderUtils;
 import com.yuhbui.comicapp.utils.MenuUtils;
-import com.yuhbui.comicapp.utils.SharedPrefsManager; // THÊM
+import com.yuhbui.comicapp.utils.SharedPrefsManager;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -169,7 +169,6 @@ public class AdminAddChapterActivity extends AppCompatActivity {
             layoutHeaderAdmin.findViewById(R.id.headerNotification).setVisibility(View.GONE);
         }
 
-        // ĐÃ SỬA: Thiết lập định dạng chữ đa màu sắc thương hiệu "haycomic" thay cho chữ đỏ mặc định cũ
         if (headerLogo != null) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                 headerLogo.setText(Html.fromHtml("<font color='#D97707'>h</font><font color='#FFFFFF'>ay</font><font color='#D97707'>c</font><font color='#FFFFFF'>omic</font>", Html.FROM_HTML_MODE_COMPACT));
@@ -186,8 +185,8 @@ public class AdminAddChapterActivity extends AppCompatActivity {
     // --- THÊM HÀM XỔ POPUP MENU AVATAR ĐĂNG XUẤT/HỒ SƠ GIỐNG HỆT BIỂU ĐỒ ---
     private void showAvatarPopupMenu(View anchorView) {
         androidx.appcompat.widget.PopupMenu popupMenu = new androidx.appcompat.widget.PopupMenu(this, anchorView);
-        popupMenu.getMenu().add(0, 1, 1, "👤 Hồ sơ cá nhân");
-        popupMenu.getMenu().add(0, 2, 2, "🚪 Đăng xuất hệ thống");
+        popupMenu.getMenu().add(0, 1, 1, "Hồ sơ cá nhân");
+        popupMenu.getMenu().add(0, 2, 2, "Đăng xuất hệ thống");
 
         popupMenu.setOnMenuItemClickListener(item -> {
             int id = item.getItemId();

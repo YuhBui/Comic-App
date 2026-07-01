@@ -4,7 +4,6 @@ import com.google.gson.annotations.SerializedName;
 
 public class ReadingHistory {
 
-    // Sử dụng @SerializedName để đảm bảo tên biến khớp chính xác với JSON trả về từ Spring Boot
     @SerializedName("historyId")
     private int historyId;
 
@@ -23,7 +22,7 @@ public class ReadingHistory {
     @SerializedName("updatedAt")
     private String updatedAt;
 
-    // --- Khởi tạo các hàm Getter và Setter ---
+    // --- Getter và Setter ---
 
     public int getHistoryId() {
         return historyId;

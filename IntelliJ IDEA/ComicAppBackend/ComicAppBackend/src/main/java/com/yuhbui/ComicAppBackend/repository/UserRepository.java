@@ -15,7 +15,7 @@ public interface UserRepository extends JpaRepository<User, Integer> {
 
     Optional<User> findByDisplayName(String displayName);
 
-    // THÊM MỚI: Hàm phân trang tìm kiếm nâng cao theo Keyword và Role giống phía User
+    // Hàm phân trang tìm kiếm nâng cao theo Keyword và Role giống phía User
     @Query("SELECT u FROM User u WHERE 1=1 " +
             "AND (:keyword IS NULL OR LOWER(u.displayName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
             "AND (:role IS NULL OR u.role = :role)")

@@ -11,7 +11,7 @@ import java.util.List;
 @Repository
 public interface ComicRepository extends JpaRepository<Comic, Integer> {
 
-    // Câu truy vấn vạn năng: Lấy thông tin truyện và tính toán tổng số chương, follow, comment
+    // Lấy thông tin truyện và tính toán tổng số chương, follow, comment
     @Query(value = "SELECT c.ComicID, c.Title, c.CoverImageUrl, c.ViewCount, c.Rating, c.Status, " +
             "(SELECT ch.ChapterNumber FROM Chapters ch WHERE ch.ComicID = c.ComicID ORDER BY ch.ChapterNumber DESC LIMIT 1) as latestChapter, " +
             "c.CreatedAt as timeUpdate, " +

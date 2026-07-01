@@ -149,10 +149,6 @@ public class AdminReplyAdapter extends RecyclerView.Adapter<AdminReplyAdapter.Ad
             if (listener != null) listener.onDelete(replyId, holder.getAdapterPosition());
         });
     }
-
-    // ====================================================================
-    // HELPER: Thực hiện Like / Dislike qua API và cập nhật UI tức thời
-    // ====================================================================
     private void executeInteraction(AdminReplyViewHolder holder, Comment reply, int userId, int type) {
         ApiClient.getApiService().interactWithComment(reply.getCommentId(), userId, type)
                 .enqueue(new Callback<Comment>() {
@@ -173,9 +169,6 @@ public class AdminReplyAdapter extends RecyclerView.Adapter<AdminReplyAdapter.Ad
                 });
     }
 
-    // ====================================================================
-    // HELPER: Đổi icon Like / Dislike sang trạng thái filled / outline
-    // ====================================================================
     private void updateLikeDislikeUI(AdminReplyViewHolder holder, Comment reply) {
         if (reply.isLiked()) {
             holder.imgLikeIcon.setImageResource(R.drawable.ic_thumb_up_filled);
@@ -201,9 +194,7 @@ public class AdminReplyAdapter extends RecyclerView.Adapter<AdminReplyAdapter.Ad
     @Override
     public int getItemCount() { return replies.size(); }
 
-    // ====================================================================
     // ViewHolder
-    // ====================================================================
     static class AdminReplyViewHolder extends RecyclerView.ViewHolder {
         ImageView imgAvatar, imgLikeIcon, imgDislikeIcon;
         TextView tvUsername, tvContent, tvLikeCount, tvDislikeCount, tvReportCount;

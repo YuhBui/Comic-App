@@ -53,7 +53,6 @@ public class AdminDashboardActivity extends AppCompatActivity {
     private ImageView btnPrevPeriod, btnNextPeriod;
     private TextView tvCurrentPeriod;
 
-    // Đã thêm: TextView hiển thị tổng số người dùng thực tế
     private TextView tvTotalUsersValue;
 
     private String currentType = "day";
@@ -178,12 +177,9 @@ public class AdminDashboardActivity extends AppCompatActivity {
     private void loadDashboardData(String type, String targetDate) {
         fetchAccessChartData(type, targetDate);
         fetchTop10ComicsData(type);
-        fetchTotalUsersCount(); // Đã thêm: Tải số lượng tài khoản thực tế từ server
+        fetchTotalUsersCount();
     }
 
-    /**
-     * Đã thêm: Hàm gọi API bất đồng bộ lấy số lượng tổng người dùng thật từ Server Spring Boot
-     */
     private void fetchTotalUsersCount() {
         ApiClient.getApiService().adminGetUsers("", "Tất cả", 0, 1).enqueue(new Callback<Map<String, Object>>() {
             @Override
@@ -196,9 +192,9 @@ public class AdminDashboardActivity extends AppCompatActivity {
                         if (totalItemsNum != null) {
                             int total = totalItemsNum.intValue();
 
-                            // SỬA ĐỔI: Sử dụng phép chia lấy phần nguyên trực tiếp để không xuất hiện số float (.0)
+                            // Sử dụng phép chia lấy phần nguyên trực tiếp để không xuất hiện số float (.0)
                             if (total >= 1000) {
-                                tvTotalUsersValue.setText((total / 1000) + "k"); // Ví dụ: 1500 -> 1k thay vì 1.5k
+                                tvTotalUsersValue.setText((total / 1000) + "k");
                             } else {
                                 tvTotalUsersValue.setText(String.valueOf(total));
                             }
@@ -276,7 +272,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
                     dataSet.setValueTextSize(10f);
                     dataSet.setValueTextColor(Color.parseColor("#FFFFFF"));
 
-                    // SỬA ĐỔI 1: Ép kiểu số nguyên cho các giá trị hiện trên các nút điểm của biểu đồ
+                    // Ép kiểu số nguyên cho các giá trị hiện trên các nút điểm của biểu đồ
                     dataSet.setValueFormatter(new com.github.mikephil.charting.formatter.ValueFormatter() {
                         @Override
                         public String getFormattedValue(float value) {
@@ -294,7 +290,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
                     xAxis.setGranularity(1f);
                     xAxis.setLabelRotationAngle(-30);
 
-                    // SỬA ĐỔI 2: Định dạng trục Y bên trái thành số nguyên
+                    // Định dạng trục Y bên trái thành số nguyên
                     YAxis leftAxis = lineChartAccess.getAxisLeft();
                     leftAxis.setTextColor(Color.parseColor("#FFFFFF"));
                     leftAxis.setGranularity(1f); // Chỉ nhảy tiến theo số nguyên (1, 2, 3...)
@@ -305,7 +301,6 @@ public class AdminDashboardActivity extends AppCompatActivity {
                         }
                     });
 
-                    // SỬA ĐỔI 3: Định dạng trục Y bên phải thành số nguyên
                     YAxis rightAxis = lineChartAccess.getAxisRight();
                     rightAxis.setTextColor(Color.parseColor("#FFFFFF"));
                     rightAxis.setGranularity(1f); // Chỉ nhảy tiến theo số nguyên
@@ -350,8 +345,8 @@ public class AdminDashboardActivity extends AppCompatActivity {
 
     private void showAvatarPopupMenu(View anchorView) {
         androidx.appcompat.widget.PopupMenu popupMenu = new androidx.appcompat.widget.PopupMenu(this, anchorView);
-        popupMenu.getMenu().add(0, 1, 1, "👤 Hồ sơ cá nhân");
-        popupMenu.getMenu().add(0, 2, 2, "🚪 Đăng xuất hệ thống");
+        popupMenu.getMenu().add(0, 1, 1, "Hồ sơ cá nhân");
+        popupMenu.getMenu().add(0, 2, 2, "Đăng xuất hệ thống");
 
         popupMenu.setOnMenuItemClickListener(item -> {
             int id = item.getItemId();

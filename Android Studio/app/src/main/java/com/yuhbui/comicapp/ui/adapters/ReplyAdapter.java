@@ -130,7 +130,7 @@ public class ReplyAdapter extends RecyclerView.Adapter<ReplyAdapter.ReplyViewHol
                     Toast.makeText(holder.itemView.getContext(), "Bạn không thể tự ghét phản hồi của chính mình!", Toast.LENGTH_SHORT).show()
             );
 
-            // ĐÃ SỬA: Chuyển đổi Icon sang dạng xóa cho tài khoản chính chủ (Đã xóa tvReportText chống crash)
+            // Chuyển đổi Icon sang dạng xóa cho tài khoản chính chủ
             holder.imgReport.setImageResource(R.drawable.ic_delete);
             holder.imgReport.setImageTintList(ColorStateList.valueOf(Color.parseColor("#F44336")));
 
@@ -156,7 +156,7 @@ public class ReplyAdapter extends RecyclerView.Adapter<ReplyAdapter.ReplyViewHol
             holder.layoutLike.setVisibility(View.VISIBLE);
             holder.layoutDislike.setVisibility(View.VISIBLE);
 
-            // ĐÃ SỬA: Thiết lập Icon tố cáo mặc định đối với tài khoản người dùng khác (Đã xóa tvReportText chống crash)
+            // Thiết lập Icon tố cáo mặc định đối với tài khoản người dùng khác
             holder.imgReport.setImageResource(R.drawable.ic_report);
             holder.imgReport.setImageTintList(ColorStateList.valueOf(Color.parseColor("#E91E63")));
 
@@ -252,7 +252,6 @@ public class ReplyAdapter extends RecyclerView.Adapter<ReplyAdapter.ReplyViewHol
     public int getItemCount() { return replies.size(); }
 
     static class ReplyViewHolder extends RecyclerView.ViewHolder {
-        // ĐH XÓA: Biến tvReportText khỏi ViewHolder để tránh lỗi NullPointerException khi ép kiểu dữ liệu
         TextView tvUserReply, tvReplyContent, tvLikeCount, tvDislikeCount;
         TextView tvReplyChapterTag;
         View layoutLike, layoutDislike, layoutReplyToReply, layoutReport;
@@ -275,8 +274,6 @@ public class ReplyAdapter extends RecyclerView.Adapter<ReplyAdapter.ReplyViewHol
             tvLikeCount = itemView.findViewById(R.id.tvLikeReplyCount);
             tvDislikeCount = itemView.findViewById(R.id.tvDislikeReplyCount);
             imgReport = itemView.findViewById(R.id.imgReportReply);
-
-            // ĐÃ XÓA dòng ánh xạ tvReportText cũ tại đây
 
             imgLikeIcon = itemView.findViewById(R.id.imgLikeReplyIcon);
             imgDislikeIcon = itemView.findViewById(R.id.imgDislikeReplyIcon);

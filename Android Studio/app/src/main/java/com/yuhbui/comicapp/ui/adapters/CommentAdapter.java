@@ -142,9 +142,7 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
 
         int currentUserId = SharedPrefsManager.getUserId(context);
 
-        // ========================================================
         // LOGIC KIỂM TRA CHÍNH CHỦ: KHÔNG ẨN NÚT - CHẶN CLICK TỰ LIKE
-        // ========================================================
         if (comment.getUserId() == currentUserId && currentUserId != -1) {
             holder.layoutLike.setVisibility(View.VISIBLE);
             holder.layoutDislike.setVisibility(View.VISIBLE);
@@ -352,9 +350,6 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.CommentV
                 });
     }
 
-    // ========================================================
-    // ⚙️ ĐÃ SỬA THÀNH CÔNG: Tiếp nhận tham số kiểu đối tượng Integer an toàn
-    // ========================================================
     public void resetRepliesCache(Integer parentCommentId) {
         if (parentCommentId == null) return;
         repliesCache.remove(parentCommentId);

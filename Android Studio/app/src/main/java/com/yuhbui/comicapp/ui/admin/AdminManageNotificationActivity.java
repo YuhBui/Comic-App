@@ -143,8 +143,8 @@ public class AdminManageNotificationActivity extends AppCompatActivity {
 
     private void showAvatarPopupMenu(View anchorView) {
         androidx.appcompat.widget.PopupMenu popupMenu = new androidx.appcompat.widget.PopupMenu(this, anchorView);
-        popupMenu.getMenu().add(0, 1, 1, "👤 Hồ sơ cá nhân");
-        popupMenu.getMenu().add(0, 2, 2, "🚪 Đăng xuất hệ thống");
+        popupMenu.getMenu().add(0, 1, 1, "Hồ sơ cá nhân");
+        popupMenu.getMenu().add(0, 2, 2, "Đăng xuất hệ thống");
 
         popupMenu.setOnMenuItemClickListener(item -> {
             int id = item.getItemId();

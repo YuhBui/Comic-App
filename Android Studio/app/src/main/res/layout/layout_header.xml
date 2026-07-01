@@ -120,5 +120,5 @@
         android:focusable="true"
         android:background="#2E3545"
         app:strokeColor="#554336"
-        app:strokeWidth="2dp"
-        app:shapeAppearanceOverlay="@style/RoundedCorner12dp"/> </LinearLayout>
+        app:shapeAppearanceOverlay="@style/CircleImageView"/>
+</LinearLayout>

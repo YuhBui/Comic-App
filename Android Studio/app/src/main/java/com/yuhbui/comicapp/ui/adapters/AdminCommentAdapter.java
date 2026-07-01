@@ -61,7 +61,7 @@ public class AdminCommentAdapter extends RecyclerView.Adapter<AdminCommentAdapte
         // Đặt displayedCount = 10 (tối thiểu) nếu hiện tại đang mở
         Integer currentCount = displayedCountCache.get(parentCommentId);
         if (currentCount == null || currentCount == 0) {
-            displayedCountCache.put(parentCommentId, 10); // Tự động mở rộng sau khi gửi reply
+            displayedCountCache.put(parentCommentId, 10);
         }
         // Notify item để trigger re-bind và auto-fetch replies từ server
         for (int i = 0; i < commentList.size(); i++) {

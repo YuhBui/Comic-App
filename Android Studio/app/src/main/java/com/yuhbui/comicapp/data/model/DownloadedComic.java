@@ -13,7 +13,6 @@ public class DownloadedComic {
     private String description;
     private String genres;
 
-    // Constructor trống cho Room
     public DownloadedComic() {}
 
     // Getters và Setters

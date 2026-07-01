@@ -10,11 +10,9 @@ public class Category implements Serializable {
     @SerializedName("name")
     private String name;
 
-    // Hàm khởi tạo không tham số (Bắt buộc cho Gson/Retrofit)
     public Category() {
     }
 
-    // Hàm khởi tạo nhận tham số Tên thể loại (Giải quyết lỗi gạch đỏ)
     public Category(String name) {
         this.name = name;
     }

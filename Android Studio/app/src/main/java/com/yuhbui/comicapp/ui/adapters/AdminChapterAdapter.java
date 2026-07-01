@@ -35,7 +35,7 @@ public class AdminChapterAdapter extends RecyclerView.Adapter<AdminChapterAdapte
     @NonNull
     @Override
     public ChapterViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        // ĐÃ SỬA: Nạp layout chứa nút xóa dành riêng cho quản trị
+        // Nạp layout chứa nút xóa dành riêng cho quản trị
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_admin_chapter, parent, false);
         return new ChapterViewHolder(view);
     }
@@ -59,7 +59,6 @@ public class AdminChapterAdapter extends RecyclerView.Adapter<AdminChapterAdapte
         // Sự kiện xử lý bấm nút Xóa chương trực tiếp hàng ngang
         holder.btnDelete.setOnClickListener(v -> {
             if (chapter.get("chapterId") != null) {
-                // ĐÃ SỬA: Dùng Number cứu cánh để tránh lỗi ép kiểu Double sang Integer đột ngột
                 Number idNum = (Number) chapter.get("chapterId");
                 int chapterId = idNum != null ? idNum.intValue() : -1;
                 if (chapterId != -1) {

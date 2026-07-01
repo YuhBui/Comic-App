@@ -25,17 +25,16 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="NHẬP EMAIL NHẬN OTP"
-                android:textSize="28sp"
+                android:text="XÁC MINH MÃ OTP"
+                android:textSize="26sp"
                 android:textStyle="bold"
                 android:textColor="#FFB77D"
-                android:letterSpacing="-0.05"
                 android:gravity="center" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Hệ thống sẽ gửi mã xác thực về Gmail của bạn"
+                android:text="Vui lòng điền mã số nhận được từ Gmail"
                 android:textSize="14sp"
                 android:textColor="#DBC2B0"
                 android:layout_marginTop="8dp"
@@ -59,7 +58,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="EMAIL TÀI KHOẢN"
+                    android:text="MÃ XÁC MINH OTP"
                     android:textSize="12sp"
                     android:textStyle="bold"
                     android:textColor="#DBC2B0"
@@ -67,67 +66,31 @@
                     android:layout_marginBottom="6dp" />
 
                 <EditText
-                    android:id="@+id/edtForgotEmail"
+                    android:id="@+id/edtOtpCode"
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
-                    android:hint="example@email.com"
-                    android:inputType="textEmailAddress"
+                    android:hint="Nhập mã OTP gồm chữ số"
+                    android:inputType="number"
                     android:background="#0C1322"
                     android:paddingLeft="16dp"
                     android:paddingRight="16dp"
                     android:textSize="14sp"
                     android:textColor="#FFFFFF"
                     android:textColorHint="#50DBC2B0"
-                    android:layout_marginBottom="16dp" />
+                    android:layout_marginBottom="20dp" />
 
                 <Button
-                    android:id="@+id/btnSendOtp"
+                    android:id="@+id/btnVerifyOtp"
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
-                    android:text="GỬI MÃ OTP XÁC NHẬN"
+                    android:text="TIẾP TỤC"
                     android:textSize="16sp"
                     android:textStyle="bold"
                     android:backgroundTint="#D97707"
                     android:textColor="#432100"
                     app:cornerRadius="8dp" />
 
-                <ProgressBar
-                    android:id="@+id/forgotProgressBar"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:visibility="gone"
-                    android:layout_gravity="center"
-                    android:layout_marginTop="16dp" />
-
             </LinearLayout>
         </androidx.cardview.widget.CardView>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center"
-            android:layout_marginBottom="16dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Nhớ ra mật khẩu cũ? "
-                android:textSize="14sp"
-                android:textColor="#DBC2B0" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Đăng nhập ngay"
-                android:textSize="15sp"
-                android:textStyle="bold"
-                android:textColor="#FFB77D"
-                android:padding="8dp"
-                android:onClick="finish"
-                android:clickable="true"
-                android:focusable="true"/>
-        </LinearLayout>
-
     </LinearLayout>
 </ScrollView>

@@ -17,7 +17,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/comics") // Đường dẫn gốc cho các API liên quan đến truyện
+@RequestMapping("/api/comics")
 public class ComicController {
 
     @Autowired
@@ -32,7 +32,7 @@ public class ComicController {
     @PersistenceContext
     private EntityManager entityManager;
 
-    // 1. API lấy toàn bộ danh sách truyện (Cơ bản)
+    // 1. API lấy toàn bộ danh sách truyện
     @GetMapping
     public List<Comic> getAllComics() {
         return comicRepository.findAll();
@@ -44,7 +44,7 @@ public class ComicController {
         return chapterRepository.findByComicIdOrderByChapterNumberDesc(comicId);
     }
 
-    // 3. API LẤY CHI TIẾT TRUYỆN ĐẦY ĐỦ (KẾT NỐI DATABASE THỰC TẾ)
+    // 3. API LẤY CHI TIẾT TRUYỆN ĐẦY ĐỦ
     @GetMapping("/{comicId}")
     public ResponseEntity<?> getComicDetail(
             @PathVariable Integer comicId,
@@ -67,7 +67,7 @@ public class ComicController {
         }
 
         // ==========================================
-        // BỔ SUNG LẤY SỐ LƯỢNG BÌNH LUẬN (COMMENT)
+        // BỔ SUNG LẤY SỐ LƯỢNG BÌNH LUẬN
         // ==========================================
         try {
             String cmtSql = "SELECT COUNT(*) FROM Comments WHERE ComicID = :comicId";
@@ -91,7 +91,7 @@ public class ComicController {
             if (!chData.isEmpty()) {
                 Object[] chRow = chData.get(0);
                 dto.setLatestChapterNumber("Chương " + chRow[0].toString());
-                dto.setTimeUpdated(convertToRelativeTime(chRow[1])); // ĐÃ SỬA: Áp dụng định dạng "... trước"
+                dto.setTimeUpdated(convertToRelativeTime(chRow[1]));
             } else {
                 dto.setLatestChapterNumber("Chưa có chương");
                 dto.setTimeUpdated("Chưa cập nhật");
@@ -123,7 +123,7 @@ public class ComicController {
         return ResponseEntity.ok(dto);
     }
 
-    // 4. API BẤM NÚT YÊU THÍCH / HỦY YÊU THÍCH (TOGGLE FAVORITE)
+    // 4. API BẤM NÚT YÊU THÍCH / HỦY YÊU THÍCH
     @PostMapping("/{comicId}/toggle-favorite")
     public ResponseEntity<?> toggleFavorite(
             @PathVariable Integer comicId,
@@ -147,9 +147,9 @@ public class ComicController {
         }
     }
 
-    // 5. API Người dùng gửi đánh giá sao (1-5) cho truyện - ĐÃ SỬA CHUẨN LOGIC VÀ THUẬT TOÁN
+    // 5. API Người dùng gửi đánh giá sao (1-5) cho truyện
     @PostMapping("/{comicId}/rate")
-    @org.springframework.transaction.annotation.Transactional // Thêm transaction để thực hiện chỉnh sửa dữ liệu DB
+    @org.springframework.transaction.annotation.Transactional
     public ResponseEntity<?> rateComic(
             @PathVariable Integer comicId,
             @RequestParam Integer userId,
@@ -164,7 +164,7 @@ public class ComicController {
             return ResponseEntity.badRequest().body("Truyện không tồn tại!");
         }
 
-        // Bước 1: Kiểm tra xem người dùng này đã từng đánh giá truyện này chưa
+        // Kiểm tra xem người dùng này đã từng đánh giá truyện này chưa
         String checkSql = "SELECT Score FROM Rating WHERE UserID = :userId AND ComicID = :comicId";
         List<?> existingRating = entityManager.createNativeQuery(checkSql)
                 .setParameter("userId", userId)
@@ -172,7 +172,7 @@ public class ComicController {
                 .getResultList();
 
         if (!existingRating.isEmpty()) {
-            // Nếu đã tồn tại -> Thực hiện CẬP NHẬT (Sửa đánh giá cũ)
+            // Nếu đã tồn tại -> Thực hiện CẬP NHẬT
             String updateRatingSql = "UPDATE Rating SET Score = :score, UpdatedAt = CURRENT_TIMESTAMP WHERE UserID = :userId AND ComicID = :comicId";
             entityManager.createNativeQuery(updateRatingSql)
                     .setParameter("score", score)
@@ -189,7 +189,7 @@ public class ComicController {
                     .executeUpdate();
         }
 
-        // Bước 2: Tính toán lại chính xác điểm trung bình thực tế từ bảng Rating bằng hàm AVG()
+        // Tính toán lại chính xác điểm trung bình thực tế từ bảng Rating bằng hàm AVG()
         String avgSql = "SELECT AVG(CAST(Score AS DOUBLE)) FROM Rating WHERE ComicID = :comicId";
         Double avgRating = (Double) entityManager.createNativeQuery(avgSql)
                 .setParameter("comicId", comicId)
@@ -197,7 +197,7 @@ public class ComicController {
 
         Comic comic = comicOpt.get();
         if (avgRating != null) {
-            // Làm tròn kết quả điểm trung bình đến 1 chữ số thập phân (Ví dụ: 4.367 -> 4.4)
+            // Làm tròn kết quả điểm trung bình đến 1 chữ số thập phân
             float roundedRating = Math.round(avgRating * 10) / 10f;
             comic.setRating(roundedRating);
         } else {
@@ -210,10 +210,10 @@ public class ComicController {
     }
 
     // =========================================================================
-    // TRÙNG KHỚP CÁC ENDPOINT MỚI BỔ SUNG CHO TRANG CHỦ (HOME NÂNG CẤP)
+    // TRÙNG KHỚP CÁC ENDPOINT MỚI BỔ SUNG CHO TRANG CHỦ
     // =========================================================================
 
-    // 6. API TRUYỆN ĐỀ CỬ HOT (Đã cập nhật nhận diện userId)
+    // 6. API TRUYỆN ĐỀ CỬ HOT
     @GetMapping("/home/recommended")
     public ResponseEntity<List<ComicHomeResponseDTO>> getRecommendedComics(@RequestParam(required = false) Integer userId) {
         List<Object[]> rawData = comicRepository.getComicHomeDataRaw();
@@ -230,7 +230,7 @@ public class ComicController {
         return ResponseEntity.ok(dtoList);
     }
 
-    // 7. API TRUYỆN MỚI CẬP NHẬT (Đã cập nhật nhận diện userId)
+    // 7. API TRUYỆN MỚI CẬP NHẬT
     @GetMapping("/home/updates")
     public ResponseEntity<List<ComicHomeResponseDTO>> getHomeUpdates(
             @RequestParam(defaultValue = "0") int page,
@@ -256,7 +256,7 @@ public class ComicController {
         return ResponseEntity.ok(dtoList.subList(start, end));
     }
 
-    // 8. API BẢNG XẾP HẠNG TOP 10 TRUYỆN (Đã cập nhật nhận diện userId)
+    // 8. API BẢNG XẾP HẠNG TOP 10 TRUYỆN
     @GetMapping("/home/ranking")
     public ResponseEntity<List<ComicHomeResponseDTO>> getTopRanking(
             @RequestParam(defaultValue = "day") String type,
@@ -293,7 +293,7 @@ public class ComicController {
         return ResponseEntity.ok(ranked);
     }
 
-    // 9. API BỘ LỌC TRUYỆN THEO THỂ LOẠI (Đã cập nhật nhận diện userId)
+    // 9. API BỘ LỌC TRUYỆN THEO THỂ LOẠI
     @GetMapping("/filter/category/{catId}")
     public ResponseEntity<List<ComicHomeResponseDTO>> filterComicsByCategory(
             @PathVariable Integer catId,
@@ -359,7 +359,7 @@ public class ComicController {
     }
 
     // =========================================================================
-    // SỬA ĐỔI: Hàm phụ trợ map dữ liệu an toàn, tránh lỗi thay đổi constructor
+    // Hàm phụ trợ map dữ liệu an toàn, tránh lỗi thay đổi constructor
     // =========================================================================
     private ComicHomeResponseDTO mapRowToDTO(Object[] row) {
         ComicHomeResponseDTO dto = new ComicHomeResponseDTO();
@@ -378,7 +378,7 @@ public class ComicController {
     }
 
 
-    // ĐÃ SỬA: API lấy danh sách truyện Yêu thích có tích hợp bộ lọc đa chọn AND Logic (NÂNG CẤP ĐẦY ĐỦ THÔNG SỐ)
+    // API lấy danh sách truyện Yêu thích có tích hợp bộ lọc đa chọn AND Logic
     @GetMapping("/user-favorites/{userId}")
     public ResponseEntity<List<ComicHomeResponseDTO>> getFavoriteComicsFiltered(
             @PathVariable("userId") Integer userId,

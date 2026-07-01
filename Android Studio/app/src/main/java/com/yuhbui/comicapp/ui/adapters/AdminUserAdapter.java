@@ -88,14 +88,14 @@ public class AdminUserAdapter extends RecyclerView.Adapter<AdminUserAdapter.User
 
         if ("Admin".equalsIgnoreCase(user.getRole())) {
             holder.tvRole.setText("ADMIN");
-            holder.tvRole.setTextColor(Color.parseColor("#166534")); // color: #166534
-            badgeBg.setColor(Color.parseColor("#34C759"));           // background: #34C759
-            badgeBg.setStroke(strokeWidth, Color.parseColor("#166534")); // border: 1px solid #166534
+            holder.tvRole.setTextColor(Color.parseColor("#166534"));
+            badgeBg.setColor(Color.parseColor("#34C759"));
+            badgeBg.setStroke(strokeWidth, Color.parseColor("#166534"));
         } else {
             holder.tvRole.setText("USER");
-            holder.tvRole.setTextColor(Color.parseColor("#6155F5")); // color: #6155F5
-            badgeBg.setColor(Color.parseColor("#00C0E8"));           // background: #00C0E8
-            badgeBg.setStroke(strokeWidth, Color.parseColor("#6155F5")); // border: 1px solid #6155F5
+            holder.tvRole.setTextColor(Color.parseColor("#6155F5"));
+            badgeBg.setColor(Color.parseColor("#00C0E8"));
+            badgeBg.setStroke(strokeWidth, Color.parseColor("#6155F5"));
         }
         holder.tvRole.setBackground(badgeBg);
 

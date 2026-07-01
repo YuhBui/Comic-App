@@ -17,6 +17,12 @@
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
         <activity
+            android:name=".ui.ResetPasswordActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.VerifyOtpActivity"
+            android:exported="false" />
+        <activity
             android:name=".ui.ForgotPasswordActivity"
             android:exported="false" />
         <activity

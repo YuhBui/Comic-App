@@ -56,7 +56,7 @@ public class CategoryFilterAdapter extends RecyclerView.Adapter<CategoryFilterAd
         holder.tvName.setGravity(android.view.Gravity.CENTER);
         holder.tvName.setMaxLines(2);
 
-        // ĐÃ SỬA: Lấy ra ID của thể loại hiện tại để đối sánh trực tiếp
+        // Lấy ra ID của thể loại hiện tại để đối sánh trực tiếp
         int catId = cat.getCategoryId();
 
         // Màu sắc theo trạng thái đa chọn (Kiểm tra xem mảng ID có chứa catId này không)

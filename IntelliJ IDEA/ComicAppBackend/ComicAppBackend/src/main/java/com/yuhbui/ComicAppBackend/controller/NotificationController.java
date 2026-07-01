@@ -43,14 +43,14 @@ public class NotificationController {
     }
 
     // === CHỨC NĂNG CRUD CỦA ADMIN ===
-    // SỬA: Hỗ trợ lấy toàn bộ thông báo kèm tìm kiếm theo tiêu đề cho Admin
+    // Hỗ trợ lấy toàn bộ thông báo kèm tìm kiếm theo tiêu đề cho Admin
     @GetMapping("/admin/all")
     public ResponseEntity<List<Notification>> getAllNotificationsForAdmin(@RequestParam(required = false) String keyword) {
         String searchKey = (keyword != null && !keyword.trim().isEmpty()) ? keyword.trim() : null;
         return ResponseEntity.ok(notificationRepository.findUniqueNotificationsForAdmin(searchKey));
     }
 
-    // SỬA: Tách nhóm đối tượng gửi: Gửi Toàn bộ hệ thống HOẶC chỉ gửi cho Người theo dõi truyện cụ thể
+    // Gửi Toàn bộ hệ thống HOẶC chỉ gửi cho Người theo dõi truyện cụ thể
     @PostMapping("/admin/create")
     public ResponseEntity<?> adminCreateNotification(@RequestBody Notification sample) {
         if (sample.getComicId() != null && sample.getComicId() > 0) {

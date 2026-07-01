@@ -28,7 +28,6 @@ public class User {
     @SerializedName("createdAt")
     private String createdAt;
 
-    // ----- Constructor rỗng (Bắt buộc cho Gson và Firebase sau này) -----
     public User() {
     }
 

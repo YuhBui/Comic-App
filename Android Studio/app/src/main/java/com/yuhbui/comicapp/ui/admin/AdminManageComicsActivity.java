@@ -86,7 +86,7 @@ public class AdminManageComicsActivity extends AppCompatActivity implements Admi
             layoutHeader.findViewById(R.id.headerNotification).setVisibility(View.GONE);
         }
 
-        // ĐÃ SỬA: Thay đổi cấu trúc chữ logo dạng Html đa màu đồng bộ thương hiệu "haycomic"
+        // Thay đổi cấu trúc chữ logo dạng Html đa màu đồng bộ thương hiệu "haycomic"
         if (headerLogo != null) {
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
                 headerLogo.setText(Html.fromHtml("<font color='#D97707'>h</font><font color='#FFFFFF'>ay</font><font color='#D97707'>c</font><font color='#FFFFFF'>omic</font>", Html.FROM_HTML_MODE_LEGACY));

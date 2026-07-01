@@ -7,9 +7,9 @@ import androidx.room.PrimaryKey;
 public class DownloadedImage {
     @PrimaryKey(autoGenerate = true)
     private int id;
-    private int chapterId; // Khóa ngoại liên kết với DownloadedChapter
-    private String localFilePath; // Đường dẫn tuyệt đối đến file ảnh trang truyện local
-    private int position; // Thứ tự trang truyện để hiển thị đúng thứ tự (0, 1, 2...)
+    private int chapterId;
+    private String localFilePath;
+    private int position;
 
     public DownloadedImage() {}
 

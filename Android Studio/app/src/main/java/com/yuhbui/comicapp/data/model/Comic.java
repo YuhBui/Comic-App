@@ -27,13 +27,13 @@ public class Comic implements Serializable {
     private float rating;
 
     @SerializedName("status")
-    private String status; // Ví dụ: "Ongoing", "Completed"
+    private String status;
 
     @SerializedName("isHidden")
     private boolean isHidden;
 
     @SerializedName("createdAt")
-    private String createdAt; // Dùng String để dễ dàng nhận dữ liệu ngày tháng từ API
+    private String createdAt;
 
     @SerializedName("latestChapterNumber")
     private String latestChapterNumber;

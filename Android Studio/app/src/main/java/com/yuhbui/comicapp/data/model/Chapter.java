@@ -18,7 +18,6 @@ public class Chapter {
     public Chapter() {
     }
 
-    // Hãy dùng phím tắt (Alt + Insert) để tạo Getter và Setter cho các biến này nhé!
     public int getChapterId() {
         return chapterId;
     }

@@ -116,7 +116,6 @@ public class ComicAdapter extends RecyclerView.Adapter<ComicAdapter.ComicViewHol
                 holder.imgLikesIcon.setVisibility(View.GONE);
             }
         } else {
-            // ĐÃ SỬA LỖI CÚ PHÁP: Thay View.getLatestChapterNumber() thành comic.getLatestChapterNumber()
             holder.tvLatestChapter.setVisibility(comic.getLatestChapterNumber() != null ? View.VISIBLE : View.GONE);
             holder.tvTimeUpdate.setVisibility(View.VISIBLE);
 
